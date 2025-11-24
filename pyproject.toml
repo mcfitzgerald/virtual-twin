@@ -1,0 +1,20 @@
+[project]
+name = "simpy-demo"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Your Name",email = "michael.craig.fitzgerald@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "simpy (>=4.1.1,<5.0.0)"
+]
+
+[tool.poetry]
+package-mode = false
+packages = [{include = "simpy_demo", from = "src"}]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
