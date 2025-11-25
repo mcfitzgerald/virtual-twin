@@ -14,6 +14,8 @@ Use `semgrep` to find hardcodes
 
 Use context7 to for library and package documentation (enabled via mcp)
 
+Update `CHANGELOG.md` when comitting with git, use semantic versioning and also update version in `pyproject.toml` 
+
 ## Commands
 
 ```bash
