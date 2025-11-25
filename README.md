@@ -81,17 +81,21 @@ The simulation logic is grounded in industry-standard definitions of Overall Equ
 
 ### This project is managed with poetry
 
-Review pyproject.toml
+```bash
+poetry install
+```
 
 ### Execution
 
-Run the script directly. It is self-contained with a default "White Paper" scenario.
+Run with the default "White Paper" scenario:
 
-```poetry run digital_twin.py```
+```bash
+poetry run python -m simpy_demo
+```
 
 ### Configuration (Scenario Testing)
 
-Modify the `ScenarioConfig` block at the bottom of the script to test hypotheses:
+Modify `scenarios.py` or create custom `ScenarioConfig` instances to test hypotheses:
 
 1.  **Test Accumulation:** Change `buffer_capacity` on the Filler from 50 to 500.
 2.  **Test Reliability:** Improve `mtbf_min` on the Packer to see impact on Total Output.
