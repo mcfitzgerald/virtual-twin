@@ -47,7 +47,7 @@ class SimulationEngine:
 
         # 5. Start monitoring
         telemetry_data: List[dict] = []
-        env.process(self._monitor_process(env, machines, buffers, telemetry_data))
+        env.process(self._monitor_process(env, machines, buffers, telemetry_data, scenario.telemetry_interval_sec))
 
         # 6. Run simulation
         duration_sec = scenario.duration_hours * 3600

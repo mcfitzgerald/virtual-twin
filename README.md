@@ -110,6 +110,8 @@ from simpy_demo.models import ReliabilityParams
 # Test with larger buffer
 scenario = ScenarioConfig(
     name="large_buffer_test",
+    duration_hours=336.0,  # 2 weeks
+    telemetry_interval_sec=300.0,  # 5-minute snapshots (default)
     equipment={
         "Filler": EquipmentParams(buffer_capacity=500)
     }
@@ -136,9 +138,10 @@ The system generates two distinct datasets useful for separate engineering tasks
 
 ### A. Telemetry (`df_ts`)
 
-  * **Format:** Time-series snapshot every 1.0 second.
+  * **Format:** Time-series snapshot at configurable intervals (default: 5 minutes).
   * **Columns:** `time`, `Buf_Filler_level`, `Filler_state`, `Packer_state`...
   * **Use Case:** Training LSTM/Transformer models to predict **Starvation Events** based on upstream buffer depletion patterns.
+  * **Configuration:** Set `telemetry_interval_sec` in `ScenarioConfig` (e.g., `1.0` for 1-second granularity).
 
 ### B. Event Log (`df_ev`)
 

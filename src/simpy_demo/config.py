@@ -34,4 +34,5 @@ class ScenarioConfig(BaseModel):
     name: str
     duration_hours: float = 8.0
     random_seed: Optional[int] = 42
+    telemetry_interval_sec: float = 300.0  # 5 minutes default
     equipment: Dict[str, EquipmentParams] = {}  # Overrides by station name
