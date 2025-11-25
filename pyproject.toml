@@ -8,7 +8,9 @@ authors = [
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "simpy (>=4.1.1,<5.0.0)"
+    "simpy (>=4.1.1,<5.0.0)",
+    "pandas (>=2.3.3,<3.0.0)",
+    "pydantic (>=2.12.4,<3.0.0)"
 ]
 
 [tool.poetry]
