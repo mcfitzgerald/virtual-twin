@@ -6,6 +6,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 SimPy-based discrete event simulation (DES) of a CPG (Consumer Packaged Goods) production line. The system serves as both an operational simulator for validating throughput/accumulation strategies and a synthetic data generator for ML training (predictive maintenance, process mining).
 
+## Coding and Engineering Standards
+
+Use `ruff` and `mypy` for linting, formatting, and typing
+
+Use `semgrep` to find hardcodes
+
+Use context7 to for library and package documentation (enabled via mcp)
+
 ## Commands
 
 ```bash
