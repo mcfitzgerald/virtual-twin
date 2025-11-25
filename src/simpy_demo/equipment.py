@@ -1,11 +1,25 @@
-import simpy
+"""Equipment simulation class with 6-phase cycle."""
+
 import random
 from typing import List, Optional
 
-from simpy_demo.models import MachineConfig, Product, MaterialType
+import simpy
+
+from simpy_demo.models import MachineConfig, MaterialType, Product
 
 
-class SmartEquipment:
+class Equipment:
+    """Generic machine simulator with configurable behavior.
+
+    Follows a 6-phase cycle where config params determine which behaviors activate:
+    1. COLLECT: Wait for upstream material (starvation)
+    2. BREAKDOWN: Poisson probability check (if reliability.mtbf_min is set)
+    3. MICROSTOP: Bernoulli per-cycle check (if performance.jam_prob > 0)
+    4. EXECUTE: Process for cycle_time_sec
+    5. TRANSFORM: Create output based on output_type
+    6. INSPECT/ROUTE: Route defectives (if quality.detection_prob > 0)
+    """
+
     def __init__(
         self,
         env: simpy.Environment,
@@ -24,11 +38,11 @@ class SmartEquipment:
         self.state = "IDLE"
 
         # Centralized Logs
-        self.event_log = []
+        self.event_log: List[dict] = []
 
         self.process = env.process(self.run())
 
-    def log(self, new_state):
+    def log(self, new_state: str) -> None:
         """Records state transitions for OEE calculation."""
         if self.state != new_state:
             self.event_log.append(
@@ -50,35 +64,35 @@ class SmartEquipment:
             )
 
     def run(self):
+        """Main process loop implementing 6-phase cycle."""
         self.log("STARVED")
 
         while True:
             # --- PHASE 1: COLLECT (Starvation Logic) ---
-            # Represents "Idling" - Waiting for material
             inputs = []
             for _ in range(self.cfg.batch_in):
                 item = yield self.upstream.get()
                 inputs.append(item)
 
             # --- PHASE 2: BREAKDOWN CHECK (Availability Loss) ---
-            # Major failures based on elapsed time (MTBF)
-            if self.cfg.mtbf_min:
-                # Poisson probability of failure during this cycle
+            if self.cfg.reliability.mtbf_min:
                 p_fail = 1.0 - 2.718 ** -(
-                    self.cfg.cycle_time_sec / (self.cfg.mtbf_min * 60)
+                    self.cfg.cycle_time_sec / (self.cfg.reliability.mtbf_min * 60)
                 )
                 if random.random() < p_fail:
                     self.log("DOWN")
-                    # Stochastic repair time
-                    repair_time = random.expovariate(1.0 / (self.cfg.mttr_min * 60))
+                    repair_time = random.expovariate(
+                        1.0 / (self.cfg.reliability.mttr_min * 60)
+                    )
                     yield self.env.timeout(repair_time)
 
             # --- PHASE 3: MICROSTOP CHECK (Performance Loss) ---
-            # Minor jams based on cycle count (Jam Rate)
-            if self.cfg.jam_prob > 0 and random.random() < self.cfg.jam_prob:
+            if (
+                self.cfg.performance.jam_prob > 0
+                and random.random() < self.cfg.performance.jam_prob
+            ):
                 self.log("JAMMED")
-                # Fixed or small variable time to clear jam
-                yield self.env.timeout(self.cfg.jam_time_sec)
+                yield self.env.timeout(self.cfg.performance.jam_time_sec)
 
             # --- PHASE 4: EXECUTE (Value Add) ---
             self.log("EXECUTE")
@@ -90,32 +104,33 @@ class SmartEquipment:
 
             # --- PHASE 6: INSPECT & ROUTE (Quality Logic) ---
             routed_to_reject = False
-            if self.cfg.detection_prob > 0 and output_item.is_defective:
-                if random.random() < self.cfg.detection_prob:
+            if self.cfg.quality.detection_prob > 0 and output_item.is_defective:
+                if random.random() < self.cfg.quality.detection_prob:
                     routed_to_reject = True
 
-            # If downstream is full, we enter BLOCKED state (Constraint)
+            # If downstream is full, we enter BLOCKED state
             self.log("BLOCKED")
             if routed_to_reject and self.reject_store:
                 yield self.reject_store.put(output_item)
             else:
                 yield self.downstream.put(output_item)
 
-            # If we succeed, we go back to waiting (Starved)
+            # Back to waiting for material
             self.log("STARVED")
 
     def _transform_material(self, inputs: List[Product]) -> Product:
+        """Transform inputs into output product based on config."""
         # 1. Inherit Defects
         has_inherited_defect = any(i.is_defective for i in inputs)
 
         # 2. Create New Defect?
-        new_defect = random.random() < self.cfg.defect_rate
+        new_defect = random.random() < self.cfg.quality.defect_rate
         is_bad = has_inherited_defect or new_defect
 
-        # 3. Create Payload
+        # 3. Create Genealogy
         genealogy = [i.uid for i in inputs]
 
-        # 4. Factory Construction
+        # 4. Factory Construction based on output_type
         if self.cfg.output_type == MaterialType.TUBE:
             return Product(
                 type=MaterialType.TUBE,
