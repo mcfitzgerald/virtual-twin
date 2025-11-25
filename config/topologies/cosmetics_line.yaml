@@ -1,0 +1,14 @@
+name: cosmetics_line
+stations:
+  - name: Filler
+    batch_in: 1
+    output_type: Tube
+  - name: Inspector
+    batch_in: 1
+    output_type: None
+  - name: Packer
+    batch_in: 12
+    output_type: Case
+  - name: Palletizer
+    batch_in: 60
+    output_type: Pallet

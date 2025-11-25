@@ -1,0 +1,289 @@
+"""YAML configuration loader with name-based resolution."""
+
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+import yaml
+
+from simpy_demo.models import (
+    MachineConfig,
+    MaterialType,
+    PerformanceParams,
+    QualityParams,
+    ReliabilityParams,
+)
+
+
+class ConfigLoader:
+    """Loads and resolves YAML configuration files."""
+
+    def __init__(self, config_dir: Path | str = "config"):
+        self.config_dir = Path(config_dir)
+
+    def load_run(self, name: str) -> "RunConfig":
+        """Load a run configuration by name."""
+        path = self.config_dir / "runs" / f"{name}.yaml"
+        data = self._load_yaml(path)
+
+        # Parse start_time if provided
+        start_time = None
+        if data.get("start_time"):
+            start_time = datetime.fromisoformat(data["start_time"])
+
+        return RunConfig(
+            name=data["name"],
+            scenario=data["scenario"],
+            duration_hours=data.get("duration_hours", 8.0),
+            random_seed=data.get("random_seed", 42),
+            telemetry_interval_sec=data.get("telemetry_interval_sec", 300.0),
+            start_time=start_time,
+        )
+
+    def load_scenario(self, name: str) -> "ScenarioConfig":
+        """Load a scenario configuration by name."""
+        path = self.config_dir / "scenarios" / f"{name}.yaml"
+        data = self._load_yaml(path)
+        return ScenarioConfig(
+            name=data["name"],
+            topology=data["topology"],
+            equipment=data.get("equipment", []),
+            overrides=data.get("overrides", {}),
+        )
+
+    def load_topology(self, name: str) -> "TopologyConfig":
+        """Load a topology configuration by name."""
+        path = self.config_dir / "topologies" / f"{name}.yaml"
+        data = self._load_yaml(path)
+        stations = [
+            StationConfig(
+                name=s["name"],
+                batch_in=s.get("batch_in", 1),
+                output_type=MaterialType(s.get("output_type", "None")),
+            )
+            for s in data.get("stations", [])
+        ]
+        return TopologyConfig(name=data["name"], stations=stations)
+
+    def load_equipment(self, name: str) -> "EquipmentConfig":
+        """Load an equipment configuration by name."""
+        # Try lowercase filename first, then original
+        path = self.config_dir / "equipment" / f"{name.lower()}.yaml"
+        if not path.exists():
+            path = self.config_dir / "equipment" / f"{name}.yaml"
+        data = self._load_yaml(path)
+        return self._parse_equipment(data)
+
+    def load_materials(self, name: str) -> "MaterialsConfig":
+        """Load a materials configuration by name."""
+        path = self.config_dir / "materials" / f"{name}.yaml"
+        data = self._load_yaml(path)
+        return MaterialsConfig(name=data["name"], types=data.get("types", {}))
+
+    def resolve_run(self, run_name: str) -> "ResolvedConfig":
+        """Fully resolve a run config into all its components."""
+        run = self.load_run(run_name)
+        scenario = self.load_scenario(run.scenario)
+        topology = self.load_topology(scenario.topology)
+
+        # Load equipment configs for each station
+        equipment_configs: Dict[str, EquipmentConfig] = {}
+        for equip_name in scenario.equipment:
+            equipment_configs[equip_name] = self.load_equipment(equip_name)
+
+        # Apply scenario overrides
+        for equip_name, overrides in scenario.overrides.items():
+            if equip_name in equipment_configs:
+                equipment_configs[equip_name] = self._apply_overrides(
+                    equipment_configs[equip_name], overrides
+                )
+
+        return ResolvedConfig(
+            run=run,
+            scenario=scenario,
+            topology=topology,
+            equipment=equipment_configs,
+        )
+
+    def build_machine_configs(self, resolved: "ResolvedConfig") -> List[MachineConfig]:
+        """Build MachineConfig objects from resolved configuration."""
+        configs = []
+        for station in resolved.topology.stations:
+            equip = resolved.equipment.get(station.name)
+            if equip is None:
+                raise ValueError(f"No equipment config for station: {station.name}")
+
+            config = MachineConfig(
+                name=station.name,
+                uph=equip.uph,
+                batch_in=station.batch_in,
+                output_type=station.output_type,
+                buffer_capacity=equip.buffer_capacity,
+                reliability=equip.reliability or ReliabilityParams(),
+                performance=equip.performance or PerformanceParams(),
+                quality=equip.quality or QualityParams(),
+            )
+            configs.append(config)
+        return configs
+
+    def _load_yaml(self, path: Path) -> Dict[str, Any]:
+        """Load a YAML file."""
+        if not path.exists():
+            raise FileNotFoundError(f"Config file not found: {path}")
+        with open(path) as f:
+            return yaml.safe_load(f) or {}
+
+    def _parse_equipment(self, data: Dict[str, Any]) -> "EquipmentConfig":
+        """Parse equipment data into EquipmentConfig."""
+        reliability = None
+        if "reliability" in data and data["reliability"]:
+            rel = data["reliability"]
+            # Filter out None values, let Pydantic use defaults
+            rel_kwargs = {}
+            if rel.get("mtbf_min") is not None:
+                rel_kwargs["mtbf_min"] = rel["mtbf_min"]
+            if rel.get("mttr_min") is not None:
+                rel_kwargs["mttr_min"] = rel["mttr_min"]
+            reliability = ReliabilityParams(**rel_kwargs)
+
+        performance = None
+        if "performance" in data and data["performance"]:
+            perf = data["performance"]
+            perf_kwargs = {}
+            if perf.get("jam_prob") is not None:
+                perf_kwargs["jam_prob"] = perf["jam_prob"]
+            if perf.get("jam_time_sec") is not None:
+                perf_kwargs["jam_time_sec"] = perf["jam_time_sec"]
+            performance = PerformanceParams(**perf_kwargs)
+
+        quality = None
+        if "quality" in data and data["quality"]:
+            qual = data["quality"]
+            qual_kwargs = {}
+            if qual.get("defect_rate") is not None:
+                qual_kwargs["defect_rate"] = qual["defect_rate"]
+            if qual.get("detection_prob") is not None:
+                qual_kwargs["detection_prob"] = qual["detection_prob"]
+            quality = QualityParams(**qual_kwargs)
+
+        return EquipmentConfig(
+            name=data["name"],
+            uph=data.get("uph", 10000),
+            buffer_capacity=data.get("buffer_capacity", 50),
+            reliability=reliability,
+            performance=performance,
+            quality=quality,
+        )
+
+    def _apply_overrides(
+        self, base: "EquipmentConfig", overrides: Dict[str, Any]
+    ) -> "EquipmentConfig":
+        """Apply overrides to an equipment config."""
+        data = {
+            "name": base.name,
+            "uph": overrides.get("uph", base.uph),
+            "buffer_capacity": overrides.get("buffer_capacity", base.buffer_capacity),
+        }
+
+        # Handle nested overrides
+        if base.reliability or "reliability" in overrides:
+            rel_base = base.reliability or ReliabilityParams()
+            rel_over = overrides.get("reliability", {})
+            data["reliability"] = {
+                "mtbf_min": rel_over.get("mtbf_min", rel_base.mtbf_min),
+                "mttr_min": rel_over.get("mttr_min", rel_base.mttr_min),
+            }
+
+        if base.performance or "performance" in overrides:
+            perf_base = base.performance or PerformanceParams()
+            perf_over = overrides.get("performance", {})
+            data["performance"] = {
+                "jam_prob": perf_over.get("jam_prob", perf_base.jam_prob),
+                "jam_time_sec": perf_over.get("jam_time_sec", perf_base.jam_time_sec),
+            }
+
+        if base.quality or "quality" in overrides:
+            qual_base = base.quality or QualityParams()
+            qual_over = overrides.get("quality", {})
+            data["quality"] = {
+                "defect_rate": qual_over.get("defect_rate", qual_base.defect_rate),
+                "detection_prob": qual_over.get(
+                    "detection_prob", qual_base.detection_prob
+                ),
+            }
+
+        return self._parse_equipment(data)
+
+
+# --- Config dataclasses ---
+
+from dataclasses import dataclass, field
+
+
+@dataclass
+class RunConfig:
+    """Run-level configuration."""
+
+    name: str
+    scenario: str
+    duration_hours: float = 8.0
+    random_seed: Optional[int] = 42
+    telemetry_interval_sec: float = 300.0
+    start_time: Optional[datetime] = None  # None = use datetime.now()
+
+
+@dataclass
+class ScenarioConfig:
+    """Scenario configuration."""
+
+    name: str
+    topology: str
+    equipment: List[str] = field(default_factory=list)
+    overrides: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+
+
+@dataclass
+class StationConfig:
+    """Station in a topology."""
+
+    name: str
+    batch_in: int = 1
+    output_type: MaterialType = MaterialType.NONE
+
+
+@dataclass
+class TopologyConfig:
+    """Topology configuration."""
+
+    name: str
+    stations: List[StationConfig] = field(default_factory=list)
+
+
+@dataclass
+class EquipmentConfig:
+    """Equipment parameters."""
+
+    name: str
+    uph: int = 10000
+    buffer_capacity: int = 50
+    reliability: Optional[ReliabilityParams] = None
+    performance: Optional[PerformanceParams] = None
+    quality: Optional[QualityParams] = None
+
+
+@dataclass
+class MaterialsConfig:
+    """Materials configuration."""
+
+    name: str
+    types: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+
+
+@dataclass
+class ResolvedConfig:
+    """Fully resolved configuration ready for simulation."""
+
+    run: RunConfig
+    scenario: ScenarioConfig
+    topology: TopologyConfig
+    equipment: Dict[str, EquipmentConfig] = field(default_factory=dict)

@@ -1,0 +1,15 @@
+name: Palletizer
+uph: 13000
+buffer_capacity: 40
+
+reliability:
+  mtbf_min: 480
+  mttr_min: null
+
+performance:
+  jam_prob: 0.0
+  jam_time_sec: 0
+
+quality:
+  defect_rate: 0.0
+  detection_prob: 0.0

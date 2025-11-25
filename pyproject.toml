@@ -1,6 +1,6 @@
 [project]
 name = "simpy-demo"
-version = "0.2.1"
+version = "0.3.1"
 description = ""
 authors = [
     {name = "Your Name",email = "michael.craig.fitzgerald@gmail.com"}
@@ -11,6 +11,7 @@ dependencies = [
     "simpy (>=4.1.1,<5.0.0)",
     "pandas (>=2.3.3,<3.0.0)",
     "pydantic (>=2.12.4,<3.0.0)",
+    "pyyaml (>=6.0.0,<7.0.0)",
     "mypy (>=1.18.2,<2.0.0)"
 ]
 

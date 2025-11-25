@@ -1,0 +1,15 @@
+name: Inspector
+uph: 11000
+buffer_capacity: 20
+
+reliability:
+  mtbf_min: null
+  mttr_min: null
+
+performance:
+  jam_prob: 0.0
+  jam_time_sec: 0
+
+quality:
+  defect_rate: 0.0
+  detection_prob: 0.95

@@ -1,0 +1,12 @@
+name: cosmetics
+
+types:
+  TUBE:
+    telemetry_fields:
+      - fill_level
+  CASE:
+    telemetry_fields:
+      - weight
+  PALLET:
+    telemetry_fields:
+      - location

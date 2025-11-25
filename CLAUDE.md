@@ -22,33 +22,61 @@ Update `CHANGELOG.md` when comitting with git, use semantic versioning and also 
 # Install dependencies
 poetry install
 
-# Run the simulation
+# Run the simulation (default config)
 poetry run python -m simpy_demo
+
+# Run specific config
+poetry run python -m simpy_demo --run baseline_8hr
+
+# Export results to CSV
+poetry run python -m simpy_demo --run baseline_8hr --export
+
+# Use custom config directory
+poetry run python -m simpy_demo --config ./my_configs --run custom_run
 ```
 
 ## Architecture
 
-### Module Structure
+### Directory Structure
 
 ```
-src/simpy_demo/
-├── __init__.py      # Public API exports
-├── __main__.py      # Entry point for `python -m simpy_demo`
-├── models.py        # Pydantic schemas (MachineConfig, Product, grouped params)
-├── equipment.py     # Equipment class (generic machine simulator)
-├── topology.py      # Line structure definitions (CosmeticsLine, Station)
-├── config.py        # Scenario configuration (ScenarioConfig, EquipmentParams)
-├── baseline.py      # Default parameter values for equipment
-├── engine.py        # SimulationEngine class (orchestration)
-└── run.py           # Entry point with example usage
+simpy-demo/
+├── src/simpy_demo/
+│   ├── __init__.py      # Public API exports
+│   ├── __main__.py      # Entry point for `python -m simpy_demo`
+│   ├── models.py        # Pydantic schemas (MachineConfig, Product, grouped params)
+│   ├── equipment.py     # Equipment class (generic machine simulator)
+│   ├── loader.py        # YAML config loader with name-based resolution
+│   ├── config.py        # Re-exports from loader.py
+│   ├── engine.py        # SimulationEngine class (orchestration)
+│   └── run.py           # CLI entry point
+├── config/
+│   ├── runs/            # Run configs (duration, seed, scenario ref)
+│   ├── scenarios/       # Scenario configs (topology + equipment refs)
+│   ├── topologies/      # Line structure (station order, batch sizes)
+│   ├── equipment/       # Equipment parameters
+│   └── materials/       # Material type definitions
+└── docs/
+    └── architecture.md  # Mermaid diagrams of system architecture
 ```
 
 ### Core Design: Separation of Concerns
 
 The architecture separates:
-1. **Topology** (line structure) from **Configuration** (parameters)
-2. **Baseline** (defaults) from **Scenarios** (what-if experiments)
+1. **Run** (simulation parameters) from **Scenario** (what-if experiments)
+2. **Topology** (line structure) from **Equipment** (parameters)
 3. **Emergent behavior** driven by config (no separate behavior classes)
+
+### Configuration Hierarchy
+
+```
+Run → Scenario → Topology + Equipment[]
+```
+
+- **Run** (`config/runs/*.yaml`): Duration, random seed, telemetry interval
+- **Scenario** (`config/scenarios/*.yaml`): References topology + equipment, defines overrides
+- **Topology** (`config/topologies/*.yaml`): Station order, batch sizes, output types
+- **Equipment** (`config/equipment/*.yaml`): UPH, buffer capacity, reliability/performance/quality params
 
 ### Core Simulation Pattern
 The system uses SimPy's cooperative multitasking with generator-based coroutines:
@@ -66,22 +94,16 @@ The system uses SimPy's cooperative multitasking with generator-based coroutines
   - `Product` (Pydantic): Composite material pattern for traceability (Tube → Case → Pallet)
   - `MaterialType` (Enum): TUBE, CASE, PALLET, NONE
 
-- **`topology.py`**:
-  - `Station`: Defines structure only (name, batch_in, output_type)
-  - `CosmeticsLine`: Line topology with stations list
-
-- **`config.py`**:
-  - `EquipmentParams`: Sparse overrides for what-if experiments
-  - `ScenarioConfig`: Run parameters + equipment overrides dictionary
-
-- **`baseline.py`**:
-  - `BASELINE`: Default parameters for each station in CosmeticsLine
+- **`loader.py`**:
+  - `ConfigLoader`: Loads and resolves YAML configs by name
+  - `RunConfig`, `ScenarioConfig`, `TopologyConfig`, `EquipmentConfig`: Dataclasses
+  - `ResolvedConfig`: Fully resolved configuration ready for simulation
 
 - **`equipment.py`**:
   - `Equipment`: Generic machine with 6-phase cycle: COLLECT → BREAKDOWN CHECK → MICROSTOP CHECK → EXECUTE → TRANSFORM → INSPECT/ROUTE
 
 - **`engine.py`**:
-  - `SimulationEngine`: Combines topology + baseline + scenario, builds layout, runs simulation
+  - `SimulationEngine`: Loads config, builds layout, runs simulation
 
 ### Equipment 6-Phase Cycle
 
@@ -107,26 +129,62 @@ PHASE 6: INSPECT/ROUTE  <- Only if quality.detection_prob > 0
 - **Quality**: `quality.defect_rate`/`quality.detection_prob` (scrap routing)
 
 ### Data Outputs
-- **Telemetry (`df_ts`)**: Time-series snapshots (buffer levels, machine states) at 1-second intervals
+- **Telemetry (`df_ts`)**: Time-series snapshots (buffer levels, machine states)
 - **Event Log (`df_ev`)**: State transition log for OEE calculation and process mining
 
 ## Configuration
 
-Create custom `ScenarioConfig` instances for what-if experiments:
+### YAML-Based Configuration
+
+Create what-if experiments by creating new YAML files:
+
+```yaml
+# config/scenarios/high_buffer_test.yaml
+name: high_buffer_test
+topology: cosmetics_line
+equipment:
+  - Filler
+  - Inspector
+  - Packer
+  - Palletizer
+overrides:
+  Filler:
+    buffer_capacity: 500
+```
+
+```yaml
+# config/runs/high_buffer_8hr.yaml
+name: high_buffer_8hr
+scenario: high_buffer_test
+duration_hours: 8.0
+random_seed: 42
+telemetry_interval_sec: 1.0
+```
+
+Then run:
+```bash
+poetry run python -m simpy_demo --run high_buffer_8hr
+```
+
+### Programmatic Usage
 
 ```python
-from simpy_demo import ScenarioConfig, EquipmentParams, run_simulation
+from simpy_demo import SimulationEngine, ConfigLoader
 
-# Only specify overrides from baseline
-scenario = ScenarioConfig(
-    name="large_buffer_test",
-    equipment={
-        "Filler": EquipmentParams(buffer_capacity=500)
-    }
-)
-run_simulation(scenario)
+# Using YAML configs
+engine = SimulationEngine("config")
+df_ts, df_ev = engine.run("baseline_8hr")
+
+# Or load and modify configs programmatically
+loader = ConfigLoader("config")
+resolved = loader.resolve_run("baseline_8hr")
+# Modify resolved.equipment["Filler"].buffer_capacity = 500
+machine_configs = loader.build_machine_configs(resolved)
 ```
+
+### What-If Experiments
 
 - Change `buffer_capacity` to test accumulation effects
 - Adjust `reliability.mtbf_min` to test reliability impact
 - Modify `uph` to break V-Curve balancing
+- Add scenario `overrides` for targeted parameter changes

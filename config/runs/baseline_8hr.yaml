@@ -1,0 +1,6 @@
+name: baseline_8hr
+scenario: baseline
+duration_hours: 8.0
+random_seed: 42
+telemetry_interval_sec: 1.0
+start_time: "2025-01-06T06:00:00"  # Optional: ISO format, defaults to now()

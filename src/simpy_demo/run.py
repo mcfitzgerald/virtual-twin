@@ -1,28 +1,28 @@
 """Entry point for running simulations."""
 
+import argparse
+from datetime import datetime
+from pathlib import Path
+
 import pandas as pd
 
-from simpy_demo.baseline import BASELINE
-from simpy_demo.config import EquipmentParams, ScenarioConfig
 from simpy_demo.engine import SimulationEngine
-from simpy_demo.topology import CosmeticsLine
 
 
-def run_simulation(scenario: ScenarioConfig | None = None) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Run a simulation with the given scenario (or default).
+def run_simulation(
+    run_name: str = "baseline_8hr", config_dir: str = "config"
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Run a simulation with the given run config name.
 
     Args:
-        scenario: Scenario configuration. If None, runs baseline with default params.
+        run_name: Name of the run config (without .yaml extension)
+        config_dir: Path to config directory
 
     Returns:
         Tuple of (telemetry_df, events_df)
     """
-    if scenario is None:
-        scenario = ScenarioConfig(name="Baseline")
-
-    # Create engine and run
-    engine = SimulationEngine(CosmeticsLine, BASELINE)
-    df_ts, df_ev = engine.run(scenario)
+    engine = SimulationEngine(config_dir)
+    df_ts, df_ev = engine.run(run_name)
 
     # Report
     print("\n--- SIMULATION COMPLETE ---")
@@ -39,8 +39,11 @@ def run_simulation(scenario: ScenarioConfig | None = None) -> tuple[pd.DataFrame
         # Pivot table for summary
         stats = df_ev.groupby(["machine", "state"])["duration"].sum().unstack().fillna(0)
 
+        # Get duration from resolved config
+        resolved = engine.loader.resolve_run(run_name)
+        total_time = resolved.run.duration_hours * 3600
+
         # Calculate Availability (Total - Down / Total)
-        total_time = scenario.duration_hours * 3600
         stats["Availability_%"] = (1 - (stats.get("DOWN", 0) / total_time)) * 100
 
         # Reorder columns for readability
@@ -52,19 +55,65 @@ def run_simulation(scenario: ScenarioConfig | None = None) -> tuple[pd.DataFrame
 
 
 def main():
-    """Entry point for running the default simulation."""
-    # Run baseline scenario
-    run_simulation()
+    """CLI entry point for running simulations."""
+    parser = argparse.ArgumentParser(
+        description="Run SimPy production line simulation",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  python -m simpy_demo                              # Run default baseline_8hr
+  python -m simpy_demo --run baseline_8hr           # Run specific config
+  python -m simpy_demo --run baseline_8hr --export  # Export to CSV
+  python -m simpy_demo --config ./my_configs        # Use custom config dir
+        """,
+    )
+    parser.add_argument(
+        "--run",
+        default="baseline_8hr",
+        help="Run config name (default: baseline_8hr)",
+    )
+    parser.add_argument(
+        "--config",
+        default="config",
+        help="Config directory path (default: config)",
+    )
+    parser.add_argument(
+        "--export",
+        action="store_true",
+        help="Export results to CSV files",
+    )
+    parser.add_argument(
+        "--output",
+        default="output",
+        help="Output directory for CSV export (default: output)",
+    )
 
-    # Example: Run a what-if scenario
-    # scenario = ScenarioConfig(
-    #     name="large_buffer_test",
-    #     duration_hours=8.0,
-    #     equipment={
-    #         "Filler": EquipmentParams(buffer_capacity=500)
-    #     }
-    # )
-    # run_simulation(scenario)
+    args = parser.parse_args()
+
+    # Run simulation
+    df_ts, df_ev = run_simulation(args.run, args.config)
+
+    # Export if requested (datetime already embedded during simulation)
+    if args.export:
+        # Create output directory
+        output_dir = Path(args.output)
+        output_dir.mkdir(exist_ok=True)
+
+        # Generate timestamped filenames from first telemetry record
+        if "datetime" in df_ts.columns and df_ts["datetime"].iloc[0]:
+            timestamp = df_ts["datetime"].iloc[0].strftime("%Y%m%d_%H%M%S")
+        else:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+        ts_path = output_dir / f"telemetry_{timestamp}.csv"
+        ev_path = output_dir / f"events_{timestamp}.csv"
+
+        # Export to CSV
+        df_ts.to_csv(ts_path, index=False)
+        df_ev.to_csv(ev_path, index=False)
+
+        print(f"\nExported: {ts_path} ({len(df_ts)} rows)")
+        print(f"Exported: {ev_path} ({len(df_ev)} rows)")
 
 
 if __name__ == "__main__":

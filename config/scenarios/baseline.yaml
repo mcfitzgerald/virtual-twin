@@ -1,0 +1,8 @@
+name: baseline
+topology: cosmetics_line
+equipment:
+  - Filler
+  - Inspector
+  - Packer
+  - Palletizer
+overrides: {}

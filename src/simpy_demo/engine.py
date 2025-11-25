@@ -1,112 +1,98 @@
 """SimPy simulation engine for production line digital twin."""
 
 import random
-from typing import Dict, List, Tuple, Type
+from datetime import datetime, timedelta
+from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
 import simpy
 
-from simpy_demo.config import EquipmentParams, ScenarioConfig
 from simpy_demo.equipment import Equipment
-from simpy_demo.models import (
-    MachineConfig,
-    MaterialType,
-    PerformanceParams,
-    Product,
-    QualityParams,
-    ReliabilityParams,
-)
-from simpy_demo.topology import CosmeticsLine, Station
+from simpy_demo.loader import ConfigLoader, ResolvedConfig, RunConfig
+from simpy_demo.models import MachineConfig, MaterialType, Product
 
 
 class SimulationEngine:
-    """Simulation engine that combines topology + baseline + scenario."""
+    """Simulation engine that runs from resolved YAML configuration."""
 
-    def __init__(
-        self,
-        topology: type[CosmeticsLine],
-        baseline: Dict[str, EquipmentParams],
-    ):
-        self.topology = topology
-        self.baseline = baseline
+    def __init__(self, config_dir: str = "config"):
+        self.loader = ConfigLoader(config_dir)
 
-    def run(self, scenario: ScenarioConfig) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        """Run scenario and return (telemetry_df, events_df)."""
+    def run(self, run_name: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        """Run simulation by run config name and return (telemetry_df, events_df)."""
+        resolved = self.loader.resolve_run(run_name)
+        return self.run_resolved(resolved)
+
+    def run_resolved(
+        self, resolved: ResolvedConfig
+    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        """Run simulation from a fully resolved configuration."""
+        run = resolved.run
+
         # 1. Set random seed
-        if scenario.random_seed is not None:
-            random.seed(scenario.random_seed)
+        if run.random_seed is not None:
+            random.seed(run.random_seed)
 
-        # 2. Create SimPy environment
+        # 2. Determine start time (config or now)
+        start_time = run.start_time or datetime.now()
+
+        # 3. Create SimPy environment
         env = simpy.Environment()
 
-        # 3. Build machine configs by merging baseline + scenario overrides
-        machine_configs = self._build_configs(scenario)
+        # 4. Build machine configs from resolved config
+        machine_configs = self.loader.build_machine_configs(resolved)
+
+        # 5. Build production line
+        machines, buffers, reject_bin = self._build_layout(env, machine_configs)
+
+        # 6. Start monitoring
+        telemetry_data: List[dict] = []
+        env.process(
+            self._monitor_process(
+                env, machines, buffers, telemetry_data, run.telemetry_interval_sec, start_time
+            )
+        )
+
+        # 7. Run simulation
+        duration_sec = run.duration_hours * 3600
+        print(f"Starting Simulation: {run.name} ({run.duration_hours} hrs)...")
+        env.run(until=duration_sec)
+
+        # 8. Compile results
+        return self._compile_results(machines, telemetry_data, start_time)
+
+    def run_config(
+        self, run: RunConfig, machine_configs: List[MachineConfig]
+    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        """Run simulation from RunConfig and pre-built MachineConfigs (programmatic use)."""
+        # 1. Set random seed
+        if run.random_seed is not None:
+            random.seed(run.random_seed)
+
+        # 2. Determine start time (config or now)
+        start_time = run.start_time or datetime.now()
+
+        # 3. Create SimPy environment
+        env = simpy.Environment()
 
         # 4. Build production line
         machines, buffers, reject_bin = self._build_layout(env, machine_configs)
 
         # 5. Start monitoring
         telemetry_data: List[dict] = []
-        env.process(self._monitor_process(env, machines, buffers, telemetry_data, scenario.telemetry_interval_sec))
+        env.process(
+            self._monitor_process(
+                env, machines, buffers, telemetry_data, run.telemetry_interval_sec, start_time
+            )
+        )
 
         # 6. Run simulation
-        duration_sec = scenario.duration_hours * 3600
-        print(f"Starting Simulation: {scenario.name} ({scenario.duration_hours} hrs)...")
+        duration_sec = run.duration_hours * 3600
+        print(f"Starting Simulation: {run.name} ({run.duration_hours} hrs)...")
         env.run(until=duration_sec)
 
         # 7. Compile results
-        return self._compile_results(machines, telemetry_data)
-
-    def _build_configs(self, scenario: ScenarioConfig) -> List[MachineConfig]:
-        """Merge topology + baseline + scenario into MachineConfigs."""
-        configs = []
-        for station in self.topology.stations:
-            # Start with baseline (or empty if not defined)
-            base = self.baseline.get(station.name, EquipmentParams())
-            override = scenario.equipment.get(station.name, EquipmentParams())
-
-            # Merge: override wins over baseline
-            config = MachineConfig(
-                name=station.name,
-                uph=override.uph or base.uph or 10000,
-                batch_in=station.batch_in,
-                output_type=station.output_type,
-                buffer_capacity=override.buffer_capacity or base.buffer_capacity or 50,
-                reliability=self._merge_params(
-                    base.reliability, override.reliability, ReliabilityParams
-                ),
-                performance=self._merge_params(
-                    base.performance, override.performance, PerformanceParams
-                ),
-                quality=self._merge_params(
-                    base.quality, override.quality, QualityParams
-                ),
-            )
-            configs.append(config)
-        return configs
-
-    def _merge_params(
-        self,
-        base: ReliabilityParams | PerformanceParams | QualityParams | None,
-        override: ReliabilityParams | PerformanceParams | QualityParams | None,
-        param_class: Type[ReliabilityParams]
-        | Type[PerformanceParams]
-        | Type[QualityParams],
-    ) -> ReliabilityParams | PerformanceParams | QualityParams:
-        """Merge two param objects, override wins for non-None fields."""
-        if base is None and override is None:
-            return param_class()
-        if base is None:
-            return override  # type: ignore
-        if override is None:
-            return base
-        # Field-level merge
-        merged = {}
-        for field in param_class.model_fields:
-            override_val = getattr(override, field, None)
-            base_val = getattr(base, field, None)
-            merged[field] = override_val if override_val is not None else base_val
-        return param_class(**merged)
+        return self._compile_results(machines, telemetry_data, start_time)
 
     def _build_layout(
         self, env: simpy.Environment, configs: List[MachineConfig]
@@ -163,10 +149,14 @@ class SimulationEngine:
         buffers: Dict[str, simpy.Store],
         telemetry_data: List[dict],
         interval: float = 1.0,
+        start_time: Optional[datetime] = None,
     ):
         """Capture telemetry at regular intervals."""
         while True:
-            snapshot = {"time": env.now}
+            snapshot = {
+                "time": env.now,
+                "datetime": start_time + timedelta(seconds=env.now) if start_time else None,
+            }
 
             # Log Buffer Levels
             for name, buf in buffers.items():
@@ -183,16 +173,37 @@ class SimulationEngine:
             yield env.timeout(interval)
 
     def _compile_results(
-        self, machines: List[Equipment], telemetry_data: List[dict]
+        self,
+        machines: List[Equipment],
+        telemetry_data: List[dict],
+        start_time: Optional[datetime] = None,
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """Compile DataFrames from simulation data."""
-        # 1. Telemetry (Time-Series)
+        # 1. Telemetry (Time-Series) - datetime already embedded
         df_telemetry = pd.DataFrame(telemetry_data)
+
+        # Reorder columns to put datetime first if present
+        if "datetime" in df_telemetry.columns:
+            cols = ["datetime", "time"] + [
+                c for c in df_telemetry.columns if c not in ["datetime", "time"]
+            ]
+            df_telemetry = df_telemetry[cols]
 
         # 2. Events (State Log)
         events = []
         for m in machines:
             events.extend(m.event_log)
         df_events = pd.DataFrame(events)
+
+        # Add datetime to events
+        if start_time and not df_events.empty:
+            df_events["datetime"] = df_events["timestamp"].apply(
+                lambda s: start_time + timedelta(seconds=s)
+            )
+            # Reorder columns
+            cols = ["datetime", "timestamp"] + [
+                c for c in df_events.columns if c not in ["datetime", "timestamp"]
+            ]
+            df_events = df_events[cols]
 
         return df_telemetry, df_events

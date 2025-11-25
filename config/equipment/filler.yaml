@@ -1,0 +1,15 @@
+name: Filler
+uph: 10000
+buffer_capacity: 50
+
+reliability:
+  mtbf_min: 120
+  mttr_min: 15
+
+performance:
+  jam_prob: 0.01
+  jam_time_sec: 15
+
+quality:
+  defect_rate: 0.02
+  detection_prob: 0.0

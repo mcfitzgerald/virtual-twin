@@ -1,0 +1,15 @@
+name: Packer
+uph: 12000
+buffer_capacity: 100
+
+reliability:
+  mtbf_min: 240
+  mttr_min: null
+
+performance:
+  jam_prob: 0.05
+  jam_time_sec: 30
+
+quality:
+  defect_rate: 0.0
+  detection_prob: 0.0
