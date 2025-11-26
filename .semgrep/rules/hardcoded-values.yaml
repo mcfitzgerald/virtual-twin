@@ -1,0 +1,214 @@
+rules:
+  # ============================================
+  # TARGETED RULES: Specific hardcode patterns to fix
+  # For catch-all audit, use: .semgrep/rules/audit-catchall.yaml
+  # ============================================
+
+  - id: simpy-numeric-field-default
+    patterns:
+      - pattern: "$FIELD: $TYPE = $NUM"
+      - metavariable-regex:
+          metavariable: $NUM
+          regex: '^-?[0-9]+\.?[0-9]*$'
+      # Exclude 0, 1, 0.0, 1.0 as they're typically legitimate
+      - metavariable-comparison:
+          metavariable: $NUM
+          comparison: $NUM != 0 and $NUM != 1 and $NUM != 0.0 and $NUM != 1.0
+    message: |
+      Hardcoded numeric field default: $NUM
+      Consider moving to config/defaults.yaml
+    languages: [python]
+    severity: WARNING
+    paths:
+      include:
+        - "**/src/simpy_demo/"
+      exclude:
+        - "**/tests/"
+
+  - id: simpy-numeric-dict-get-default
+    patterns:
+      - pattern: $DATA.get($KEY, $NUM)
+      - metavariable-regex:
+          metavariable: $NUM
+          regex: '^-?[0-9]+\.?[0-9]*$'
+      - metavariable-comparison:
+          metavariable: $NUM
+          comparison: $NUM != 0 and $NUM != 1 and $NUM != 0.0 and $NUM != 1.0
+    message: |
+      Hardcoded dict.get default: $NUM
+      Consider moving to config/defaults.yaml
+    languages: [python]
+    severity: WARNING
+    paths:
+      include:
+        - "**/src/simpy_demo/"
+      exclude:
+        - "**/tests/"
+
+  - id: simpy-numeric-literal-in-expression
+    patterns:
+      - pattern-either:
+          - pattern: $X * $NUM
+          - pattern: $NUM * $X
+          - pattern: $X / $NUM
+          - pattern: $NUM / $X
+          - pattern: $X + $NUM
+          - pattern: $NUM + $X
+          - pattern: $X - $NUM
+          - pattern: $NUM - $X
+          - pattern: $X ** $NUM
+      - metavariable-regex:
+          metavariable: $NUM
+          regex: '^-?[0-9]+\.?[0-9]*$'
+      # Exclude common small numbers
+      - metavariable-comparison:
+          metavariable: $NUM
+          comparison: $NUM > 1 or $NUM < 0
+    message: |
+      Numeric literal in expression: $NUM
+      Consider using a named constant from config/constants.yaml
+    languages: [python]
+    severity: INFO
+    paths:
+      include:
+        - "**/src/simpy_demo/"
+      exclude:
+        - "**/tests/"
+
+  # ============================================
+  # SPECIFIC HIGH-PRIORITY HARDCODES
+  # ============================================
+
+  - id: simpy-hardcoded-gaussian-telemetry
+    patterns:
+      - pattern: random.gauss($MEAN, $STD)
+      - pattern-not: random.gauss(mean, std)
+      - pattern-not: random.gauss(self.mean, self.std)
+      - pattern-not: random.gauss(config.mean, config.std)
+    message: |
+      Hardcoded gaussian parameters detected.
+      Move to config/materials/*.yaml with generator: gaussian
+    languages: [python]
+    severity: WARNING
+    paths:
+      include:
+        - "**/src/simpy_demo/"
+
+  - id: simpy-hardcoded-location-string
+    pattern-regex: '["'']Warehouse_\w+["'']'
+    message: |
+      Hardcoded warehouse location.
+      Move to config/constants.yaml as DEFAULT_WAREHOUSE
+    languages: [python]
+    severity: WARNING
+    paths:
+      include:
+        - "**/src/simpy_demo/"
+
+  - id: simpy-hardcoded-equipment-name-string
+    pattern-regex: '["''](Raw|Filler|Inspector|Packer|Palletizer)["'']'
+    message: |
+      Hardcoded equipment/source name.
+      Move to config/sources/*.yaml or use config reference
+    languages: [python]
+    severity: WARNING
+    paths:
+      include:
+        - "**/src/simpy_demo/"
+
+  # ============================================
+  # RANGE/INVENTORY HARDCODES
+  # ============================================
+
+  - id: simpy-hardcoded-large-range
+    patterns:
+      - pattern: range($NUM)
+      - metavariable-comparison:
+          metavariable: $NUM
+          comparison: $NUM > 100
+    message: |
+      Large hardcoded range: $NUM
+      Move to config/sources/*.yaml as initial_inventory
+    languages: [python]
+    severity: WARNING
+    paths:
+      include:
+        - "**/src/simpy_demo/"
+
+  # ============================================
+  # MAGIC NUMBERS (TIME CONVERSIONS)
+  # ============================================
+
+  - id: simpy-magic-3600
+    patterns:
+      - pattern-either:
+          - pattern: $X * 3600
+          - pattern: 3600 * $X
+          - pattern: $X / 3600
+          - pattern: 3600 / $X
+          - pattern: $X * 3600.0
+          - pattern: 3600.0 * $X
+          - pattern: $X / 3600.0
+          - pattern: 3600.0 / $X
+    message: |
+      Magic number 3600 (seconds per hour).
+      Use SECONDS_PER_HOUR from config/constants.yaml
+    languages: [python]
+    severity: WARNING
+    paths:
+      include:
+        - "**/src/simpy_demo/"
+
+  - id: simpy-magic-60
+    patterns:
+      - pattern-either:
+          - pattern: $X * 60
+          - pattern: 60 * $X
+          - pattern: $X / 60
+          - pattern: 60 / $X
+          - pattern: $X * 60.0
+          - pattern: 60.0 * $X
+          - pattern: $X / 60.0
+          - pattern: 60.0 / $X
+    message: |
+      Magic number 60 (seconds per minute).
+      Use SECONDS_PER_MINUTE from config/constants.yaml
+    languages: [python]
+    severity: WARNING
+    paths:
+      include:
+        - "**/src/simpy_demo/"
+
+  # ============================================
+  # EULER'S NUMBER APPROXIMATION
+  # ============================================
+
+  - id: simpy-hardcoded-euler
+    pattern-regex: '2\.718'
+    message: |
+      Hardcoded approximation of Euler's number (e).
+      Use math.e from the math module
+    languages: [python]
+    severity: WARNING
+    paths:
+      include:
+        - "**/src/simpy_demo/"
+
+  # ============================================
+  # LIST COMPREHENSION HARDCODES
+  # ============================================
+
+  - id: simpy-hardcoded-list-comprehension
+    patterns:
+      - pattern: "[$NUM for $VAR in $ITER]"
+      - metavariable-comparison:
+          metavariable: $NUM
+          comparison: $NUM > 1
+    message: |
+      Hardcoded value in list comprehension: $NUM
+      Move to config/constants.yaml or materials config
+    languages: [python]
+    severity: WARNING
+    paths:
+      include:
+        - "**/src/simpy_demo/"

@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.2] - 2025-11-26
+
+### Added
+- **Semgrep hardcode detection rules** (`.semgrep/rules/hardcoded-values.yaml`)
+  - `simpy-numeric-field-default`: Detects hardcoded defaults in Pydantic/dataclass fields
+  - `simpy-numeric-dict-get-default`: Detects hardcoded dict.get() defaults
+  - `simpy-numeric-literal-in-expression`: Detects magic numbers in expressions
+  - `simpy-magic-3600`: Detects seconds-per-hour magic number
+  - `simpy-magic-60`: Detects seconds-per-minute magic number
+  - `simpy-hardcoded-gaussian-telemetry`: Detects hardcoded gaussian parameters
+  - `simpy-hardcoded-location-string`: Detects hardcoded warehouse locations
+  - `simpy-hardcoded-equipment-name-string`: Detects hardcoded equipment names
+  - `simpy-hardcoded-large-range`: Detects large hardcoded ranges (>100)
+  - `simpy-hardcoded-euler`: Detects hardcoded Euler's number approximation
+  - `simpy-hardcoded-list-comprehension`: Detects hardcoded values in list comprehensions
+- Baseline scan identifying 48 hardcoded values to extract to config:
+  - 15 field defaults (Pydantic/dataclass)
+  - 11 numeric literals in expressions
+  - 9 dict.get() defaults
+  - 5 magic number 3600 (seconds per hour)
+  - 2 magic number 60 (seconds per minute)
+  - 1 hardcoded range(100000)
+  - 1 hardcoded "Raw" equipment name
+  - 1 hardcoded Euler's number approximation
+  - 1 hardcoded gaussian parameters
+  - 1 hardcoded list comprehension value
+  - 1 hardcoded warehouse location
+
 ## [0.4.1] - 2025-11-25
 
 ### Changed

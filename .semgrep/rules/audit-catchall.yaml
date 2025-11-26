@@ -1,0 +1,23 @@
+rules:
+  # ============================================
+  # AUDIT CATCH-ALL: Finds ALL numeric literals
+  #
+  # This rule intentionally over-catches for audit purposes.
+  # Use it to sanity-check that no hardcoded numbers were missed.
+  #
+  # Run independently:
+  #   semgrep --config .semgrep/rules/audit-catchall.yaml src/simpy_demo/
+  # ============================================
+
+  - id: simpy-audit-all-numbers
+    pattern-regex: '\b\d+\.?\d*\b'
+    message: "[AUDIT] Numeric literal: review if configurable"
+    languages:
+      - python
+    severity: INFO
+    paths:
+      include:
+        - "**/src/simpy_demo/"
+      exclude:
+        - "**/tests/"
+        - "**/__pycache__/"
