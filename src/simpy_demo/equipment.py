@@ -2,11 +2,14 @@
 
 import math
 import random
-from typing import List, Optional
+from typing import TYPE_CHECKING, List, Optional
 
 import simpy
 
 from simpy_demo.models import MachineConfig, MaterialType, Product
+
+if TYPE_CHECKING:
+    from simpy_demo.factories.telemetry import TelemetryGenerator
 
 
 class Equipment:
@@ -28,12 +31,14 @@ class Equipment:
         upstream: simpy.Store,
         downstream: simpy.Store,
         reject_store: Optional[simpy.Store],
+        telemetry_gen: Optional["TelemetryGenerator"] = None,
     ):
         self.env = env
         self.cfg = config
         self.upstream = upstream
         self.downstream = downstream
         self.reject_store = reject_store
+        self.telemetry_gen = telemetry_gen
 
         self.items_produced = 0
         self.state = "IDLE"
@@ -163,6 +168,8 @@ class Equipment:
     def _transform_material(self, inputs: List[Product]) -> tuple[Product, bool]:
         """Transform inputs into output product based on config.
 
+        Uses TelemetryGenerator if available, otherwise falls back to pass-through.
+
         Returns:
             Tuple of (output_product, new_defect_created)
         """
@@ -176,46 +183,29 @@ class Equipment:
         # 3. Create Genealogy
         genealogy = [i.uid for i in inputs]
 
-        # 4. Factory Construction based on output_type
-        if self.cfg.output_type == MaterialType.TUBE:
-            return (
-                Product(
-                    type=MaterialType.TUBE,
-                    created_at=self.env.now,
-                    parent_machine=self.cfg.name,
-                    is_defective=is_bad,
-                    genealogy=genealogy,
-                    telemetry={"fill_level": random.gauss(100, 1.0)},
-                ),
-                new_defect,
-            )
-        elif self.cfg.output_type == MaterialType.CASE:
-            return (
-                Product(
-                    type=MaterialType.CASE,
-                    created_at=self.env.now,
-                    parent_machine=self.cfg.name,
-                    is_defective=is_bad,
-                    genealogy=genealogy,
-                    telemetry={"weight": sum([100 for _ in inputs]) + 50},
-                ),
-                new_defect,
-            )
-        elif self.cfg.output_type == MaterialType.PALLET:
-            return (
-                Product(
-                    type=MaterialType.PALLET,
-                    created_at=self.env.now,
-                    parent_machine=self.cfg.name,
-                    is_defective=is_bad,
-                    genealogy=genealogy,
-                    telemetry={"location": "Warehouse_A"},
-                ),
-                new_defect,
-            )
+        # 4. Pass-through for NONE output type (e.g., Inspection Station)
+        if self.cfg.output_type == MaterialType.NONE:
+            return (inputs[0], False)
 
-        # Pass-through (e.g. Inspection Station)
-        return (inputs[0], False)
+        # 5. Generate telemetry from config if available
+        material_type_str = self.cfg.output_type.name  # "TUBE", "CASE", "PALLET"
+        telemetry: dict = {}
+
+        if self.telemetry_gen and self.telemetry_gen.has_config_for(material_type_str):
+            telemetry = self.telemetry_gen.generate(material_type_str, inputs)
+
+        # 6. Create output product
+        return (
+            Product(
+                type=self.cfg.output_type,
+                created_at=self.env.now,
+                parent_machine=self.cfg.name,
+                is_defective=is_bad,
+                genealogy=genealogy,
+                telemetry=telemetry,
+            ),
+            new_defect,
+        )
 
     @property
     def total_time_sec(self) -> float:

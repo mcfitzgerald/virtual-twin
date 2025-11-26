@@ -1,12 +1,37 @@
+# Cosmetics line material types with telemetry generators
+# Each material type defines how its telemetry is generated
+
 name: cosmetics
 
 types:
   TUBE:
-    telemetry_fields:
-      - fill_level
+    telemetry:
+      fill_level:
+        generator: gaussian
+        mean: "${NOMINAL_FILL_LEVEL_ML}"
+        stddev: "${FILL_STDDEV_ML}"
+      weight:
+        generator: fixed
+        value: "${TUBE_WEIGHT_G}"
+
   CASE:
-    telemetry_fields:
-      - weight
+    telemetry:
+      weight:
+        generator: expression
+        expr: "sum(inputs, 'telemetry.weight') + ${CASE_TARE_WEIGHT_G}"
+      tube_count:
+        generator: count_inputs
+
   PALLET:
-    telemetry_fields:
-      - location
+    telemetry:
+      location:
+        generator: fixed
+        value: "${DEFAULT_WAREHOUSE}"
+      weight:
+        generator: expression
+        expr: "sum(inputs, 'telemetry.weight') + ${PALLET_TARE_WEIGHT_KG} * 1000"
+      case_count:
+        generator: count_inputs
+
+  NONE:
+    telemetry: {}

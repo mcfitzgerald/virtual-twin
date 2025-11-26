@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2025-11-26
+
+### Added
+- **Expression Engine** (`src/simpy_demo/expressions/`) for evaluating YAML config expressions
+  - Safe AST-based evaluation (no `eval()`) for security
+  - `${CONSTANT_NAME}` substitution from `constants.yaml`
+  - Arithmetic operators: `+`, `-`, `*`, `/`
+  - Aggregate functions: `sum(inputs, 'field')`, `len(inputs)`, `max(inputs, 'field')`, `min(inputs, 'field')`
+- **Telemetry Generator** (`src/simpy_demo/factories/telemetry.py`) for config-driven telemetry
+  - Generator types: `gaussian`, `fixed`, `expression`, `count_inputs`
+  - Replaces hardcoded telemetry values in `equipment.py`
+- Enhanced materials config (`config/materials/cosmetics.yaml`) with telemetry generators:
+  - TUBE: `fill_level` (gaussian), `weight` (fixed)
+  - CASE: `weight` (expression), `tube_count` (count_inputs)
+  - PALLET: `location` (fixed), `weight` (expression), `case_count` (count_inputs)
+- `materials` field in `TopologyConfig` to reference materials config
+- `materials` field in `ResolvedConfig` for fully resolved config
+- New exports in `__init__.py`: `ExpressionEngine`, `TelemetryGenerator`, `MaterialsConfig`
+
+### Changed
+- `Equipment` now accepts optional `TelemetryGenerator` for config-driven telemetry
+- `_transform_material()` uses `TelemetryGenerator` instead of hardcoded if/elif
+- `SimulationEngine._build_layout()` creates and passes `TelemetryGenerator` to equipment
+- Telemetry values now configurable in YAML instead of code:
+  - `random.gauss(100, 1.0)` → `generator: gaussian` with `${NOMINAL_FILL_LEVEL_ML}`
+  - `sum([100 for _]) + 50` → `generator: expression` with `sum(inputs, 'telemetry.weight') + ${CASE_TARE_WEIGHT_G}`
+  - `"Warehouse_A"` → `generator: fixed` with `${DEFAULT_WAREHOUSE}`
+
+### Technical Notes
+- Expression engine uses Python's `ast` module for safe parsing
+- Telemetry config supports nested field access (e.g., `telemetry.weight`)
+- Backward compatible: equipment without telemetry_gen produces empty telemetry
+
 ## [0.5.0] - 2025-11-26
 
 ### Added

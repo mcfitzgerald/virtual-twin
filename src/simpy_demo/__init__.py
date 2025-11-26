@@ -5,6 +5,7 @@ from simpy_demo.config import (
     ConstantsConfig,
     DefaultsConfig,
     EquipmentConfig,
+    MaterialsConfig,
     ResolvedConfig,
     RunConfig,
     ScenarioConfig,
@@ -14,6 +15,8 @@ from simpy_demo.config import (
 )
 from simpy_demo.engine import SimulationEngine
 from simpy_demo.equipment import Equipment
+from simpy_demo.expressions import ExpressionEngine
+from simpy_demo.factories import TelemetryGenerator
 from simpy_demo.models import (
     CostRates,
     MachineConfig,
@@ -46,7 +49,12 @@ __all__ = [
     "TopologyConfig",
     "StationConfig",
     "EquipmentConfig",
+    "MaterialsConfig",
     "ResolvedConfig",
+    # Expression Engine
+    "ExpressionEngine",
+    # Factories
+    "TelemetryGenerator",
     # Engine
     "SimulationEngine",
     "Equipment",

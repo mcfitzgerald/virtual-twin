@@ -158,6 +158,7 @@ class ConfigLoader:
         return TopologyConfig(
             name=data["name"],
             source=data.get("source", "infinite_raw"),  # Default source
+            materials=data.get("materials", "cosmetics"),  # Default materials
             stations=stations,
         )
 
@@ -209,6 +210,9 @@ class ConfigLoader:
         # Load source config from topology reference
         source = self.load_source(topology.source)
 
+        # Load materials config from topology reference
+        materials = self.load_materials(topology.materials)
+
         # Load product config if specified
         product = None
         if run.product:
@@ -234,6 +238,7 @@ class ConfigLoader:
             product=product,
             source=source,
             constants=self.constants,
+            materials=materials,
         )
 
     def build_machine_configs(self, resolved: "ResolvedConfig") -> List[MachineConfig]:
@@ -405,6 +410,7 @@ class TopologyConfig:
 
     name: str
     source: str = "infinite_raw"  # Reference to config/sources/*.yaml
+    materials: str = "cosmetics"  # Reference to config/materials/*.yaml
     stations: List[StationConfig] = field(default_factory=list)
 
 
@@ -440,3 +446,4 @@ class ResolvedConfig:
     product: Optional[ProductConfig] = None
     source: Optional[SourceConfig] = None
     constants: Optional[ConstantsConfig] = None
+    materials: Optional["MaterialsConfig"] = None
