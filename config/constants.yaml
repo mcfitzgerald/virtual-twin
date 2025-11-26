@@ -1,0 +1,23 @@
+# Named constants for use in expressions and telemetry generation
+# These can be referenced in materials config using ${CONSTANT_NAME} syntax
+
+constants:
+  # Time conversions
+  SECONDS_PER_MINUTE: 60
+  SECONDS_PER_HOUR: 3600
+
+  # Physical constants for telemetry
+  TUBE_WEIGHT_G: 100
+  CASE_TARE_WEIGHT_G: 50
+  PALLET_TARE_WEIGHT_KG: 25
+
+  # Telemetry defaults
+  NOMINAL_FILL_LEVEL_ML: 100
+  FILL_STDDEV_ML: 1.0
+
+  # Locations
+  DEFAULT_WAREHOUSE: "Warehouse_A"
+  REJECT_BIN: "Reject_Bin"
+
+  # Mathematical constants (use math.e in code, but available for config)
+  EULER: 2.718281828459045

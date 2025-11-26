@@ -18,11 +18,92 @@ from simpy_demo.models import (
 )
 
 
+# --- New config dataclasses for Phase 1 ---
+
+
+@dataclass
+class DefaultsConfig:
+    """Global defaults loaded from config/defaults.yaml."""
+
+    time: Dict[str, Any] = field(default_factory=dict)
+    simulation: Dict[str, Any] = field(default_factory=dict)
+    equipment: Dict[str, Any] = field(default_factory=dict)
+    product: Dict[str, Any] = field(default_factory=dict)
+    source: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class ConstantsConfig:
+    """Named constants loaded from config/constants.yaml."""
+
+    constants: Dict[str, Any] = field(default_factory=dict)
+
+    def get(self, key: str, default: Any = None) -> Any:
+        """Get a constant value by name."""
+        return self.constants.get(key, default)
+
+
+@dataclass
+class SourceConfig:
+    """Source configuration for raw material input."""
+
+    name: str
+    description: str = ""
+    initial_inventory: int = 100000
+    material_type: str = "None"
+    parent_machine: str = "Raw"
+
+
 class ConfigLoader:
     """Loads and resolves YAML configuration files."""
 
     def __init__(self, config_dir: Path | str = "config"):
         self.config_dir = Path(config_dir)
+        # Load global defaults and constants on init
+        self.defaults = self.load_defaults()
+        self.constants = self.load_constants()
+
+    def load_defaults(self) -> DefaultsConfig:
+        """Load global defaults from config/defaults.yaml."""
+        path = self.config_dir / "defaults.yaml"
+        if not path.exists():
+            return DefaultsConfig()
+        data = self._load_yaml(path)
+        return DefaultsConfig(
+            time=data.get("time", {}),
+            simulation=data.get("simulation", {}),
+            equipment=data.get("equipment", {}),
+            product=data.get("product", {}),
+            source=data.get("source", {}),
+        )
+
+    def load_constants(self) -> ConstantsConfig:
+        """Load named constants from config/constants.yaml."""
+        path = self.config_dir / "constants.yaml"
+        if not path.exists():
+            return ConstantsConfig()
+        data = self._load_yaml(path)
+        return ConstantsConfig(constants=data.get("constants", {}))
+
+    def load_source(self, name: str) -> SourceConfig:
+        """Load a source configuration by name."""
+        path = self.config_dir / "sources" / f"{name}.yaml"
+        data = self._load_yaml(path)
+        # Get defaults from defaults.yaml
+        src_defaults = self.defaults.source
+        return SourceConfig(
+            name=data["name"],
+            description=data.get("description", ""),
+            initial_inventory=data.get(
+                "initial_inventory", src_defaults.get("initial_inventory", 100000)
+            ),
+            material_type=data.get(
+                "material_type", src_defaults.get("material_type", "None")
+            ),
+            parent_machine=data.get(
+                "parent_machine", src_defaults.get("parent_machine", "Raw")
+            ),
+        )
 
     def load_run(self, name: str) -> "RunConfig":
         """Load a run configuration by name."""
@@ -34,13 +115,20 @@ class ConfigLoader:
         if data.get("start_time"):
             start_time = datetime.fromisoformat(data["start_time"])
 
+        # Use defaults from defaults.yaml
+        sim_defaults = self.defaults.simulation
         return RunConfig(
             name=data["name"],
             scenario=data["scenario"],
             product=data.get("product"),  # Optional product reference
-            duration_hours=data.get("duration_hours", 8.0),
-            random_seed=data.get("random_seed", 42),
-            telemetry_interval_sec=data.get("telemetry_interval_sec", 300.0),
+            duration_hours=data.get(
+                "duration_hours", sim_defaults.get("duration_hours", 8.0)
+            ),
+            random_seed=data.get("random_seed", sim_defaults.get("random_seed", 42)),
+            telemetry_interval_sec=data.get(
+                "telemetry_interval_sec",
+                sim_defaults.get("telemetry_interval_sec", 300.0),
+            ),
             start_time=start_time,
         )
 
@@ -67,7 +155,11 @@ class ConfigLoader:
             )
             for s in data.get("stations", [])
         ]
-        return TopologyConfig(name=data["name"], stations=stations)
+        return TopologyConfig(
+            name=data["name"],
+            source=data.get("source", "infinite_raw"),  # Default source
+            stations=stations,
+        )
 
     def load_equipment(self, name: str) -> "EquipmentConfig":
         """Load an equipment configuration by name."""
@@ -88,14 +180,24 @@ class ConfigLoader:
         """Load a product configuration by name."""
         path = self.config_dir / "products" / f"{name}.yaml"
         data = self._load_yaml(path)
+        # Use defaults from defaults.yaml
+        prod_defaults = self.defaults.product
         return ProductConfig(
             name=data["name"],
             description=data.get("description", ""),
             size_oz=data.get("size_oz", 0.0),
-            units_per_case=data.get("units_per_case", 12),
-            cases_per_pallet=data.get("cases_per_pallet", 60),
-            material_cost=data.get("material_cost", 150.0),
-            selling_price=data.get("selling_price", 450.0),
+            units_per_case=data.get(
+                "units_per_case", prod_defaults.get("units_per_case", 12)
+            ),
+            cases_per_pallet=data.get(
+                "cases_per_pallet", prod_defaults.get("cases_per_pallet", 60)
+            ),
+            material_cost=data.get(
+                "material_cost", prod_defaults.get("material_cost", 150.0)
+            ),
+            selling_price=data.get(
+                "selling_price", prod_defaults.get("selling_price", 450.0)
+            ),
         )
 
     def resolve_run(self, run_name: str) -> "ResolvedConfig":
@@ -103,6 +205,9 @@ class ConfigLoader:
         run = self.load_run(run_name)
         scenario = self.load_scenario(run.scenario)
         topology = self.load_topology(scenario.topology)
+
+        # Load source config from topology reference
+        source = self.load_source(topology.source)
 
         # Load product config if specified
         product = None
@@ -127,6 +232,8 @@ class ConfigLoader:
             topology=topology,
             equipment=equipment_configs,
             product=product,
+            source=source,
+            constants=self.constants,
         )
 
     def build_machine_configs(self, resolved: "ResolvedConfig") -> List[MachineConfig]:
@@ -203,10 +310,14 @@ class ConfigLoader:
                 cr_kwargs["overhead_per_hour"] = cr["overhead_per_hour"]
             cost_rates = CostRates(**cr_kwargs)
 
+        # Use defaults from defaults.yaml
+        equip_defaults = self.defaults.equipment
         return EquipmentConfig(
             name=data["name"],
-            uph=data.get("uph", 10000),
-            buffer_capacity=data.get("buffer_capacity", 50),
+            uph=data.get("uph", equip_defaults.get("uph", 10000)),
+            buffer_capacity=data.get(
+                "buffer_capacity", equip_defaults.get("buffer_capacity", 50)
+            ),
             reliability=reliability,
             performance=performance,
             quality=quality,
@@ -293,6 +404,7 @@ class TopologyConfig:
     """Topology configuration."""
 
     name: str
+    source: str = "infinite_raw"  # Reference to config/sources/*.yaml
     stations: List[StationConfig] = field(default_factory=list)
 
 
@@ -326,3 +438,5 @@ class ResolvedConfig:
     topology: TopologyConfig
     equipment: Dict[str, EquipmentConfig] = field(default_factory=dict)
     product: Optional[ProductConfig] = None
+    source: Optional[SourceConfig] = None
+    constants: Optional[ConstantsConfig] = None

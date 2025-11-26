@@ -1,0 +1,45 @@
+# Global defaults for simulation configuration
+# These values are used when not specified in more specific configs
+version: "1.0"
+
+# Time conversion constants (also in constants.yaml for expressions)
+time:
+  seconds_per_minute: 60
+  seconds_per_hour: 3600
+
+# Simulation defaults
+simulation:
+  duration_hours: 8.0
+  random_seed: 42
+  telemetry_interval_sec: 300.0  # 5 minutes
+
+# Equipment defaults
+equipment:
+  uph: 10000
+  buffer_capacity: 50
+  reliability:
+    mtbf_min: null  # null = no breakdowns
+    mttr_min: 60.0
+  performance:
+    jam_prob: 0.0
+    jam_time_sec: 10.0
+  quality:
+    defect_rate: 0.0
+    detection_prob: 0.0
+  cost_rates:
+    labor_per_hour: 25.0
+    energy_per_hour: 5.0
+    overhead_per_hour: 10.0
+
+# Product defaults
+product:
+  units_per_case: 12
+  cases_per_pallet: 60
+  material_cost: 150.0  # $ per pallet
+  selling_price: 450.0  # $ per pallet
+
+# Source defaults
+source:
+  initial_inventory: 100000
+  material_type: "None"
+  parent_machine: "Raw"

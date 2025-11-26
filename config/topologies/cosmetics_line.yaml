@@ -1,4 +1,5 @@
 name: cosmetics_line
+source: infinite_raw  # Reference to config/sources/*.yaml
 stations:
   - name: Filler
     batch_in: 1

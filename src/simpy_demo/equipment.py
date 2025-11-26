@@ -1,5 +1,6 @@
 """Equipment simulation class with 6-phase cycle."""
 
+import math
 import random
 from typing import List, Optional
 
@@ -102,9 +103,9 @@ class Equipment:
 
             # --- PHASE 2: BREAKDOWN CHECK (Availability Loss) ---
             if self.cfg.reliability.mtbf_min:
-                p_fail = 1.0 - 2.718 ** -(
-                    self.cfg.cycle_time_sec / (self.cfg.reliability.mtbf_min * 60)
-                )
+                # Poisson probability: P(fail) = 1 - e^(-cycle_time/mtbf)
+                mtbf_sec = self.cfg.reliability.mtbf_min * 60  # minutes to seconds
+                p_fail = 1.0 - math.exp(-self.cfg.cycle_time_sec / mtbf_sec)
                 if random.random() < p_fail:
                     self.log("DOWN")
                     repair_time = random.expovariate(

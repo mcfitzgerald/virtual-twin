@@ -8,7 +8,7 @@ import pandas as pd
 import simpy
 
 from simpy_demo.equipment import Equipment
-from simpy_demo.loader import ConfigLoader, ResolvedConfig, RunConfig
+from simpy_demo.loader import ConfigLoader, ResolvedConfig, RunConfig, SourceConfig
 from simpy_demo.models import MachineConfig, MaterialType, Product, ProductConfig
 
 
@@ -42,8 +42,10 @@ class SimulationEngine:
         # 4. Build machine configs from resolved config
         machine_configs = self.loader.build_machine_configs(resolved)
 
-        # 5. Build production line
-        machines, buffers, reject_bin = self._build_layout(env, machine_configs)
+        # 5. Build production line (pass source config for initial inventory)
+        machines, buffers, reject_bin = self._build_layout(
+            env, machine_configs, resolved.source
+        )
 
         # 6. Start monitoring
         telemetry_data: List[dict] = []
@@ -72,6 +74,7 @@ class SimulationEngine:
         run: RunConfig,
         machine_configs: List[MachineConfig],
         product: Optional[ProductConfig] = None,
+        source: Optional[SourceConfig] = None,
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """Run simulation from RunConfig and pre-built MachineConfigs (programmatic use)."""
         # 1. Set random seed
@@ -85,7 +88,7 @@ class SimulationEngine:
         env = simpy.Environment()
 
         # 4. Build production line
-        machines, buffers, reject_bin = self._build_layout(env, machine_configs)
+        machines, buffers, reject_bin = self._build_layout(env, machine_configs, source)
 
         # 5. Start monitoring
         telemetry_data: List[dict] = []
@@ -110,21 +113,33 @@ class SimulationEngine:
         return self._compile_results(machines, telemetry_data, start_time)
 
     def _build_layout(
-        self, env: simpy.Environment, configs: List[MachineConfig]
+        self,
+        env: simpy.Environment,
+        configs: List[MachineConfig],
+        source_config: Optional[SourceConfig] = None,
     ) -> Tuple[List[Equipment], Dict[str, simpy.Store], simpy.Store]:
         """Build SimPy stores and Equipment instances."""
         machines: List[Equipment] = []
         buffers: Dict[str, simpy.Store] = {}
 
+        # Get source parameters from config or use defaults
+        initial_inventory = 100000
+        material_type_str = "None"
+        parent_machine = "Raw"
+        if source_config:
+            initial_inventory = source_config.initial_inventory
+            material_type_str = source_config.material_type
+            parent_machine = source_config.parent_machine
+
         # 1. Infinite Source
         source = simpy.Store(env, capacity=float("inf"))
         # Pre-fill with generic raw material
-        for _ in range(100000):
+        for _ in range(initial_inventory):
             source.put(
                 Product(
-                    type=MaterialType.NONE,
+                    type=MaterialType(material_type_str),
                     created_at=0,
-                    parent_machine="Raw",
+                    parent_machine=parent_machine,
                     genealogy=[],
                 )
             )

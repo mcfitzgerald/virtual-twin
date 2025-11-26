@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2025-11-26
+
+### Added
+- **Config foundation** for extracting hardcoded values (Phase 1 of refac3.md)
+- `config/defaults.yaml` - Global default values for simulation, equipment, products, and sources
+- `config/constants.yaml` - Named constants (TUBE_WEIGHT_G, SECONDS_PER_HOUR, DEFAULT_WAREHOUSE, etc.)
+- `config/sources/infinite_raw.yaml` - Configurable source for raw material input
+- New dataclasses in `loader.py`:
+  - `DefaultsConfig` - Global defaults container
+  - `ConstantsConfig` - Named constants container with `get()` method
+  - `SourceConfig` - Source configuration (initial_inventory, material_type, parent_machine)
+- New loader methods: `load_defaults()`, `load_constants()`, `load_source()`
+- `source` field in `TopologyConfig` to reference source configs
+- `source` and `constants` fields in `ResolvedConfig`
+- `source` parameter in `SimulationEngine.run_config()` for programmatic use
+
+### Changed
+- `ConfigLoader` now loads defaults and constants on initialization
+- All loader methods use `defaults.yaml` values instead of inline hardcoded defaults
+- `engine.py` uses `SourceConfig` for initial_inventory (was hardcoded 100000) and parent_machine (was "Raw")
+- `equipment.py` uses `math.exp()` instead of hardcoded Euler approximation (2.718)
+- `TopologyConfig` now includes `source` reference (default: "infinite_raw")
+- Topology YAML files can specify `source: <name>` to reference source configs
+
+### Technical Notes
+- Remaining telemetry hardcodes (gauss params, weights, locations) will be addressed in Phase 2
+- Time conversion constants (60, 3600) kept as code constants since they're physics, not config
+
 ## [0.4.2] - 2025-11-26
 
 ### Added

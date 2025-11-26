@@ -1,0 +1,14 @@
+# Infinite raw material source configuration
+# This is the default source that pre-fills the first machine's upstream buffer
+
+name: infinite_raw
+description: "Infinite raw material source for production line"
+
+# Number of items to pre-fill in the source buffer
+initial_inventory: 100000
+
+# Material type for source items (None = raw/unprocessed)
+material_type: "None"
+
+# Parent machine name for traceability
+parent_machine: "Raw"
