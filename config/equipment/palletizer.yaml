@@ -13,3 +13,8 @@ performance:
 quality:
   defect_rate: 0.0
   detection_prob: 0.0
+
+cost_rates:
+  labor_per_hour: 20.00      # Highly automated
+  energy_per_hour: 4.00      # Robotics
+  overhead_per_hour: 8.00    # Low maintenance

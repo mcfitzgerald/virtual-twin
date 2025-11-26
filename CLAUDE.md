@@ -51,10 +51,11 @@ simpy-demo/
 │   ├── engine.py        # SimulationEngine class (orchestration)
 │   └── run.py           # CLI entry point
 ├── config/
-│   ├── runs/            # Run configs (duration, seed, scenario ref)
+│   ├── runs/            # Run configs (duration, seed, scenario, product ref)
 │   ├── scenarios/       # Scenario configs (topology + equipment refs)
 │   ├── topologies/      # Line structure (station order, batch sizes)
-│   ├── equipment/       # Equipment parameters
+│   ├── equipment/       # Equipment parameters + cost_rates
+│   ├── products/        # Product/SKU definitions with economics
 │   └── materials/       # Material type definitions
 └── docs/
     └── architecture.md  # Mermaid diagrams of system architecture
@@ -71,12 +72,14 @@ The architecture separates:
 
 ```
 Run → Scenario → Topology + Equipment[]
+ └──→ Product (optional, for economics)
 ```
 
-- **Run** (`config/runs/*.yaml`): Duration, random seed, telemetry interval
+- **Run** (`config/runs/*.yaml`): Duration, random seed, telemetry interval, product reference
 - **Scenario** (`config/scenarios/*.yaml`): References topology + equipment, defines overrides
 - **Topology** (`config/topologies/*.yaml`): Station order, batch sizes, output types
-- **Equipment** (`config/equipment/*.yaml`): UPH, buffer capacity, reliability/performance/quality params
+- **Equipment** (`config/equipment/*.yaml`): UPH, buffer capacity, reliability/performance/quality params, cost_rates
+- **Product** (`config/products/*.yaml`): SKU name, physical attributes, material_cost, selling_price
 
 ### Core Simulation Pattern
 The system uses SimPy's cooperative multitasking with generator-based coroutines:
@@ -91,6 +94,8 @@ The system uses SimPy's cooperative multitasking with generator-based coroutines
   - `ReliabilityParams`: MTBF/MTTR for availability loss
   - `PerformanceParams`: Jam probability/time for performance loss
   - `QualityParams`: Defect rate/detection for quality loss
+  - `CostRates`: Labor, energy, overhead per hour for conversion cost
+  - `ProductConfig`: SKU definition with physical and economic attributes
   - `Product` (Pydantic): Composite material pattern for traceability (Tube → Case → Pallet)
   - `MaterialType` (Enum): TUBE, CASE, PALLET, NONE
 
@@ -129,8 +134,19 @@ PHASE 6: INSPECT/ROUTE  <- Only if quality.detection_prob > 0
 - **Quality**: `quality.defect_rate`/`quality.detection_prob` (scrap routing)
 
 ### Data Outputs
-- **Telemetry (`df_ts`)**: Time-series snapshots (buffer levels, machine states)
+- **Telemetry (`df_ts`)**: Time-series at 5-min intervals with **incremental** values per interval:
+  - SKU context: `sku_name`, `sku_description`, `size_oz`, `units_per_case`, `cases_per_pallet`
+  - Production (per interval): `tubes_produced`, `cases_produced`, `pallets_produced`, `good_pallets`, `defective_pallets`
+  - Quality (per interval): `defects_created`, `defects_detected`
+  - Economics (per interval): `material_cost`, `conversion_cost`, `revenue`, `gross_margin`
+  - Snapshots: Buffer levels, machine states
 - **Event Log (`df_ev`)**: State transition log for OEE calculation and process mining
+
+### Economic Model
+- **Material cost** = pallets produced × `product.material_cost` (includes scrap)
+- **Conversion cost** = Σ(machine wall-clock time × `equipment.cost_rates`) - responsive to OEE
+- **Revenue** = good pallets × `product.selling_price`
+- **Gross margin** = revenue - material_cost - conversion_cost
 
 ## Configuration
 
@@ -156,9 +172,21 @@ overrides:
 # config/runs/high_buffer_8hr.yaml
 name: high_buffer_8hr
 scenario: high_buffer_test
+product: fresh_toothpaste_5oz  # Optional: enables economic tracking
 duration_hours: 8.0
 random_seed: 42
-telemetry_interval_sec: 1.0
+telemetry_interval_sec: 300.0  # 5-minute intervals
+```
+
+```yaml
+# config/products/fresh_toothpaste_5oz.yaml
+name: fresh_toothpaste_5oz
+description: "Fresh Toothpaste 5oz Tube"
+size_oz: 5.0
+units_per_case: 12
+cases_per_pallet: 60
+material_cost: 150.00   # $ per pallet
+selling_price: 450.00   # $ per pallet
 ```
 
 Then run:

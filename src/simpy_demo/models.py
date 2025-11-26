@@ -52,6 +52,35 @@ class QualityParams(BaseModel):
     detection_prob: float = 0.0  # Inspection accuracy
 
 
+class CostRates(BaseModel):
+    """Cost rates for conversion cost calculation (per hour)."""
+
+    labor_per_hour: float = 25.0  # $/hr operator cost
+    energy_per_hour: float = 5.0  # $/hr electricity
+    overhead_per_hour: float = 10.0  # $/hr maintenance, depreciation
+
+    @property
+    def total_per_hour(self) -> float:
+        """Total cost rate per hour."""
+        return self.labor_per_hour + self.energy_per_hour + self.overhead_per_hour
+
+
+class ProductConfig(BaseModel):
+    """Product/SKU configuration with economic attributes."""
+
+    name: str
+    description: str = ""
+
+    # Physical attributes
+    size_oz: float = 0.0
+    units_per_case: int = 12
+    cases_per_pallet: int = 60
+
+    # Economic attributes (per pallet)
+    material_cost: float = 150.0  # $ per pallet of raw materials
+    selling_price: float = 450.0  # $ per pallet
+
+
 class MachineConfig(BaseModel):
     """Complete machine configuration with grouped parameters."""
 
@@ -64,6 +93,7 @@ class MachineConfig(BaseModel):
     reliability: ReliabilityParams = Field(default_factory=ReliabilityParams)
     performance: PerformanceParams = Field(default_factory=PerformanceParams)
     quality: QualityParams = Field(default_factory=QualityParams)
+    cost_rates: CostRates = Field(default_factory=CostRates)
 
     @property
     def cycle_time_sec(self) -> float:

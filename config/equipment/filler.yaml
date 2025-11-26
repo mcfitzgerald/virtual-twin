@@ -13,3 +13,8 @@ performance:
 quality:
   defect_rate: 0.02
   detection_prob: 0.0
+
+cost_rates:
+  labor_per_hour: 30.00      # Higher skill operator
+  energy_per_hour: 8.00      # High energy for filling
+  overhead_per_hour: 12.00   # Maintenance intensive

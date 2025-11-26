@@ -5,6 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] - 2025-11-25
+
+### Changed
+- Telemetry now shows **incremental** values per interval (not cumulative)
+  - Production counts, defects, and economic values are deltas for each 5-min interval
+  - Buffer levels and machine states remain as current values
+- CLI summary now sums incremental values for totals
+
+## [0.4.0] - 2025-11-25
+
+### Added
+- **Product/SKU configuration** (`config/products/*.yaml`)
+  - Product definitions with name, description, physical attributes
+  - Economic attributes: `material_cost` and `selling_price` per pallet
+- **Cost rates for equipment** (`cost_rates` in equipment YAML)
+  - `labor_per_hour`, `energy_per_hour`, `overhead_per_hour`
+  - Conversion cost computed from wall-clock simulation time
+- **Production counters by material type**
+  - `tubes_produced`, `cases_produced`, `pallets_produced`
+  - `defects_created`, `defects_detected`, `defects_escaped`
+- **Economic data in telemetry** (5-minute intervals)
+  - SKU context: `sku_name`, `sku_description`, `size_oz`, `units_per_case`, `cases_per_pallet`
+  - Costs: `material_cost`, `conversion_cost`, `revenue`, `gross_margin`
+- **Economic summary in CLI output**
+  - Production counts, revenue, costs, margin percentage, cost per pallet
+- `ProductConfig` and `CostRates` Pydantic models
+- `product` field in `RunConfig` to reference product configuration
+
+### Changed
+- `Equipment` now tracks time spent in each state for conversion cost
+- `_transform_material()` returns tuple of (product, new_defect_created)
+- Telemetry interval updated to 300 seconds (5 minutes) by default
+- `loader.py` loads products and equipment cost_rates
+- `MachineConfig` includes `cost_rates` field
+
 ## [0.3.1] - 2025-11-25
 
 ### Added

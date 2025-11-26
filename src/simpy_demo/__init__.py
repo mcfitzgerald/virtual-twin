@@ -12,10 +12,12 @@ from simpy_demo.config import (
 from simpy_demo.engine import SimulationEngine
 from simpy_demo.equipment import Equipment
 from simpy_demo.models import (
+    CostRates,
     MachineConfig,
     MaterialType,
     PerformanceParams,
     Product,
+    ProductConfig,
     QualityParams,
     ReliabilityParams,
 )
@@ -25,10 +27,12 @@ __all__ = [
     # Models
     "MaterialType",
     "Product",
+    "ProductConfig",
     "MachineConfig",
     "ReliabilityParams",
     "PerformanceParams",
     "QualityParams",
+    "CostRates",
     # Config
     "ConfigLoader",
     "RunConfig",

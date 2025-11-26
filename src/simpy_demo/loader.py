@@ -1,5 +1,6 @@
 """YAML configuration loader with name-based resolution."""
 
+from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -7,9 +8,11 @@ from typing import Any, Dict, List, Optional
 import yaml
 
 from simpy_demo.models import (
+    CostRates,
     MachineConfig,
     MaterialType,
     PerformanceParams,
+    ProductConfig,
     QualityParams,
     ReliabilityParams,
 )
@@ -34,6 +37,7 @@ class ConfigLoader:
         return RunConfig(
             name=data["name"],
             scenario=data["scenario"],
+            product=data.get("product"),  # Optional product reference
             duration_hours=data.get("duration_hours", 8.0),
             random_seed=data.get("random_seed", 42),
             telemetry_interval_sec=data.get("telemetry_interval_sec", 300.0),
@@ -80,11 +84,30 @@ class ConfigLoader:
         data = self._load_yaml(path)
         return MaterialsConfig(name=data["name"], types=data.get("types", {}))
 
+    def load_product(self, name: str) -> ProductConfig:
+        """Load a product configuration by name."""
+        path = self.config_dir / "products" / f"{name}.yaml"
+        data = self._load_yaml(path)
+        return ProductConfig(
+            name=data["name"],
+            description=data.get("description", ""),
+            size_oz=data.get("size_oz", 0.0),
+            units_per_case=data.get("units_per_case", 12),
+            cases_per_pallet=data.get("cases_per_pallet", 60),
+            material_cost=data.get("material_cost", 150.0),
+            selling_price=data.get("selling_price", 450.0),
+        )
+
     def resolve_run(self, run_name: str) -> "ResolvedConfig":
         """Fully resolve a run config into all its components."""
         run = self.load_run(run_name)
         scenario = self.load_scenario(run.scenario)
         topology = self.load_topology(scenario.topology)
+
+        # Load product config if specified
+        product = None
+        if run.product:
+            product = self.load_product(run.product)
 
         # Load equipment configs for each station
         equipment_configs: Dict[str, EquipmentConfig] = {}
@@ -103,6 +126,7 @@ class ConfigLoader:
             scenario=scenario,
             topology=topology,
             equipment=equipment_configs,
+            product=product,
         )
 
     def build_machine_configs(self, resolved: "ResolvedConfig") -> List[MachineConfig]:
@@ -122,6 +146,7 @@ class ConfigLoader:
                 reliability=equip.reliability or ReliabilityParams(),
                 performance=equip.performance or PerformanceParams(),
                 quality=equip.quality or QualityParams(),
+                cost_rates=equip.cost_rates or CostRates(),
             )
             configs.append(config)
         return configs
@@ -166,6 +191,18 @@ class ConfigLoader:
                 qual_kwargs["detection_prob"] = qual["detection_prob"]
             quality = QualityParams(**qual_kwargs)
 
+        cost_rates = None
+        if "cost_rates" in data and data["cost_rates"]:
+            cr = data["cost_rates"]
+            cr_kwargs = {}
+            if cr.get("labor_per_hour") is not None:
+                cr_kwargs["labor_per_hour"] = cr["labor_per_hour"]
+            if cr.get("energy_per_hour") is not None:
+                cr_kwargs["energy_per_hour"] = cr["energy_per_hour"]
+            if cr.get("overhead_per_hour") is not None:
+                cr_kwargs["overhead_per_hour"] = cr["overhead_per_hour"]
+            cost_rates = CostRates(**cr_kwargs)
+
         return EquipmentConfig(
             name=data["name"],
             uph=data.get("uph", 10000),
@@ -173,6 +210,7 @@ class ConfigLoader:
             reliability=reliability,
             performance=performance,
             quality=quality,
+            cost_rates=cost_rates,
         )
 
     def _apply_overrides(
@@ -217,8 +255,6 @@ class ConfigLoader:
 
 # --- Config dataclasses ---
 
-from dataclasses import dataclass, field
-
 
 @dataclass
 class RunConfig:
@@ -226,6 +262,7 @@ class RunConfig:
 
     name: str
     scenario: str
+    product: Optional[str] = None  # Reference to product config
     duration_hours: float = 8.0
     random_seed: Optional[int] = 42
     telemetry_interval_sec: float = 300.0
@@ -269,6 +306,7 @@ class EquipmentConfig:
     reliability: Optional[ReliabilityParams] = None
     performance: Optional[PerformanceParams] = None
     quality: Optional[QualityParams] = None
+    cost_rates: Optional[CostRates] = None
 
 
 @dataclass
@@ -287,3 +325,4 @@ class ResolvedConfig:
     scenario: ScenarioConfig
     topology: TopologyConfig
     equipment: Dict[str, EquipmentConfig] = field(default_factory=dict)
+    product: Optional[ProductConfig] = None

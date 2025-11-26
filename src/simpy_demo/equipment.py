@@ -36,6 +36,26 @@ class Equipment:
 
         self.items_produced = 0
         self.state = "IDLE"
+        self.state_start_time = 0.0  # Track time in current state
+
+        # Production counters by material type
+        self.tubes_produced = 0
+        self.cases_produced = 0
+        self.pallets_produced = 0
+
+        # Quality counters
+        self.defects_created = 0
+        self.defects_detected = 0
+        self.defects_escaped = 0
+
+        # Time tracking by state (for conversion cost)
+        self.time_in_state: dict[str, float] = {
+            "STARVED": 0.0,
+            "EXECUTE": 0.0,
+            "DOWN": 0.0,
+            "JAMMED": 0.0,
+            "BLOCKED": 0.0,
+        }
 
         # Centralized Logs
         self.event_log: List[dict] = []
@@ -43,8 +63,13 @@ class Equipment:
         self.process = env.process(self.run())
 
     def log(self, new_state: str) -> None:
-        """Records state transitions for OEE calculation."""
+        """Records state transitions for OEE calculation and time tracking."""
         if self.state != new_state:
+            # Track time spent in previous state
+            time_spent = self.env.now - self.state_start_time
+            if self.state in self.time_in_state:
+                self.time_in_state[self.state] += time_spent
+
             self.event_log.append(
                 {
                     "timestamp": self.env.now,
@@ -54,6 +79,7 @@ class Equipment:
                 }
             )
             self.state = new_state
+            self.state_start_time = self.env.now
             self.event_log.append(
                 {
                     "timestamp": self.env.now,
@@ -99,14 +125,29 @@ class Equipment:
             yield self.env.timeout(self.cfg.cycle_time_sec)
 
             # --- PHASE 5: TRANSFORM (Traceability Logic) ---
-            output_item = self._transform_material(inputs)
+            output_item, new_defect = self._transform_material(inputs)
             self.items_produced += 1
+
+            # Track production by type
+            if output_item.type == MaterialType.TUBE:
+                self.tubes_produced += 1
+            elif output_item.type == MaterialType.CASE:
+                self.cases_produced += 1
+            elif output_item.type == MaterialType.PALLET:
+                self.pallets_produced += 1
+
+            # Track defects
+            if new_defect:
+                self.defects_created += 1
 
             # --- PHASE 6: INSPECT & ROUTE (Quality Logic) ---
             routed_to_reject = False
             if self.cfg.quality.detection_prob > 0 and output_item.is_defective:
                 if random.random() < self.cfg.quality.detection_prob:
                     routed_to_reject = True
+                    self.defects_detected += 1
+                else:
+                    self.defects_escaped += 1
 
             # If downstream is full, we enter BLOCKED state
             self.log("BLOCKED")
@@ -118,8 +159,12 @@ class Equipment:
             # Back to waiting for material
             self.log("STARVED")
 
-    def _transform_material(self, inputs: List[Product]) -> Product:
-        """Transform inputs into output product based on config."""
+    def _transform_material(self, inputs: List[Product]) -> tuple[Product, bool]:
+        """Transform inputs into output product based on config.
+
+        Returns:
+            Tuple of (output_product, new_defect_created)
+        """
         # 1. Inherit Defects
         has_inherited_defect = any(i.is_defective for i in inputs)
 
@@ -132,32 +177,52 @@ class Equipment:
 
         # 4. Factory Construction based on output_type
         if self.cfg.output_type == MaterialType.TUBE:
-            return Product(
-                type=MaterialType.TUBE,
-                created_at=self.env.now,
-                parent_machine=self.cfg.name,
-                is_defective=is_bad,
-                genealogy=genealogy,
-                telemetry={"fill_level": random.gauss(100, 1.0)},
+            return (
+                Product(
+                    type=MaterialType.TUBE,
+                    created_at=self.env.now,
+                    parent_machine=self.cfg.name,
+                    is_defective=is_bad,
+                    genealogy=genealogy,
+                    telemetry={"fill_level": random.gauss(100, 1.0)},
+                ),
+                new_defect,
             )
         elif self.cfg.output_type == MaterialType.CASE:
-            return Product(
-                type=MaterialType.CASE,
-                created_at=self.env.now,
-                parent_machine=self.cfg.name,
-                is_defective=is_bad,
-                genealogy=genealogy,
-                telemetry={"weight": sum([100 for _ in inputs]) + 50},
+            return (
+                Product(
+                    type=MaterialType.CASE,
+                    created_at=self.env.now,
+                    parent_machine=self.cfg.name,
+                    is_defective=is_bad,
+                    genealogy=genealogy,
+                    telemetry={"weight": sum([100 for _ in inputs]) + 50},
+                ),
+                new_defect,
             )
         elif self.cfg.output_type == MaterialType.PALLET:
-            return Product(
-                type=MaterialType.PALLET,
-                created_at=self.env.now,
-                parent_machine=self.cfg.name,
-                is_defective=is_bad,
-                genealogy=genealogy,
-                telemetry={"location": "Warehouse_A"},
+            return (
+                Product(
+                    type=MaterialType.PALLET,
+                    created_at=self.env.now,
+                    parent_machine=self.cfg.name,
+                    is_defective=is_bad,
+                    genealogy=genealogy,
+                    telemetry={"location": "Warehouse_A"},
+                ),
+                new_defect,
             )
 
         # Pass-through (e.g. Inspection Station)
-        return inputs[0]
+        return (inputs[0], False)
+
+    @property
+    def total_time_sec(self) -> float:
+        """Total wall-clock time spent by this machine (for conversion cost)."""
+        return sum(self.time_in_state.values())
+
+    @property
+    def conversion_cost(self) -> float:
+        """Calculate conversion cost based on total time and cost rates."""
+        hours = self.total_time_sec / 3600.0
+        return hours * self.cfg.cost_rates.total_per_hour

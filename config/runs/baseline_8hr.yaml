@@ -1,6 +1,7 @@
 name: baseline_8hr
 scenario: baseline
+product: fresh_toothpaste_5oz
 duration_hours: 8.0
 random_seed: 42
-telemetry_interval_sec: 1.0
+telemetry_interval_sec: 300.0  # 5-minute intervals
 start_time: "2025-01-06T06:00:00"  # Optional: ISO format, defaults to now()

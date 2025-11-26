@@ -9,7 +9,7 @@ import simpy
 
 from simpy_demo.equipment import Equipment
 from simpy_demo.loader import ConfigLoader, ResolvedConfig, RunConfig
-from simpy_demo.models import MachineConfig, MaterialType, Product
+from simpy_demo.models import MachineConfig, MaterialType, Product, ProductConfig
 
 
 class SimulationEngine:
@@ -49,7 +49,13 @@ class SimulationEngine:
         telemetry_data: List[dict] = []
         env.process(
             self._monitor_process(
-                env, machines, buffers, telemetry_data, run.telemetry_interval_sec, start_time
+                env,
+                machines,
+                buffers,
+                telemetry_data,
+                run.telemetry_interval_sec,
+                start_time,
+                resolved.product,
             )
         )
 
@@ -62,7 +68,10 @@ class SimulationEngine:
         return self._compile_results(machines, telemetry_data, start_time)
 
     def run_config(
-        self, run: RunConfig, machine_configs: List[MachineConfig]
+        self,
+        run: RunConfig,
+        machine_configs: List[MachineConfig],
+        product: Optional[ProductConfig] = None,
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """Run simulation from RunConfig and pre-built MachineConfigs (programmatic use)."""
         # 1. Set random seed
@@ -82,7 +91,13 @@ class SimulationEngine:
         telemetry_data: List[dict] = []
         env.process(
             self._monitor_process(
-                env, machines, buffers, telemetry_data, run.telemetry_interval_sec, start_time
+                env,
+                machines,
+                buffers,
+                telemetry_data,
+                run.telemetry_interval_sec,
+                start_time,
+                product,
             )
         )
 
@@ -150,21 +165,100 @@ class SimulationEngine:
         telemetry_data: List[dict],
         interval: float = 1.0,
         start_time: Optional[datetime] = None,
+        product: Optional[ProductConfig] = None,
     ):
-        """Capture telemetry at regular intervals."""
+        """Capture telemetry at regular intervals (incremental values per interval)."""
+        # Track previous values for delta calculation
+        prev = {
+            "tubes": 0,
+            "cases": 0,
+            "pallets": 0,
+            "good": 0,
+            "defective": 0,
+            "defects_created": 0,
+            "defects_detected": 0,
+            "material_cost": 0.0,
+            "conversion_cost": 0.0,
+            "revenue": 0.0,
+        }
+
         while True:
             snapshot = {
                 "time": env.now,
                 "datetime": start_time + timedelta(seconds=env.now) if start_time else None,
             }
 
-            # Log Buffer Levels
+            # SKU Context (if product defined)
+            if product:
+                snapshot["sku_name"] = product.name
+                snapshot["sku_description"] = product.description
+                snapshot["size_oz"] = product.size_oz
+                snapshot["units_per_case"] = product.units_per_case
+                snapshot["cases_per_pallet"] = product.cases_per_pallet
+
+            # Production Counts (aggregate across machines by type)
+            total_tubes = sum(m.tubes_produced for m in machines)
+            total_cases = sum(m.cases_produced for m in machines)
+            total_pallets = sum(m.pallets_produced for m in machines)
+            total_defects_created = sum(m.defects_created for m in machines)
+            total_defects_detected = sum(m.defects_detected for m in machines)
+
+            # Find palletizer to determine good vs defective pallets
+            palletizer = next(
+                (m for m in machines if m.cfg.output_type == MaterialType.PALLET), None
+            )
+            total_defective = palletizer.defects_escaped if palletizer else 0
+            total_good = total_pallets - total_defective
+
+            # Store incremental values (delta from previous interval)
+            snapshot["tubes_produced"] = total_tubes - prev["tubes"]
+            snapshot["cases_produced"] = total_cases - prev["cases"]
+            snapshot["pallets_produced"] = total_pallets - prev["pallets"]
+            snapshot["good_pallets"] = total_good - prev["good"]
+            snapshot["defective_pallets"] = total_defective - prev["defective"]
+            snapshot["defects_created"] = total_defects_created - prev["defects_created"]
+            snapshot["defects_detected"] = total_defects_detected - prev["defects_detected"]
+
+            # Update previous values
+            prev["tubes"] = total_tubes
+            prev["cases"] = total_cases
+            prev["pallets"] = total_pallets
+            prev["good"] = total_good
+            prev["defective"] = total_defective
+            prev["defects_created"] = total_defects_created
+            prev["defects_detected"] = total_defects_detected
+
+            # Economic Data (if product defined)
+            if product:
+                # Material cost: all pallets consume materials (includes scrap)
+                material_cost = total_pallets * product.material_cost
+
+                # Conversion cost: sum across all machines
+                conversion_cost = sum(m.conversion_cost for m in machines)
+
+                # Revenue: only good pallets sell
+                revenue = total_good * product.selling_price
+
+                # Store incremental economic values
+                snapshot["material_cost"] = round(material_cost - prev["material_cost"], 2)
+                snapshot["conversion_cost"] = round(conversion_cost - prev["conversion_cost"], 2)
+                snapshot["revenue"] = round(revenue - prev["revenue"], 2)
+                snapshot["gross_margin"] = round(
+                    snapshot["revenue"] - snapshot["material_cost"] - snapshot["conversion_cost"], 2
+                )
+
+                # Update previous economic values
+                prev["material_cost"] = material_cost
+                prev["conversion_cost"] = conversion_cost
+                prev["revenue"] = revenue
+
+            # Log Buffer Levels (these stay as current values, not deltas)
             for name, buf in buffers.items():
                 if buf.capacity != float("inf"):
                     snapshot[f"{name}_level"] = len(buf.items)
                     snapshot[f"{name}_cap"] = buf.capacity
 
-            # Log Machine States
+            # Log Machine States (current state, not delta)
             for m in machines:
                 snapshot[f"{m.cfg.name}_state"] = m.state
                 snapshot[f"{m.cfg.name}_output"] = m.items_produced

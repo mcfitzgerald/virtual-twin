@@ -13,3 +13,8 @@ performance:
 quality:
   defect_rate: 0.0
   detection_prob: 0.95
+
+cost_rates:
+  labor_per_hour: 20.00      # Mostly automated
+  energy_per_hour: 3.00      # Vision system
+  overhead_per_hour: 8.00    # Sensor calibration

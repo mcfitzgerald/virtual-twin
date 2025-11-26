@@ -1,0 +1,11 @@
+name: fresh_toothpaste_5oz
+description: "Fresh Toothpaste 5oz Tube"
+
+# Physical attributes
+size_oz: 5.0
+units_per_case: 12
+cases_per_pallet: 60
+
+# Economic attributes (per pallet)
+material_cost: 150.00    # $ per pallet of raw materials
+selling_price: 450.00    # $ per pallet

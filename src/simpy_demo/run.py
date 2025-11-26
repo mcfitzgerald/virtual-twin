@@ -29,6 +29,50 @@ def run_simulation(
     print(f"Telemetry Records: {len(df_ts)}")
     print(f"Event Records: {len(df_ev)}")
 
+    # Production Summary (sum of incremental values)
+    if not df_ts.empty:
+        print("\n--- PRODUCTION SUMMARY ---")
+        if "tubes_produced" in df_ts.columns:
+            print(f"Tubes Produced:    {int(df_ts['tubes_produced'].sum()):,}")
+        if "cases_produced" in df_ts.columns:
+            print(f"Cases Produced:    {int(df_ts['cases_produced'].sum()):,}")
+        if "pallets_produced" in df_ts.columns:
+            print(f"Pallets Produced:  {int(df_ts['pallets_produced'].sum()):,}")
+        if "good_pallets" in df_ts.columns:
+            print(f"  Good Pallets:    {int(df_ts['good_pallets'].sum()):,}")
+        if "defective_pallets" in df_ts.columns:
+            print(f"  Defective:       {int(df_ts['defective_pallets'].sum()):,}")
+        if "defects_created" in df_ts.columns:
+            print(f"Defects Created:   {int(df_ts['defects_created'].sum()):,}")
+        if "defects_detected" in df_ts.columns:
+            print(f"Defects Detected:  {int(df_ts['defects_detected'].sum()):,}")
+
+        # Economic Summary (sum of incremental values)
+        last = df_ts.iloc[-1]
+        if "sku_name" in df_ts.columns and pd.notna(last.get("sku_name")):
+            print("\n--- ECONOMIC SUMMARY ---")
+            print(f"Product: {last['sku_name']}")
+            if last.get("sku_description"):
+                print(f"         {last['sku_description']}")
+
+            good = int(df_ts["good_pallets"].sum())
+            revenue = df_ts["revenue"].sum()
+            material = df_ts["material_cost"].sum()
+            conversion = df_ts["conversion_cost"].sum()
+            margin = df_ts["gross_margin"].sum()
+
+            print(f"\nRevenue:          ${revenue:,.2f}")
+            print(f"Material Cost:    ${material:,.2f}")
+            print(f"Conversion Cost:  ${conversion:,.2f}")
+            print(f"{'─' * 30}")
+            print(f"Gross Margin:     ${margin:,.2f}")
+            if revenue > 0:
+                margin_pct = (margin / revenue) * 100
+                print(f"Margin %:         {margin_pct:.1f}%")
+            if good > 0:
+                cost_per_pallet = (material + conversion) / good
+                print(f"Cost per Pallet:  ${cost_per_pallet:,.2f}")
+
     # OEE Analysis
     print("\n--- Time in State (Seconds) ---")
     if not df_ev.empty:
