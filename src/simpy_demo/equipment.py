@@ -10,6 +10,7 @@ from simpy_demo.models import MachineConfig, MaterialType, Product
 
 if TYPE_CHECKING:
     from simpy_demo.factories.telemetry import TelemetryGenerator
+    from simpy_demo.simulation.layout import NodeConnections
 
 
 class Equipment:
@@ -22,6 +23,9 @@ class Equipment:
     4. EXECUTE: Process for cycle_time_sec
     5. TRANSFORM: Create output based on output_type
     6. INSPECT/ROUTE: Route defectives (if quality.detection_prob > 0)
+
+    Supports both linear (single upstream/downstream) and graph-based
+    (multiple upstream/downstream with conditional routing) topologies.
     """
 
     def __init__(
@@ -32,13 +36,31 @@ class Equipment:
         downstream: simpy.Store,
         reject_store: Optional[simpy.Store],
         telemetry_gen: Optional["TelemetryGenerator"] = None,
+        connections: Optional["NodeConnections"] = None,
     ):
+        """Initialize equipment.
+
+        Args:
+            env: SimPy environment
+            config: Machine configuration
+            upstream: Primary upstream store (for backward compatibility)
+            downstream: Primary downstream store (for backward compatibility)
+            reject_store: Store for rejected products
+            telemetry_gen: Telemetry generator
+            connections: Optional graph-based connections for multi-path routing
+        """
         self.env = env
         self.cfg = config
         self.upstream = upstream
         self.downstream = downstream
         self.reject_store = reject_store
         self.telemetry_gen = telemetry_gen
+
+        # Graph-based connections (optional)
+        self._connections = connections
+        self._use_graph_routing = connections is not None and len(
+            connections.downstream_routes
+        ) > 1
 
         self.items_produced = 0
         self.state = "IDLE"
@@ -157,9 +179,17 @@ class Equipment:
 
             # If downstream is full, we enter BLOCKED state
             self.log("BLOCKED")
-            if routed_to_reject and self.reject_store:
+
+            # Route output using graph-based routing or legacy routing
+            if self._use_graph_routing and self._connections:
+                # Graph-based routing: use connections to determine destination
+                destination = self._connections.get_route(output_item)
+                yield destination.put(output_item)
+            elif routed_to_reject and self.reject_store:
+                # Legacy routing: route defectives to reject store
                 yield self.reject_store.put(output_item)
             else:
+                # Legacy routing: route to primary downstream
                 yield self.downstream.put(output_item)
 
             # Back to waiting for material

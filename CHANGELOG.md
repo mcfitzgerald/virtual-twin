@@ -5,6 +5,46 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2025-11-26
+
+### Added
+- **Graph-based topology** (`src/simpy_demo/topology/`) for DAG-based production lines (Phase 3 of refac3.md)
+  - `TopologyGraph` class with nodes, edges, cycle detection, and topological ordering
+  - `StationNode` dataclass for representing stations in the graph
+  - `BufferEdge` dataclass for connections with optional conditions
+  - Special nodes: `_source`, `_sink`, `_reject` for standard flow endpoints
+  - `from_linear()` class method for backward-compatible conversion
+- **Graph-aware layout builder** (`src/simpy_demo/simulation/layout.py`)
+  - `LayoutBuilder` class for constructing SimPy layout from `TopologyGraph`
+  - `NodeConnections` for multi-path upstream/downstream routing
+  - `RoutingRule` for conditional routing (e.g., quality gates)
+  - Supports branching (one-to-many), merging (many-to-one), and conditional routing
+- **New topology config format** with explicit nodes and edges:
+  - `config/topologies/cosmetics_line_graph.yaml` - Graph-based example with quality gate routing
+  - `config/scenarios/baseline_graph.yaml` - Scenario using graph topology
+  - `config/runs/baseline_graph_8hr.yaml` - Run config for graph topology
+- New dataclasses in `loader.py`:
+  - `NodeConfig` - Node configuration for graph topology
+  - `EdgeConfig` - Edge configuration with conditions
+- New exports in `__init__.py`: `TopologyGraph`, `StationNode`, `BufferEdge`, `CycleDetectedError`, `NodeConfig`, `EdgeConfig`
+
+### Changed
+- `TopologyConfig` now supports both linear (`stations` list) and graph (`nodes`/`edges` lists) formats
+- `TopologyConfig.to_graph()` method converts either format to `TopologyGraph`
+- `TopologyConfig.is_graph_topology` property to detect format
+- `ConfigLoader.load_topology()` parses both formats from YAML
+- `ConfigLoader.build_machine_configs()` supports graph topology (iterates in topological order)
+- `Equipment` accepts optional `connections` parameter for graph-based routing
+- `Equipment.run()` Phase 6 uses `NodeConnections.get_route()` for conditional routing
+- `SimulationEngine.run_resolved()` uses `_build_graph_layout()` for graph topologies
+- Added `_build_graph_layout()` method to `SimulationEngine`
+
+### Technical Notes
+- Graph topology is fully backward compatible - existing linear configs continue to work
+- Graph format enables: branching, merging, conditional routing (quality gates), rework loops
+- Cycle detection via Kahn's algorithm in `TopologyGraph.topological_order()`
+- Condition expressions support: `product.is_defective`, `not product.is_defective`
+
 ## [0.6.0] - 2025-11-26
 
 ### Added

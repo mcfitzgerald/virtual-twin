@@ -1,0 +1,8 @@
+# Baseline 8-hour run using graph-based topology
+name: baseline_graph_8hr
+scenario: baseline_graph
+product: fresh_toothpaste_5oz
+duration_hours: 8.0
+random_seed: 42
+telemetry_interval_sec: 300.0
+start_time: "2025-01-06T06:00:00"

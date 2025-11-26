@@ -16,6 +16,7 @@ from simpy_demo.loader import (
     SourceConfig,
 )
 from simpy_demo.models import MachineConfig, MaterialType, Product, ProductConfig
+from simpy_demo.simulation.layout import LayoutBuilder
 
 
 class SimulationEngine:
@@ -32,7 +33,10 @@ class SimulationEngine:
     def run_resolved(
         self, resolved: ResolvedConfig
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        """Run simulation from a fully resolved configuration."""
+        """Run simulation from a fully resolved configuration.
+
+        Supports both linear and graph-based topologies.
+        """
         run = resolved.run
 
         # 1. Set random seed
@@ -53,10 +57,17 @@ class SimulationEngine:
         materials_types = resolved.materials.types if resolved.materials else {}
         telemetry_gen = TelemetryGenerator(materials_types, constants)
 
-        # 6. Build production line (pass source config for initial inventory)
-        machines, buffers, reject_bin = self._build_layout(
-            env, machine_configs, resolved.source, telemetry_gen
-        )
+        # 6. Build production line based on topology type
+        if resolved.topology.is_graph_topology:
+            # Use graph-based layout builder
+            machines, buffers, reject_bin = self._build_graph_layout(
+                env, resolved, machine_configs, telemetry_gen
+            )
+        else:
+            # Use legacy linear layout builder
+            machines, buffers, reject_bin = self._build_layout(
+                env, machine_configs, resolved.source, telemetry_gen
+            )
 
         # 7. Start monitoring
         telemetry_data: List[dict] = []
@@ -184,6 +195,50 @@ class SimulationEngine:
             current_upstream = downstream
 
         return machines, buffers, reject_bin
+
+    def _build_graph_layout(
+        self,
+        env: simpy.Environment,
+        resolved: ResolvedConfig,
+        machine_configs: List[MachineConfig],
+        telemetry_gen: Optional[TelemetryGenerator] = None,
+    ) -> Tuple[List[Equipment], Dict[str, simpy.Store], simpy.Store]:
+        """Build SimPy layout from graph-based topology.
+
+        Args:
+            env: SimPy environment
+            resolved: Fully resolved configuration
+            machine_configs: List of machine configurations
+            telemetry_gen: Telemetry generator
+
+        Returns:
+            Tuple of (machines, buffers, reject_store)
+        """
+        # Convert TopologyConfig to TopologyGraph
+        graph = resolved.topology.to_graph()
+
+        # Create machine config dict keyed by name
+        config_dict = {cfg.name: cfg for cfg in machine_configs}
+
+        # Build layout using LayoutBuilder
+        builder = LayoutBuilder(
+            env=env,
+            graph=graph,
+            machine_configs=config_dict,
+            source_config=resolved.source,
+            telemetry_gen=telemetry_gen,
+        )
+
+        result = builder.build()
+
+        # Convert to list format for backward compatibility
+        machines_list = [
+            result.machines[node.name]
+            for node in graph.topological_order()
+            if not node.is_special and node.name in result.machines
+        ]
+
+        return machines_list, result.buffers, result.reject_store
 
     def _monitor_process(
         self,

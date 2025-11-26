@@ -1,0 +1,9 @@
+# Baseline scenario using graph-based topology
+name: baseline_graph
+topology: cosmetics_line_graph
+equipment:
+  - Filler
+  - Inspector
+  - Packer
+  - Palletizer
+overrides: {}

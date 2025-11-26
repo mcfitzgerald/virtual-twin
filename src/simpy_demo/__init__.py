@@ -4,8 +4,10 @@ from simpy_demo.config import (
     ConfigLoader,
     ConstantsConfig,
     DefaultsConfig,
+    EdgeConfig,
     EquipmentConfig,
     MaterialsConfig,
+    NodeConfig,
     ResolvedConfig,
     RunConfig,
     ScenarioConfig,
@@ -28,6 +30,12 @@ from simpy_demo.models import (
     ReliabilityParams,
 )
 from simpy_demo.run import run_simulation
+from simpy_demo.topology import (
+    BufferEdge,
+    CycleDetectedError,
+    StationNode,
+    TopologyGraph,
+)
 
 __all__ = [
     # Models
@@ -48,9 +56,16 @@ __all__ = [
     "ScenarioConfig",
     "TopologyConfig",
     "StationConfig",
+    "NodeConfig",
+    "EdgeConfig",
     "EquipmentConfig",
     "MaterialsConfig",
     "ResolvedConfig",
+    # Topology
+    "TopologyGraph",
+    "StationNode",
+    "BufferEdge",
+    "CycleDetectedError",
     # Expression Engine
     "ExpressionEngine",
     # Factories

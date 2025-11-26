@@ -16,6 +16,7 @@ from simpy_demo.models import (
     QualityParams,
     ReliabilityParams,
 )
+from simpy_demo.topology import BufferEdge, StationNode, TopologyGraph
 
 
 # --- New config dataclasses for Phase 1 ---
@@ -144,9 +145,16 @@ class ConfigLoader:
         )
 
     def load_topology(self, name: str) -> "TopologyConfig":
-        """Load a topology configuration by name."""
+        """Load a topology configuration by name.
+
+        Supports both formats:
+        - Linear: stations list (backward compatible)
+        - Graph: nodes list + edges list (new format)
+        """
         path = self.config_dir / "topologies" / f"{name}.yaml"
         data = self._load_yaml(path)
+
+        # Parse linear format (stations)
         stations = [
             StationConfig(
                 name=s["name"],
@@ -155,11 +163,35 @@ class ConfigLoader:
             )
             for s in data.get("stations", [])
         ]
+
+        # Parse graph format (nodes + edges)
+        nodes = [
+            NodeConfig(
+                name=n["name"],
+                batch_in=n.get("batch_in", 1),
+                output_type=MaterialType(n.get("output_type", "None")),
+                equipment_ref=n.get("equipment_ref"),
+                behavior_ref=n.get("behavior_ref"),
+            )
+            for n in data.get("nodes", [])
+        ]
+        edges = [
+            EdgeConfig(
+                source=e["source"],
+                target=e["target"],
+                capacity_override=e.get("capacity_override"),
+                condition=e.get("condition"),
+            )
+            for e in data.get("edges", [])
+        ]
+
         return TopologyConfig(
             name=data["name"],
             source=data.get("source", "infinite_raw"),  # Default source
             materials=data.get("materials", "cosmetics"),  # Default materials
             stations=stations,
+            nodes=nodes,
+            edges=edges,
         )
 
     def load_equipment(self, name: str) -> "EquipmentConfig":
@@ -242,25 +274,62 @@ class ConfigLoader:
         )
 
     def build_machine_configs(self, resolved: "ResolvedConfig") -> List[MachineConfig]:
-        """Build MachineConfig objects from resolved configuration."""
-        configs = []
-        for station in resolved.topology.stations:
-            equip = resolved.equipment.get(station.name)
-            if equip is None:
-                raise ValueError(f"No equipment config for station: {station.name}")
+        """Build MachineConfig objects from resolved configuration.
 
-            config = MachineConfig(
-                name=station.name,
-                uph=equip.uph,
-                batch_in=station.batch_in,
-                output_type=station.output_type,
-                buffer_capacity=equip.buffer_capacity,
-                reliability=equip.reliability or ReliabilityParams(),
-                performance=equip.performance or PerformanceParams(),
-                quality=equip.quality or QualityParams(),
-                cost_rates=equip.cost_rates or CostRates(),
-            )
-            configs.append(config)
+        Supports both linear and graph topologies.
+        For graph topology, returns configs in topological order.
+        """
+        configs = []
+
+        if resolved.topology.is_graph_topology:
+            # Graph format: iterate over nodes in topological order
+            graph = resolved.topology.to_graph()
+            for node in graph.topological_order():
+                # Skip special nodes
+                if node.is_special:
+                    continue
+
+                # Look up equipment config by equipment_ref or node name
+                equip_name = node.equipment_ref or node.name
+                equip = resolved.equipment.get(equip_name)
+                if equip is None:
+                    raise ValueError(
+                        f"No equipment config for node: {node.name} "
+                        f"(equipment_ref: {equip_name})"
+                    )
+
+                config = MachineConfig(
+                    name=node.name,
+                    uph=equip.uph,
+                    batch_in=node.batch_in,
+                    output_type=node.output_type,
+                    buffer_capacity=equip.buffer_capacity,
+                    reliability=equip.reliability or ReliabilityParams(),
+                    performance=equip.performance or PerformanceParams(),
+                    quality=equip.quality or QualityParams(),
+                    cost_rates=equip.cost_rates or CostRates(),
+                )
+                configs.append(config)
+        else:
+            # Linear format: iterate over stations
+            for station in resolved.topology.stations:
+                equip = resolved.equipment.get(station.name)
+                if equip is None:
+                    raise ValueError(f"No equipment config for station: {station.name}")
+
+                config = MachineConfig(
+                    name=station.name,
+                    uph=equip.uph,
+                    batch_in=station.batch_in,
+                    output_type=station.output_type,
+                    buffer_capacity=equip.buffer_capacity,
+                    reliability=equip.reliability or ReliabilityParams(),
+                    performance=equip.performance or PerformanceParams(),
+                    quality=equip.quality or QualityParams(),
+                    cost_rates=equip.cost_rates or CostRates(),
+                )
+                configs.append(config)
+
         return configs
 
     def _load_yaml(self, path: Path) -> Dict[str, Any]:
@@ -405,13 +474,96 @@ class StationConfig:
 
 
 @dataclass
+class NodeConfig:
+    """Node configuration for graph-based topology."""
+
+    name: str
+    batch_in: int = 1
+    output_type: MaterialType = MaterialType.NONE
+    equipment_ref: Optional[str] = None  # Reference to equipment config
+    behavior_ref: Optional[str] = None  # Reference to behavior config (future)
+
+
+@dataclass
+class EdgeConfig:
+    """Edge configuration for graph-based topology."""
+
+    source: str
+    target: str
+    capacity_override: Optional[int] = None
+    condition: Optional[str] = None  # Expression for conditional routing
+
+
+@dataclass
 class TopologyConfig:
-    """Topology configuration."""
+    """Topology configuration supporting both linear and graph formats.
+
+    Linear format (backward compatible):
+        stations: List[StationConfig]  # Implicit linear ordering
+
+    Graph format:
+        nodes: List[NodeConfig]  # Explicit nodes
+        edges: List[EdgeConfig]  # Explicit edges with conditions
+    """
 
     name: str
     source: str = "infinite_raw"  # Reference to config/sources/*.yaml
     materials: str = "cosmetics"  # Reference to config/materials/*.yaml
+
+    # Linear format (backward compatible)
     stations: List[StationConfig] = field(default_factory=list)
+
+    # Graph format
+    nodes: List[NodeConfig] = field(default_factory=list)
+    edges: List[EdgeConfig] = field(default_factory=list)
+
+    @property
+    def is_graph_topology(self) -> bool:
+        """Check if this topology uses graph format."""
+        return len(self.nodes) > 0 and len(self.edges) > 0
+
+    def to_graph(self) -> TopologyGraph:
+        """Convert to TopologyGraph, handling both linear and graph formats.
+
+        Returns:
+            TopologyGraph representation
+        """
+        if self.is_graph_topology:
+            # Graph format: build from nodes/edges
+            graph = TopologyGraph()
+            for node_cfg in self.nodes:
+                graph.add_node(
+                    StationNode(
+                        name=node_cfg.name,
+                        batch_in=node_cfg.batch_in,
+                        output_type=node_cfg.output_type,
+                        equipment_ref=node_cfg.equipment_ref or node_cfg.name,
+                        behavior_ref=node_cfg.behavior_ref,
+                    )
+                )
+            for edge_cfg in self.edges:
+                graph.add_edge(
+                    BufferEdge(
+                        source=edge_cfg.source,
+                        target=edge_cfg.target,
+                        capacity_override=edge_cfg.capacity_override,
+                        condition=edge_cfg.condition,
+                    )
+                )
+            return graph
+        else:
+            # Linear format: convert to graph
+            return TopologyGraph.from_linear(
+                [
+                    {
+                        "name": s.name,
+                        "batch_in": s.batch_in,
+                        "output_type": s.output_type.value,
+                        "equipment_ref": s.name,
+                    }
+                    for s in self.stations
+                ]
+            )
 
 
 @dataclass

@@ -1,0 +1,56 @@
+# Graph-based topology with explicit nodes and edges
+# Supports conditional routing for quality gates
+name: cosmetics_line_graph
+source: infinite_raw
+materials: cosmetics
+
+# Nodes represent stations (equipment)
+nodes:
+  - name: Filler
+    batch_in: 1
+    output_type: Tube
+    equipment_ref: Filler
+
+  - name: Inspector
+    batch_in: 1
+    output_type: None
+    equipment_ref: Inspector
+
+  - name: Packer
+    batch_in: 12
+    output_type: Case
+    equipment_ref: Packer
+
+  - name: Palletizer
+    batch_in: 60
+    output_type: Pallet
+    equipment_ref: Palletizer
+
+# Edges represent connections (buffers) between nodes
+# Special nodes: _source, _sink, _reject
+edges:
+  # Source feeds Filler
+  - source: _source
+    target: Filler
+
+  # Filler -> Inspector
+  - source: Filler
+    target: Inspector
+
+  # Inspector -> Packer (good products only)
+  - source: Inspector
+    target: Packer
+    condition: "not product.is_defective"
+
+  # Inspector -> Reject (defective products)
+  - source: Inspector
+    target: _reject
+    condition: "product.is_defective"
+
+  # Packer -> Palletizer
+  - source: Packer
+    target: Palletizer
+
+  # Palletizer -> Sink
+  - source: Palletizer
+    target: _sink
