@@ -177,3 +177,6 @@ pyrightconfig.json
 
 # Simulation output
 output/
+
+# Mac
+.DS_Store
