@@ -17,10 +17,11 @@ from simpy_demo.models import MachineConfig, MaterialType, Product
 from simpy_demo.topology import TopologyGraph
 
 if TYPE_CHECKING:
-    from simpy_demo.behavior import BehaviorOrchestrator
     from simpy_demo.equipment import Equipment
     from simpy_demo.factories.telemetry import TelemetryGenerator
     from simpy_demo.loader import SourceConfig
+
+from simpy_demo.behavior import BehaviorOrchestrator, DEFAULT_BEHAVIOR
 
 
 @dataclass
@@ -151,7 +152,7 @@ class LayoutBuilder:
         source_config: Optional["SourceConfig"] = None,
         telemetry_gen: Optional["TelemetryGenerator"] = None,
         equipment_factory: Optional[Callable] = None,
-        orchestrator: Optional["BehaviorOrchestrator"] = None,
+        orchestrator: Optional[BehaviorOrchestrator] = None,  # None uses DEFAULT_BEHAVIOR
     ):
         """Initialize layout builder.
 
@@ -162,7 +163,7 @@ class LayoutBuilder:
             source_config: Source configuration for initial inventory
             telemetry_gen: Telemetry generator for equipment
             equipment_factory: Optional factory for creating Equipment instances
-            orchestrator: Behavior orchestrator for YAML-defined phases
+            orchestrator: Behavior orchestrator (uses DEFAULT_BEHAVIOR if None)
         """
         self.env = env
         self.graph = graph
@@ -170,7 +171,8 @@ class LayoutBuilder:
         self.source_config = source_config
         self.telemetry_gen = telemetry_gen
         self.equipment_factory = equipment_factory
-        self.orchestrator = orchestrator
+        # Always use an orchestrator (default if not provided)
+        self.orchestrator = orchestrator or BehaviorOrchestrator(DEFAULT_BEHAVIOR)
 
     def build(self) -> LayoutResult:
         """Build the complete SimPy layout.

@@ -7,7 +7,7 @@ from typing import Dict, List, Optional, Tuple
 import pandas as pd
 import simpy
 
-from simpy_demo.behavior import BehaviorOrchestrator
+from simpy_demo.behavior import BehaviorOrchestrator, DEFAULT_BEHAVIOR
 from simpy_demo.equipment import Equipment
 from simpy_demo.factories.telemetry import TelemetryGenerator
 from simpy_demo.loader import (
@@ -58,10 +58,9 @@ class SimulationEngine:
         materials_types = resolved.materials.types if resolved.materials else {}
         telemetry_gen = TelemetryGenerator(materials_types, constants)
 
-        # 6. Create behavior orchestrator from behavior config
-        orchestrator: Optional[BehaviorOrchestrator] = None
-        if resolved.behavior:
-            orchestrator = BehaviorOrchestrator(resolved.behavior)
+        # 6. Create behavior orchestrator (always required)
+        behavior_config = resolved.behavior or DEFAULT_BEHAVIOR
+        orchestrator = BehaviorOrchestrator(behavior_config)
 
         # 7. Build production line based on topology type
         if resolved.topology.is_graph_topology:
@@ -146,9 +145,13 @@ class SimulationEngine:
         configs: List[MachineConfig],
         source_config: Optional[SourceConfig] = None,
         telemetry_gen: Optional[TelemetryGenerator] = None,
-        orchestrator: Optional[BehaviorOrchestrator] = None,
+        orchestrator: Optional[BehaviorOrchestrator] = None,  # None uses DEFAULT_BEHAVIOR
     ) -> Tuple[List[Equipment], Dict[str, simpy.Store], simpy.Store]:
         """Build SimPy stores and Equipment instances."""
+        # Ensure orchestrator is always provided
+        if orchestrator is None:
+            orchestrator = BehaviorOrchestrator(DEFAULT_BEHAVIOR)
+
         machines: List[Equipment] = []
         buffers: Dict[str, simpy.Store] = {}
 
@@ -210,7 +213,7 @@ class SimulationEngine:
         resolved: ResolvedConfig,
         machine_configs: List[MachineConfig],
         telemetry_gen: Optional[TelemetryGenerator] = None,
-        orchestrator: Optional[BehaviorOrchestrator] = None,
+        orchestrator: Optional[BehaviorOrchestrator] = None,  # None uses DEFAULT_BEHAVIOR
     ) -> Tuple[List[Equipment], Dict[str, simpy.Store], simpy.Store]:
         """Build SimPy layout from graph-based topology.
 
@@ -219,11 +222,15 @@ class SimulationEngine:
             resolved: Fully resolved configuration
             machine_configs: List of machine configurations
             telemetry_gen: Telemetry generator
-            orchestrator: Behavior orchestrator
+            orchestrator: Behavior orchestrator (uses DEFAULT_BEHAVIOR if None)
 
         Returns:
             Tuple of (machines, buffers, reject_store)
         """
+        # Ensure orchestrator is always provided
+        if orchestrator is None:
+            orchestrator = BehaviorOrchestrator(DEFAULT_BEHAVIOR)
+
         # Convert TopologyConfig to TopologyGraph
         graph = resolved.topology.to_graph()
 

@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.1] - 2025-11-26
+
+### Changed
+- **Deprecated inline behavior implementation** (Phase 4 Addendum of refac3.md)
+  - Removed `Equipment._run_inline()` method (~76 lines) - behavior now always uses orchestrator
+  - Removed `Equipment._transform_material()` method (~39 lines) - logic in TransformPhase
+  - Inlined `Equipment._run_with_orchestrator()` contents directly into `run()`
+  - Equipment always creates orchestrator from `DEFAULT_BEHAVIOR` if none provided
+  - `SimulationEngine` always creates `BehaviorOrchestrator` using `DEFAULT_BEHAVIOR` as fallback
+  - `LayoutBuilder` always creates orchestrator from `DEFAULT_BEHAVIOR` if none provided
+
+### Removed
+- `Equipment._run_inline()` method (backward compatibility code)
+- `Equipment._transform_material()` method (duplicated in TransformPhase)
+- Conditional orchestrator creation in `SimulationEngine.run_resolved()`
+
+### Technical Notes
+- Equipment.py reduced from ~330 lines to ~198 lines
+- Single code path through behavior system (no more conditional orchestrator check)
+- Identical simulation results verified (no functional changes)
+- All code paths now use `BehaviorOrchestrator` with `DEFAULT_BEHAVIOR` fallback
+
 ## [0.8.0] - 2025-11-26
 
 ### Added
