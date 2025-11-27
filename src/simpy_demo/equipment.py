@@ -9,6 +9,7 @@ import simpy
 from simpy_demo.models import MachineConfig, MaterialType, Product
 
 if TYPE_CHECKING:
+    from simpy_demo.behavior import BehaviorOrchestrator
     from simpy_demo.factories.telemetry import TelemetryGenerator
     from simpy_demo.simulation.layout import NodeConnections
 
@@ -26,6 +27,8 @@ class Equipment:
 
     Supports both linear (single upstream/downstream) and graph-based
     (multiple upstream/downstream with conditional routing) topologies.
+
+    Behavior can be customized via BehaviorOrchestrator for YAML-defined phases.
     """
 
     def __init__(
@@ -37,6 +40,7 @@ class Equipment:
         reject_store: Optional[simpy.Store],
         telemetry_gen: Optional["TelemetryGenerator"] = None,
         connections: Optional["NodeConnections"] = None,
+        orchestrator: Optional["BehaviorOrchestrator"] = None,
     ):
         """Initialize equipment.
 
@@ -48,6 +52,7 @@ class Equipment:
             reject_store: Store for rejected products
             telemetry_gen: Telemetry generator
             connections: Optional graph-based connections for multi-path routing
+            orchestrator: Optional behavior orchestrator for YAML-defined phases
         """
         self.env = env
         self.cfg = config
@@ -61,6 +66,9 @@ class Equipment:
         self._use_graph_routing = connections is not None and len(
             connections.downstream_routes
         ) > 1
+
+        # Behavior orchestrator (optional)
+        self._orchestrator = orchestrator
 
         self.items_produced = 0
         self.state = "IDLE"
@@ -118,7 +126,79 @@ class Equipment:
             )
 
     def run(self):
-        """Main process loop implementing 6-phase cycle."""
+        """Main process loop implementing 6-phase cycle.
+
+        If an orchestrator is provided, delegates to run_with_orchestrator().
+        Otherwise uses the inline implementation for backward compatibility.
+        """
+        if self._orchestrator:
+            yield from self._run_with_orchestrator()
+        else:
+            yield from self._run_inline()
+
+    def _run_with_orchestrator(self):
+        """Run equipment cycle using BehaviorOrchestrator."""
+        from simpy_demo.behavior.phases import PhaseContext
+
+        self.log("STARVED")
+
+        while True:
+            # Create phase context with all necessary dependencies
+            context = PhaseContext(
+                upstream=self.upstream,
+                downstream=self.downstream,
+                reject_store=self.reject_store,
+                connections=self._connections,
+                telemetry_gen=self.telemetry_gen,
+                log_state=self.log,
+            )
+
+            # Run the full cycle through orchestrator
+            cycle_gen = self._orchestrator.run_cycle(
+                self.env, self.cfg, context
+            )
+
+            # Execute cycle, yielding SimPy events and forwarding values
+            try:
+                # Get first event
+                event = next(cycle_gen)
+                while True:
+                    # Yield to SimPy and get value back
+                    value = yield event
+                    # Send value to orchestrator and get next event
+                    event = cycle_gen.send(value)
+            except StopIteration:
+                pass  # Cycle completed
+
+            # Update counters from context
+            output_item = context.transformed_output
+            if output_item:
+                self.items_produced += 1
+
+                # Track production by type
+                if output_item.type == MaterialType.TUBE:
+                    self.tubes_produced += 1
+                elif output_item.type == MaterialType.CASE:
+                    self.cases_produced += 1
+                elif output_item.type == MaterialType.PALLET:
+                    self.pallets_produced += 1
+
+            # Track defects
+            if context.new_defect_created:
+                self.defects_created += 1
+
+            # Only count detection/escape if detection was enabled for this machine
+            if self.cfg.quality.detection_prob > 0 and output_item and output_item.is_defective:
+                if context.routed_to_reject:
+                    self.defects_detected += 1
+                else:
+                    self.defects_escaped += 1
+
+            # Back to waiting for material
+            self.log("STARVED")
+
+    def _run_inline(self):
+        """Original inline implementation of 6-phase cycle (backward compatible)."""
         self.log("STARVED")
 
         while True:

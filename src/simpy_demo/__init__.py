@@ -1,5 +1,20 @@
 """SimPy-based production line digital twin."""
 
+from simpy_demo.behavior import (
+    BehaviorConfig,
+    BehaviorOrchestrator,
+    BreakdownPhase,
+    CollectPhase,
+    DEFAULT_BEHAVIOR,
+    ExecutePhase,
+    InspectPhase,
+    MicrostopPhase,
+    Phase,
+    PhaseConfig,
+    PhaseContext,
+    PhaseResult,
+    TransformPhase,
+)
 from simpy_demo.config import (
     ConfigLoader,
     ConstantsConfig,
@@ -70,6 +85,20 @@ __all__ = [
     "ExpressionEngine",
     # Factories
     "TelemetryGenerator",
+    # Behavior
+    "BehaviorConfig",
+    "BehaviorOrchestrator",
+    "DEFAULT_BEHAVIOR",
+    "Phase",
+    "PhaseConfig",
+    "PhaseContext",
+    "PhaseResult",
+    "CollectPhase",
+    "BreakdownPhase",
+    "MicrostopPhase",
+    "ExecutePhase",
+    "TransformPhase",
+    "InspectPhase",
     # Engine
     "SimulationEngine",
     "Equipment",

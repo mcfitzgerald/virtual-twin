@@ -5,6 +5,52 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2025-11-26
+
+### Added
+- **Configurable equipment phases** (`src/simpy_demo/behavior/`) - YAML-defined behavior (Phase 4 of refac3.md)
+  - `Phase` abstract base class with execute/is_enabled interface
+  - `PhaseConfig` and `PhaseContext` dataclasses for phase coordination
+  - `PhaseResult` for capturing phase outcomes
+- **Individual phase handlers** (`src/simpy_demo/behavior/phases/`):
+  - `CollectPhase`: Wait for and gather inputs from upstream
+  - `BreakdownPhase`: Poisson-based failure check (availability loss)
+  - `MicrostopPhase`: Bernoulli per-cycle jam check (performance loss)
+  - `ExecutePhase`: Value-add processing time
+  - `TransformPhase`: Convert inputs to output with telemetry generation
+  - `InspectPhase`: Quality inspection and conditional routing
+- **BehaviorOrchestrator** (`src/simpy_demo/behavior/orchestrator.py`):
+  - Coordinates phase execution based on behavior config
+  - Checks enabled conditions for each phase
+  - Passes shared context between phases
+  - `DEFAULT_BEHAVIOR` singleton for default 6-phase cycle
+- **Behavior YAML config** (`config/behaviors/default_6phase.yaml`):
+  - Declarative definition of equipment phases
+  - Handler class references
+  - Enabled condition expressions
+- **Config loader support**:
+  - `load_behavior()` method in ConfigLoader
+  - `behavior` field in ScenarioConfig (optional reference)
+  - `behavior` field in ResolvedConfig
+- New exports in `__init__.py`: `BehaviorConfig`, `BehaviorOrchestrator`, `DEFAULT_BEHAVIOR`, `Phase`, `PhaseConfig`, `PhaseContext`, `PhaseResult`, `CollectPhase`, `BreakdownPhase`, `MicrostopPhase`, `ExecutePhase`, `TransformPhase`, `InspectPhase`
+
+### Changed
+- `Equipment` now accepts optional `orchestrator` parameter for YAML-defined phases
+- `Equipment.run()` delegates to `_run_with_orchestrator()` when orchestrator provided
+- Original inline 6-phase cycle preserved in `_run_inline()` for backward compatibility
+- `SimulationEngine` now creates `BehaviorOrchestrator` from resolved config and passes to Equipment
+- `LayoutBuilder` accepts and passes orchestrator for graph-based topologies
+- Default behavior config (`config/behaviors/default_6phase.yaml`) is loaded automatically when present
+
+### Technical Notes
+- Orchestrator is used by default when `config/behaviors/default_6phase.yaml` exists
+- Inline implementation is fallback when no behavior config is available
+- Phase handlers are registered in `PHASE_REGISTRY` for lookup by name
+- PhaseContext provides shared state between phases (upstream/downstream stores, telemetry_gen, log callback)
+- Each phase is a generator yielding SimPy events and returning PhaseResult
+- Proper SimPy yield/send protocol ensures values flow correctly between phases
+- Enabled conditions are evaluated by phase's `is_enabled()` method based on MachineConfig
+
 ## [0.7.0] - 2025-11-26
 
 ### Added

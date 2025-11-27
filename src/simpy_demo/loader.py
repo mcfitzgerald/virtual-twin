@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Optional
 
 import yaml
 
+from simpy_demo.behavior import BehaviorConfig, PhaseConfig
 from simpy_demo.models import (
     CostRates,
     MachineConfig,
@@ -142,6 +143,7 @@ class ConfigLoader:
             topology=data["topology"],
             equipment=data.get("equipment", []),
             overrides=data.get("overrides", {}),
+            behavior=data.get("behavior"),  # Optional behavior reference
         )
 
     def load_topology(self, name: str) -> "TopologyConfig":
@@ -209,6 +211,35 @@ class ConfigLoader:
         data = self._load_yaml(path)
         return MaterialsConfig(name=data["name"], types=data.get("types", {}))
 
+    def load_behavior(self, name: str) -> BehaviorConfig:
+        """Load a behavior configuration by name.
+
+        Args:
+            name: Behavior config name (e.g., "default_6phase")
+
+        Returns:
+            BehaviorConfig with phases list
+        """
+        path = self.config_dir / "behaviors" / f"{name}.yaml"
+        data = self._load_yaml(path)
+
+        phases = []
+        for phase_data in data.get("phases", []):
+            phases.append(
+                PhaseConfig(
+                    name=phase_data["name"],
+                    handler=phase_data["handler"],
+                    enabled=phase_data.get("enabled", "always"),
+                    params=phase_data.get("params", {}),
+                )
+            )
+
+        return BehaviorConfig(
+            name=data["name"],
+            description=data.get("description", ""),
+            phases=phases,
+        )
+
     def load_product(self, name: str) -> ProductConfig:
         """Load a product configuration by name."""
         path = self.config_dir / "products" / f"{name}.yaml"
@@ -262,6 +293,17 @@ class ConfigLoader:
                     equipment_configs[equip_name], overrides
                 )
 
+        # Load behavior config (from scenario or default)
+        behavior = None
+        behavior_ref = scenario.behavior
+        if behavior_ref:
+            behavior = self.load_behavior(behavior_ref)
+        else:
+            # Try to load default behavior if it exists
+            default_behavior_path = self.config_dir / "behaviors" / "default_6phase.yaml"
+            if default_behavior_path.exists():
+                behavior = self.load_behavior("default_6phase")
+
         return ResolvedConfig(
             run=run,
             scenario=scenario,
@@ -271,6 +313,7 @@ class ConfigLoader:
             source=source,
             constants=self.constants,
             materials=materials,
+            behavior=behavior,
         )
 
     def build_machine_configs(self, resolved: "ResolvedConfig") -> List[MachineConfig]:
@@ -462,6 +505,7 @@ class ScenarioConfig:
     topology: str
     equipment: List[str] = field(default_factory=list)
     overrides: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    behavior: Optional[str] = None  # Reference to behavior config (e.g., "default_6phase")
 
 
 @dataclass
@@ -599,3 +643,4 @@ class ResolvedConfig:
     source: Optional[SourceConfig] = None
     constants: Optional[ConstantsConfig] = None
     materials: Optional["MaterialsConfig"] = None
+    behavior: Optional[BehaviorConfig] = None  # Equipment behavior configuration

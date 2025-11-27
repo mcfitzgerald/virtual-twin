@@ -17,6 +17,7 @@ from simpy_demo.models import MachineConfig, MaterialType, Product
 from simpy_demo.topology import TopologyGraph
 
 if TYPE_CHECKING:
+    from simpy_demo.behavior import BehaviorOrchestrator
     from simpy_demo.equipment import Equipment
     from simpy_demo.factories.telemetry import TelemetryGenerator
     from simpy_demo.loader import SourceConfig
@@ -150,6 +151,7 @@ class LayoutBuilder:
         source_config: Optional["SourceConfig"] = None,
         telemetry_gen: Optional["TelemetryGenerator"] = None,
         equipment_factory: Optional[Callable] = None,
+        orchestrator: Optional["BehaviorOrchestrator"] = None,
     ):
         """Initialize layout builder.
 
@@ -160,6 +162,7 @@ class LayoutBuilder:
             source_config: Source configuration for initial inventory
             telemetry_gen: Telemetry generator for equipment
             equipment_factory: Optional factory for creating Equipment instances
+            orchestrator: Behavior orchestrator for YAML-defined phases
         """
         self.env = env
         self.graph = graph
@@ -167,6 +170,7 @@ class LayoutBuilder:
         self.source_config = source_config
         self.telemetry_gen = telemetry_gen
         self.equipment_factory = equipment_factory
+        self.orchestrator = orchestrator
 
     def build(self) -> LayoutResult:
         """Build the complete SimPy layout.
@@ -281,6 +285,7 @@ class LayoutBuilder:
                     reject_store=reject_store if has_reject_routing else None,
                     telemetry_gen=self.telemetry_gen,
                     connections=node_conn,
+                    orchestrator=self.orchestrator,
                 )
             else:
                 machine = Equipment(
@@ -292,6 +297,7 @@ class LayoutBuilder:
                     if config.quality.detection_prob > 0
                     else None,
                     telemetry_gen=self.telemetry_gen,
+                    orchestrator=self.orchestrator,
                 )
 
             machines[node.name] = machine

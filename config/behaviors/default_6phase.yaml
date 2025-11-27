@@ -1,0 +1,55 @@
+name: default_6phase
+description: "Standard 6-phase equipment cycle"
+
+# The default behavior replicates the original hardcoded Equipment.run() logic.
+# Each phase is conditionally enabled based on equipment configuration.
+#
+# Phase execution order:
+# 1. COLLECT: Wait for batch_in items from upstream (models starvation)
+# 2. BREAKDOWN: Poisson-based failure check (availability loss)
+# 3. MICROSTOP: Bernoulli per-cycle jam check (performance loss)
+# 4. EXECUTE: Value-add processing time
+# 5. TRANSFORM: Convert inputs to output with telemetry generation
+# 6. INSPECT: Quality inspection and routing (to downstream or reject)
+#
+# Enabled conditions:
+# - "always": Phase runs every cycle
+# - "config.reliability.mtbf_min is not None": Phase runs if MTBF is configured
+# - "config.performance.jam_prob > 0": Phase runs if jam probability > 0
+# - "config.quality.detection_prob > 0": Phase runs if detection is configured
+#
+# Note: The actual enabled condition is evaluated by the Phase.is_enabled() method,
+# which has access to the full MachineConfig. The YAML condition is informational.
+
+phases:
+  - name: collect
+    handler: CollectPhase
+    enabled: always
+    # params: {}  # CollectPhase has no additional params
+
+  - name: breakdown
+    handler: BreakdownPhase
+    enabled: "config.reliability.mtbf_min is not None"
+    # params:
+    #   distribution: poisson  # Only distribution currently supported
+
+  - name: microstop
+    handler: MicrostopPhase
+    enabled: "config.performance.jam_prob > 0"
+    # params: {}  # Uses config.performance.jam_time_sec
+
+  - name: execute
+    handler: ExecutePhase
+    enabled: always
+    # params: {}  # Uses config.cycle_time_sec (derived from UPH)
+
+  - name: transform
+    handler: TransformPhase
+    enabled: always
+    # params: {}  # Uses config.output_type, quality.defect_rate, telemetry_gen
+
+  - name: inspect
+    handler: InspectPhase
+    enabled: always
+    # Note: Inspect phase always runs to handle routing to downstream.
+    # Detection logic only activates if config.quality.detection_prob > 0

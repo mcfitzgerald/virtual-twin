@@ -625,6 +625,56 @@ class BehaviorOrchestrator:
 
 ---
 
+### Phase 4 Addendum: Deprecate Backwards Compatibility (v0.8.1)
+
+**Goal**: Remove inline 6-phase cycle now that BehaviorOrchestrator is functional
+
+#### Rationale
+
+- Orchestrator produces identical results to inline implementation (verified)
+- No external tests or code depend on inline implementation
+- `config/behaviors/default_6phase.yaml` is auto-loaded, so orchestrator is always used
+- Cleanup reduces maintenance burden (~170 lines removed)
+
+#### 4A.1 Files to Modify
+
+**`src/simpy_demo/equipment.py`** - Remove dead code:
+- `_run_inline()` method (~76 lines)
+- `_transform_material()` method (~39 lines) - logic already in `TransformPhase`
+- `_run_with_orchestrator()` method - inline its contents into `run()`
+- Remove `Optional` from `orchestrator` parameter - make it required
+
+**`src/simpy_demo/engine.py`**:
+- Always create `BehaviorOrchestrator` (use `DEFAULT_BEHAVIOR` if no config)
+- Remove the `if resolved.behavior:` conditional
+
+**`src/simpy_demo/loader.py`**:
+- Always load default behavior if no explicit behavior specified
+- Import and use `DEFAULT_BEHAVIOR` from behavior module
+
+**`src/simpy_demo/simulation/layout.py`**:
+- Make `orchestrator` parameter required in `LayoutBuilder.__init__()`
+
+#### 4A.2 Execution Steps
+
+1. Update loader.py - Always provide behavior config (use DEFAULT_BEHAVIOR)
+2. Update engine.py - Remove conditional orchestrator creation
+3. Update layout.py - Make orchestrator required
+4. Simplify equipment.py - Remove inline code, inline orchestrator call
+5. Update __init__.py exports if needed
+6. Run verification - `poetry run python -m simpy_demo --run baseline_8hr`
+7. Run ruff/mypy - Ensure code quality
+8. Update CHANGELOG.md - Document changes
+
+#### 4A.3 Expected Outcome
+
+- Equipment.py reduced from ~330 lines to ~155 lines
+- Single code path through behavior system
+- Cleaner, more maintainable architecture
+- No functional changes (identical simulation results)
+
+---
+
 ### Phase 5: CLI & Scenario Generation (v0.9.0)
 
 **Goal**: `configure` → `simulate` workflow with scenario bundling
@@ -1266,6 +1316,7 @@ constants:
 | v0.6.0 | 2 | Expression engine + telemetry from config |
 | v0.7.0 | 3 | Graph topology abstraction |
 | v0.8.0 | 4 | Configurable equipment phases |
+| v0.8.1 | 4A | Deprecate backwards compatibility (cleanup) |
 | v0.9.0 | 5 | CLI commands + scenario generation |
 | v1.0.0 | 6 | Multi-line support |
 
@@ -1337,10 +1388,11 @@ cat .semgrep/baseline_scan.json | jq '.results | length'
 
 ### Version Checklist
 
-- [ ] v0.4.2 - Semgrep rules + baseline scan
-- [ ] v0.5.0 - Config foundation (defaults, constants, source)
-- [ ] v0.6.0 - Expression engine + telemetry from config
-- [ ] v0.7.0 - Graph topology abstraction
-- [ ] v0.8.0 - Configurable equipment phases
+- [x] v0.4.2 - Semgrep rules + baseline scan
+- [x] v0.5.0 - Config foundation (defaults, constants, source)
+- [x] v0.6.0 - Expression engine + telemetry from config
+- [x] v0.7.0 - Graph topology abstraction
+- [x] v0.8.0 - Configurable equipment phases
+- [ ] v0.8.1 - Deprecate backwards compatibility (cleanup)
 - [ ] v0.9.0 - CLI commands + scenario generation
 - [ ] v1.0.0 - Multi-line support
