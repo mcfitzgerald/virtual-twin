@@ -95,9 +95,6 @@ class PhaseContext:
     # Graph-based connections (optional)
     connections: Optional[Any] = None  # NodeConnections
 
-    # Telemetry generator
-    telemetry_gen: Optional[Any] = None  # TelemetryGenerator
-
     # Accumulated results during cycle
     collected_inputs: List["Product"] = field(default_factory=list)
     transformed_output: Optional["Product"] = None

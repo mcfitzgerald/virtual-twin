@@ -190,7 +190,6 @@ class ConfigLoader:
         return TopologyConfig(
             name=data["name"],
             source=data.get("source", "infinite_raw"),  # Default source
-            materials=data.get("materials", "cosmetics"),  # Default materials
             stations=stations,
             nodes=nodes,
             edges=edges,
@@ -204,12 +203,6 @@ class ConfigLoader:
             path = self.config_dir / "equipment" / f"{name}.yaml"
         data = self._load_yaml(path)
         return self._parse_equipment(data)
-
-    def load_materials(self, name: str) -> "MaterialsConfig":
-        """Load a materials configuration by name."""
-        path = self.config_dir / "materials" / f"{name}.yaml"
-        data = self._load_yaml(path)
-        return MaterialsConfig(name=data["name"], types=data.get("types", {}))
 
     def load_behavior(self, name: str) -> BehaviorConfig:
         """Load a behavior configuration by name.
@@ -250,6 +243,7 @@ class ConfigLoader:
             name=data["name"],
             description=data.get("description", ""),
             size_oz=data.get("size_oz", 0.0),
+            net_weight_g=data.get("net_weight_g", 0.0),
             units_per_case=data.get(
                 "units_per_case", prod_defaults.get("units_per_case", 12)
             ),
@@ -272,9 +266,6 @@ class ConfigLoader:
 
         # Load source config from topology reference
         source = self.load_source(topology.source)
-
-        # Load materials config from topology reference
-        materials = self.load_materials(topology.materials)
 
         # Load product config if specified
         product = None
@@ -312,7 +303,6 @@ class ConfigLoader:
             product=product,
             source=source,
             constants=self.constants,
-            materials=materials,
             behavior=behavior,
         )
 
@@ -552,7 +542,6 @@ class TopologyConfig:
 
     name: str
     source: str = "infinite_raw"  # Reference to config/sources/*.yaml
-    materials: str = "cosmetics"  # Reference to config/materials/*.yaml
 
     # Linear format (backward compatible)
     stations: List[StationConfig] = field(default_factory=list)
@@ -624,14 +613,6 @@ class EquipmentConfig:
 
 
 @dataclass
-class MaterialsConfig:
-    """Materials configuration."""
-
-    name: str
-    types: Dict[str, Dict[str, Any]] = field(default_factory=dict)
-
-
-@dataclass
 class ResolvedConfig:
     """Fully resolved configuration ready for simulation."""
 
@@ -642,5 +623,4 @@ class ResolvedConfig:
     product: Optional[ProductConfig] = None
     source: Optional[SourceConfig] = None
     constants: Optional[ConstantsConfig] = None
-    materials: Optional["MaterialsConfig"] = None
     behavior: Optional[BehaviorConfig] = None  # Equipment behavior configuration

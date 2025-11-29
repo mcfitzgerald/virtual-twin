@@ -73,6 +73,7 @@ class ProductConfig(BaseModel):
 
     # Physical attributes
     size_oz: float = 0.0
+    net_weight_g: float = 0.0  # Net weight per unit in grams
     units_per_case: int = 12
     cases_per_pallet: int = 60
 

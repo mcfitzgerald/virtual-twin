@@ -8,7 +8,6 @@ from simpy_demo.behavior import BehaviorOrchestrator, DEFAULT_BEHAVIOR
 from simpy_demo.models import MachineConfig, MaterialType
 
 if TYPE_CHECKING:
-    from simpy_demo.factories.telemetry import TelemetryGenerator
     from simpy_demo.simulation.layout import NodeConnections
 
 
@@ -34,7 +33,6 @@ class Equipment:
         upstream: simpy.Store,
         downstream: simpy.Store,
         reject_store: Optional[simpy.Store],
-        telemetry_gen: Optional["TelemetryGenerator"] = None,
         connections: Optional["NodeConnections"] = None,
         orchestrator: Optional[BehaviorOrchestrator] = None,  # None uses DEFAULT_BEHAVIOR
     ):
@@ -46,7 +44,6 @@ class Equipment:
             upstream: Primary upstream store
             downstream: Primary downstream store
             reject_store: Store for rejected products
-            telemetry_gen: Telemetry generator
             connections: Optional graph-based connections for multi-path routing
             orchestrator: Behavior orchestrator (uses DEFAULT_BEHAVIOR if None)
         """
@@ -55,7 +52,6 @@ class Equipment:
         self.upstream = upstream
         self.downstream = downstream
         self.reject_store = reject_store
-        self.telemetry_gen = telemetry_gen
 
         # Graph-based connections (optional)
         self._connections = connections
@@ -137,7 +133,6 @@ class Equipment:
                 downstream=self.downstream,
                 reject_store=self.reject_store,
                 connections=self._connections,
-                telemetry_gen=self.telemetry_gen,
                 log_state=self.log,
             )
 

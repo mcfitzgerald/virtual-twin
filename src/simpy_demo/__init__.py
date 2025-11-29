@@ -21,7 +21,6 @@ from simpy_demo.config import (
     DefaultsConfig,
     EdgeConfig,
     EquipmentConfig,
-    MaterialsConfig,
     NodeConfig,
     ResolvedConfig,
     RunConfig,
@@ -32,8 +31,6 @@ from simpy_demo.config import (
 )
 from simpy_demo.engine import SimulationEngine
 from simpy_demo.equipment import Equipment
-from simpy_demo.expressions import ExpressionEngine
-from simpy_demo.factories import TelemetryGenerator
 from simpy_demo.models import (
     CostRates,
     MachineConfig,
@@ -74,17 +71,12 @@ __all__ = [
     "NodeConfig",
     "EdgeConfig",
     "EquipmentConfig",
-    "MaterialsConfig",
     "ResolvedConfig",
     # Topology
     "TopologyGraph",
     "StationNode",
     "BufferEdge",
     "CycleDetectedError",
-    # Expression Engine
-    "ExpressionEngine",
-    # Factories
-    "TelemetryGenerator",
     # Behavior
     "BehaviorConfig",
     "BehaviorOrchestrator",

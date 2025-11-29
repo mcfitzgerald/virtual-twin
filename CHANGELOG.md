@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.2] - 2025-11-29
+
+### Added
+- `net_weight_g` field to `ProductConfig` for product-level weight attribute
+
+### Removed
+- **Expression Engine** (`src/simpy_demo/expressions/`) - ~230 lines deleted
+  - Over-engineered for prototype needs
+  - Safe AST-based expression evaluation no longer needed
+- **Telemetry Generator** (`src/simpy_demo/factories/telemetry.py`) - ~150 lines deleted
+  - Generator types (gaussian, fixed, expression, count_inputs) removed
+  - Per-item telemetry generation deferred to future enhancement
+- **Materials Configuration** (`config/materials/cosmetics.yaml`) - ~40 lines deleted
+  - Telemetry generator configs no longer used
+- `MaterialsConfig` dataclass from loader.py
+- `materials` field from `TopologyConfig` and `ResolvedConfig`
+- `telemetry_gen` parameter from `Equipment`, `LayoutBuilder`, and `SimulationEngine`
+- Exports removed from `__init__.py`: `ExpressionEngine`, `TelemetryGenerator`, `MaterialsConfig`
+
+### Changed
+- `TransformPhase.execute()` simplified - no longer uses TelemetryGenerator
+- Product telemetry now empty dict (simplified for prototype)
+- `Equipment` constructor no longer accepts `telemetry_gen` parameter
+- `LayoutBuilder` constructor no longer accepts `telemetry_gen` parameter
+- `SimulationEngine._build_layout()` and `_build_graph_layout()` simplified
+
+### Technical Notes
+- ~420 lines of code deleted total
+- Telemetry simplified to product-level attributes (size_oz, net_weight_g)
+- No functional changes to simulation output (production counts, OEE, economics unchanged)
+- Per-item telemetry generation deferred to Future Enhancements
+
 ## [0.8.1] - 2025-11-26
 
 ### Changed

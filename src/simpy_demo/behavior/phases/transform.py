@@ -17,7 +17,6 @@ class TransformPhase(Phase):
     - Defect inheritance from inputs
     - New defect creation based on defect_rate
     - Genealogy tracking
-    - Telemetry generation (via TelemetryGenerator)
     - Pass-through for NONE output type (inspection stations)
     """
 
@@ -53,23 +52,14 @@ class TransformPhase(Phase):
                 new_defect=False,
             )
 
-        # 5. Generate telemetry from config if available
-        material_type_str = config.output_type.name  # "TUBE", "CASE", "PALLET"
-        telemetry: dict = {}
-
-        if context.telemetry_gen and context.telemetry_gen.has_config_for(
-            material_type_str
-        ):
-            telemetry = context.telemetry_gen.generate(material_type_str, actual_inputs)
-
-        # 6. Create output product
+        # 5. Create output product (telemetry simplified - no expression engine)
         output = Product(
             type=config.output_type,
             created_at=env.now,
             parent_machine=config.name,
             is_defective=is_bad,
             genealogy=genealogy,
-            telemetry=telemetry,
+            telemetry={},  # Simplified: no per-item telemetry generation
         )
 
         # Store in context for inspect phase

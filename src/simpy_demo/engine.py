@@ -9,7 +9,6 @@ import simpy
 
 from simpy_demo.behavior import BehaviorOrchestrator, DEFAULT_BEHAVIOR
 from simpy_demo.equipment import Equipment
-from simpy_demo.factories.telemetry import TelemetryGenerator
 from simpy_demo.loader import (
     ConfigLoader,
     ResolvedConfig,
@@ -53,28 +52,23 @@ class SimulationEngine:
         # 4. Build machine configs from resolved config
         machine_configs = self.loader.build_machine_configs(resolved)
 
-        # 5. Create telemetry generator from materials config
-        constants = resolved.constants.constants if resolved.constants else {}
-        materials_types = resolved.materials.types if resolved.materials else {}
-        telemetry_gen = TelemetryGenerator(materials_types, constants)
-
-        # 6. Create behavior orchestrator (always required)
+        # 5. Create behavior orchestrator (always required)
         behavior_config = resolved.behavior or DEFAULT_BEHAVIOR
         orchestrator = BehaviorOrchestrator(behavior_config)
 
-        # 7. Build production line based on topology type
+        # 6. Build production line based on topology type
         if resolved.topology.is_graph_topology:
             # Use graph-based layout builder
             machines, buffers, reject_bin = self._build_graph_layout(
-                env, resolved, machine_configs, telemetry_gen, orchestrator
+                env, resolved, machine_configs, orchestrator
             )
         else:
             # Use legacy linear layout builder
             machines, buffers, reject_bin = self._build_layout(
-                env, machine_configs, resolved.source, telemetry_gen, orchestrator
+                env, machine_configs, resolved.source, orchestrator
             )
 
-        # 8. Start monitoring
+        # 7. Start monitoring
         telemetry_data: List[dict] = []
         env.process(
             self._monitor_process(
@@ -88,12 +82,12 @@ class SimulationEngine:
             )
         )
 
-        # 9. Run simulation
+        # 8. Run simulation
         duration_sec = run.duration_hours * 3600
         print(f"Starting Simulation: {run.name} ({run.duration_hours} hrs)...")
         env.run(until=duration_sec)
 
-        # 10. Compile results
+        # 9. Compile results
         return self._compile_results(machines, telemetry_data, start_time)
 
     def run_config(
@@ -144,7 +138,6 @@ class SimulationEngine:
         env: simpy.Environment,
         configs: List[MachineConfig],
         source_config: Optional[SourceConfig] = None,
-        telemetry_gen: Optional[TelemetryGenerator] = None,
         orchestrator: Optional[BehaviorOrchestrator] = None,  # None uses DEFAULT_BEHAVIOR
     ) -> Tuple[List[Equipment], Dict[str, simpy.Store], simpy.Store]:
         """Build SimPy stores and Equipment instances."""
@@ -199,7 +192,6 @@ class SimulationEngine:
                 upstream=current_upstream,
                 downstream=downstream,
                 reject_store=reject_bin if m_conf.quality.detection_prob > 0 else None,
-                telemetry_gen=telemetry_gen,
                 orchestrator=orchestrator,
             )
             machines.append(machine)
@@ -212,7 +204,6 @@ class SimulationEngine:
         env: simpy.Environment,
         resolved: ResolvedConfig,
         machine_configs: List[MachineConfig],
-        telemetry_gen: Optional[TelemetryGenerator] = None,
         orchestrator: Optional[BehaviorOrchestrator] = None,  # None uses DEFAULT_BEHAVIOR
     ) -> Tuple[List[Equipment], Dict[str, simpy.Store], simpy.Store]:
         """Build SimPy layout from graph-based topology.
@@ -221,7 +212,6 @@ class SimulationEngine:
             env: SimPy environment
             resolved: Fully resolved configuration
             machine_configs: List of machine configurations
-            telemetry_gen: Telemetry generator
             orchestrator: Behavior orchestrator (uses DEFAULT_BEHAVIOR if None)
 
         Returns:
@@ -243,7 +233,6 @@ class SimulationEngine:
             graph=graph,
             machine_configs=config_dict,
             source_config=resolved.source,
-            telemetry_gen=telemetry_gen,
             orchestrator=orchestrator,
         )
 

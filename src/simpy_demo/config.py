@@ -7,7 +7,6 @@ from simpy_demo.loader import (
     DefaultsConfig,
     EdgeConfig,
     EquipmentConfig,
-    MaterialsConfig,
     NodeConfig,
     ResolvedConfig,
     RunConfig,
@@ -29,6 +28,5 @@ __all__ = [
     "NodeConfig",
     "EdgeConfig",
     "EquipmentConfig",
-    "MaterialsConfig",
     "ResolvedConfig",
 ]

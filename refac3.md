@@ -1483,7 +1483,7 @@ cat .semgrep/baseline_scan.json | jq '.results | length'
 - [x] v0.7.0 - Graph topology abstraction
 - [x] v0.8.0 - Configurable equipment phases
 - [x] v0.8.1 - Deprecate backwards compatibility (cleanup)
-- [ ] v0.8.2 - Simplify telemetry (delete expression engine)
+- [x] v0.8.2 - Simplify telemetry (delete expression engine)
 - [ ] v0.9.0 - CLI commands + scenario generation + campaigns
 
 **Deferred:**

@@ -3,6 +3,7 @@ description: "Fresh Toothpaste 5oz Tube"
 
 # Physical attributes
 size_oz: 5.0
+net_weight_g: 150.0      # Net weight per tube in grams
 units_per_case: 12
 cases_per_pallet: 60
 

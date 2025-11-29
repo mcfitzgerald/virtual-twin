@@ -18,7 +18,6 @@ from simpy_demo.topology import TopologyGraph
 
 if TYPE_CHECKING:
     from simpy_demo.equipment import Equipment
-    from simpy_demo.factories.telemetry import TelemetryGenerator
     from simpy_demo.loader import SourceConfig
 
 from simpy_demo.behavior import BehaviorOrchestrator, DEFAULT_BEHAVIOR
@@ -150,7 +149,6 @@ class LayoutBuilder:
         graph: TopologyGraph,
         machine_configs: Dict[str, MachineConfig],
         source_config: Optional["SourceConfig"] = None,
-        telemetry_gen: Optional["TelemetryGenerator"] = None,
         equipment_factory: Optional[Callable] = None,
         orchestrator: Optional[BehaviorOrchestrator] = None,  # None uses DEFAULT_BEHAVIOR
     ):
@@ -161,7 +159,6 @@ class LayoutBuilder:
             graph: Topology graph to build from
             machine_configs: Dict mapping node name to MachineConfig
             source_config: Source configuration for initial inventory
-            telemetry_gen: Telemetry generator for equipment
             equipment_factory: Optional factory for creating Equipment instances
             orchestrator: Behavior orchestrator (uses DEFAULT_BEHAVIOR if None)
         """
@@ -169,7 +166,6 @@ class LayoutBuilder:
         self.graph = graph
         self.machine_configs = machine_configs
         self.source_config = source_config
-        self.telemetry_gen = telemetry_gen
         self.equipment_factory = equipment_factory
         # Always use an orchestrator (default if not provided)
         self.orchestrator = orchestrator or BehaviorOrchestrator(DEFAULT_BEHAVIOR)
@@ -285,7 +281,6 @@ class LayoutBuilder:
                     upstream=primary_upstream,
                     downstream=primary_downstream,
                     reject_store=reject_store if has_reject_routing else None,
-                    telemetry_gen=self.telemetry_gen,
                     connections=node_conn,
                     orchestrator=self.orchestrator,
                 )
@@ -298,7 +293,6 @@ class LayoutBuilder:
                     reject_store=reject_store
                     if config.quality.detection_prob > 0
                     else None,
-                    telemetry_gen=self.telemetry_gen,
                     orchestrator=self.orchestrator,
                 )
 
@@ -350,7 +344,6 @@ def build_layout_from_graph(
     graph: TopologyGraph,
     machine_configs: Dict[str, MachineConfig],
     source_config: Optional["SourceConfig"] = None,
-    telemetry_gen: Optional["TelemetryGenerator"] = None,
 ) -> Tuple[List["Equipment"], Dict[str, simpy.Store], simpy.Store]:
     """Build layout from graph (convenience function).
 
@@ -361,7 +354,6 @@ def build_layout_from_graph(
         graph: Topology graph
         machine_configs: Dict mapping node name to MachineConfig
         source_config: Source configuration
-        telemetry_gen: Telemetry generator
 
     Returns:
         Tuple of (machines_list, buffers_dict, reject_store)
@@ -373,7 +365,6 @@ def build_layout_from_graph(
         if isinstance(machine_configs, dict)
         else {cfg.name: cfg for cfg in machine_configs},
         source_config=source_config,
-        telemetry_gen=telemetry_gen,
     )
 
     result = builder.build()
