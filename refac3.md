@@ -675,6 +675,91 @@ class BehaviorOrchestrator:
 
 ---
 
+### Phase 4B: Simplify Telemetry (v0.8.2)
+
+**Goal**: Delete over-engineered expression engine, simplify telemetry to product-level attributes
+
+#### Rationale
+
+The expression engine was built to support config-driven telemetry with expressions like:
+```yaml
+weight:
+  generator: expression
+  expr: "sum(inputs, 'telemetry.weight') + ${CASE_TARE_WEIGHT_G}"
+```
+
+This is over-engineering. For the prototype, we only need:
+- Product volume (e.g., `size_oz: 5.0`)
+- Product net weight (e.g., `net_weight_g: 150.0`)
+
+Pack weights (CASE/PALLET aggregation) aren't needed for this prototype.
+
+#### 4B.1 Files to Delete
+
+| Path | Lines | Reason |
+|------|-------|--------|
+| `src/simpy_demo/expressions/` | ~230 | Entire directory - expression engine not needed |
+| `src/simpy_demo/factories/telemetry.py` | ~150 | TelemetryGenerator with expression/gaussian generators |
+| `config/materials/cosmetics.yaml` | ~40 | Telemetry generator configs |
+
+#### 4B.2 Files to Modify
+
+**`src/simpy_demo/models.py`**:
+- Add `net_weight_g: float` to `ProductConfig`
+
+**`config/products/*.yaml`**:
+```yaml
+name: fresh_toothpaste_5oz
+size_oz: 5.0
+net_weight_g: 150.0  # NEW: simple product attribute
+units_per_case: 12
+cases_per_pallet: 60
+```
+
+**`src/simpy_demo/behavior/phases/transform.py`**:
+- Remove TelemetryGenerator injection
+- Product telemetry = simple dict from product config (volume, weight)
+- No expressions, no aggregation
+
+**`src/simpy_demo/equipment.py`**:
+- Remove `telemetry_gen` parameter from `__init__`
+
+**`src/simpy_demo/engine.py`**:
+- Remove `TelemetryGenerator` creation in `_build_layout()`
+
+**`src/simpy_demo/simulation/layout.py`**:
+- Remove `telemetry_gen` from `LayoutBuilder`
+
+**`src/simpy_demo/loader.py`**:
+- Remove `MaterialsConfig` and `load_materials()`
+
+**`src/simpy_demo/__init__.py`**:
+- Remove exports: `ExpressionEngine`, `TelemetryGenerator`, `MaterialsConfig`
+
+#### 4B.3 Execution Steps
+
+1. Add `net_weight_g: float` to `ProductConfig` in `models.py`
+2. Update `config/products/*.yaml` with net_weight values
+3. Simplify `TransformPhase.execute()` - use product config directly
+4. Remove `telemetry_gen` from `Equipment`, `LayoutBuilder`, `engine.py`
+5. Delete `src/simpy_demo/expressions/` directory
+6. Delete `src/simpy_demo/factories/telemetry.py`
+7. Delete `config/materials/cosmetics.yaml`
+8. Update `loader.py` - remove `MaterialsConfig`, `load_materials()`
+9. Update `__init__.py` exports
+10. Run verification - `poetry run python -m simpy_demo --run baseline_8hr`
+11. Run linting - `poetry run ruff check src/ && poetry run mypy src/`
+12. Update CHANGELOG.md
+
+#### 4B.4 Expected Outcome
+
+- ~400 lines of code deleted
+- Telemetry simplified to product-level attributes
+- No more expression parsing, no more "generator" abstraction
+- Product config is the single source of truth for product attributes
+
+---
+
 ### Phase 5: CLI & Scenario Generation (v0.9.0)
 
 **Goal**: `configure` → `simulate` workflow with scenario bundling
@@ -763,13 +848,17 @@ simpy-demo campaign --campaign weekly_skus --export
 
 ---
 
-### Phase 6: Multi-Line Support (v1.0.0)
+---
+
+## Future Enhancements
+
+> These features are deferred until there's a real use case. Revisit when needed.
+
+### Multi-Line Support (formerly v1.0.0)
 
 **Goal**: Simulate multiple production lines, share resources
 
-#### 6.1 Plant-Level Config
-
-**`config/plants/main_factory.yaml`**
+**Plant-Level Config** (`config/plants/main_factory.yaml`):
 ```yaml
 name: main_factory
 
@@ -788,13 +877,10 @@ shared_resources:
     capacity: 3
 ```
 
-#### 6.2 Multi-Line Engine
-
+**Implementation Notes**:
 - Run multiple lines in same SimPy environment
 - Shared resources (maintenance, forklifts) as SimPy Resources
 - Cross-line telemetry aggregation
-
----
 
 ---
 
@@ -1313,12 +1399,15 @@ constants:
 |---------|-------|-----------------|
 | v0.4.2 | 0 | Semgrep rules + baseline scan |
 | v0.5.0 | 1 | Config foundation (defaults, constants, source) |
-| v0.6.0 | 2 | Expression engine + telemetry from config |
+| v0.6.0 | 2 | ~~Expression engine~~ (removed in v0.8.2) |
 | v0.7.0 | 3 | Graph topology abstraction |
 | v0.8.0 | 4 | Configurable equipment phases |
 | v0.8.1 | 4A | Deprecate backwards compatibility (cleanup) |
-| v0.9.0 | 5 | CLI commands + scenario generation |
-| v1.0.0 | 6 | Multi-line support |
+| v0.8.2 | 4B | Simplify telemetry (delete expression engine) |
+| v0.9.0 | 5 | CLI commands + scenario generation + campaigns |
+
+**Deferred to Future Enhancement:**
+- v1.0.0 Multi-line support (revisit when there's a real use case)
 
 ---
 
@@ -1390,9 +1479,12 @@ cat .semgrep/baseline_scan.json | jq '.results | length'
 
 - [x] v0.4.2 - Semgrep rules + baseline scan
 - [x] v0.5.0 - Config foundation (defaults, constants, source)
-- [x] v0.6.0 - Expression engine + telemetry from config
+- [x] v0.6.0 - ~~Expression engine~~ (superseded by v0.8.2)
 - [x] v0.7.0 - Graph topology abstraction
 - [x] v0.8.0 - Configurable equipment phases
 - [x] v0.8.1 - Deprecate backwards compatibility (cleanup)
-- [ ] v0.9.0 - CLI commands + scenario generation
-- [ ] v1.0.0 - Multi-line support
+- [ ] v0.8.2 - Simplify telemetry (delete expression engine)
+- [ ] v0.9.0 - CLI commands + scenario generation + campaigns
+
+**Deferred:**
+- [ ] Multi-line support (formerly v1.0.0) - see Future Enhancements
