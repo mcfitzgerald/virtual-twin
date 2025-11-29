@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.1] - 2025-11-29
+
+### Added
+- **MkDocs documentation site** with Material theme
+  - `mkdocs.yml` configuration with Mermaid diagram support
+  - `docs/index.md` landing page with feature overview
+  - `docs/getting-started/` - Installation, quickstart, core concepts
+  - `docs/user-guide/` - Configuration, running, scenarios, products, outputs
+  - `docs/tutorials/` - Basic simulation, custom equipment, buffer optimization, OEE analysis
+  - `docs/reference/` - API, config schema, CLI, glossary
+  - `docs/contributing.md` and `docs/changelog.md`
+- **New dev dependencies**: `mkdocs`, `mkdocs-material`, `mkdocs-mermaid2-plugin`
+
+### Changed
+- Updated `README.md` to version 0.9.0 with new CLI workflows and features
+- Updated `docs/architecture.md` with 12 new Mermaid diagrams covering all system components
+
 ## [0.9.0] - 2025-11-29
 
 ### Added

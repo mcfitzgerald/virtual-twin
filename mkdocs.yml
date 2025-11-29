@@ -1,0 +1,84 @@
+site_name: SimPy-Demo Documentation
+site_description: Discrete Event Simulation for CPG Production Lines
+repo_url: https://github.com/michael/simpy-demo
+repo_name: simpy-demo
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.tabs.link
+
+plugins:
+  - search
+  - mermaid2
+
+markdown_extensions:
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.details
+  - admonition
+  - tables
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Installation: getting-started/installation.md
+    - Quickstart: getting-started/quickstart.md
+    - Concepts: getting-started/concepts.md
+  - User Guide:
+    - Configuration: user-guide/configuration.md
+    - Running Simulations: user-guide/running-simulations.md
+    - Scenarios: user-guide/scenarios.md
+    - Products & Economics: user-guide/products-economics.md
+    - Outputs: user-guide/outputs.md
+  - Tutorials:
+    - Basic Simulation: tutorials/basic-simulation.md
+    - Custom Equipment: tutorials/custom-equipment.md
+    - Buffer Optimization: tutorials/buffer-optimization.md
+    - OEE Analysis: tutorials/oee-analysis.md
+  - Reference:
+    - API: reference/api.md
+    - Config Schema: reference/config-schema.md
+    - CLI: reference/cli.md
+    - Glossary: reference/glossary.md
+  - Architecture: architecture.md
+  - Contributing: contributing.md
+  - Changelog: changelog.md
