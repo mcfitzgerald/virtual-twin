@@ -12,11 +12,11 @@ Use `ruff` and `mypy` for linting, formatting, and typing
 
 Use `semgrep` to find hardcodes
 
-Use context7 to for library and package documentation (enabled via mcp)
+Use context7 for library and package documentation (enabled via mcp)
 
-Don't revinvent the wheel, search web for robust libraries and always opt for simple. Don't over-engineer!
+Don't reinvent the wheel, search web for robust libraries and always opt for simple. Don't over-engineer!
 
-Update `CHANGELOG.md` and `README.md` and any docs when comitting with git, use semantic versioning and also update version in `pyproject.toml`
+Update `CHANGELOG.md` and `README.md` and any docs when committing with git, use semantic versioning and also update version in `pyproject.toml`
 
 ## Commands
 
@@ -24,17 +24,22 @@ Update `CHANGELOG.md` and `README.md` and any docs when comitting with git, use 
 # Install dependencies
 poetry install
 
-# Run the simulation (default config)
+# Run simulation (default or named config)
 poetry run python -m simpy_demo
-
-# Run specific config
-poetry run python -m simpy_demo --run baseline_8hr
-
-# Export results to CSV
 poetry run python -m simpy_demo --run baseline_8hr --export
 
-# Use custom config directory
-poetry run python -m simpy_demo --config ./my_configs --run custom_run
+# Two-stage workflow (reproducible scenario bundles)
+poetry run python -m simpy_demo configure --run baseline_8hr
+poetry run python -m simpy_demo simulate --scenario ./scenarios/baseline_8hr_*
+
+# Linting and type checking
+poetry run ruff check src/
+poetry run ruff format src/
+poetry run mypy src/
+
+# Documentation (local dev server)
+poetry run mkdocs serve
+poetry run mkdocs build
 ```
 
 ## Architecture
@@ -44,23 +49,30 @@ poetry run python -m simpy_demo --config ./my_configs --run custom_run
 ```
 simpy-demo/
 ├── src/simpy_demo/
-│   ├── __init__.py      # Public API exports
-│   ├── __main__.py      # Entry point for `python -m simpy_demo`
-│   ├── models.py        # Pydantic schemas (MachineConfig, Product, grouped params)
-│   ├── equipment.py     # Equipment class (generic machine simulator)
-│   ├── loader.py        # YAML config loader with name-based resolution
-│   ├── config.py        # Re-exports from loader.py
-│   ├── engine.py        # SimulationEngine class (orchestration)
-│   └── run.py           # CLI entry point
+│   ├── __init__.py           # Public API exports
+│   ├── __main__.py           # Entry point for `python -m simpy_demo`
+│   ├── models.py             # Pydantic schemas (MachineConfig, Product, params)
+│   ├── equipment.py          # Equipment class (generic machine simulator)
+│   ├── loader.py             # YAML config loader with name-based resolution
+│   ├── engine.py             # SimulationEngine class (orchestration)
+│   ├── behavior/             # Pluggable 6-phase equipment behavior
+│   │   ├── orchestrator.py   # BehaviorOrchestrator (phase sequencing)
+│   │   └── phases/           # Phase implementations (collect, breakdown, etc.)
+│   ├── topology/             # DAG-based production line structure
+│   │   └── graph.py          # TopologyGraph (branching, merging, routing)
+│   ├── simulation/           # Runtime execution
+│   │   ├── layout.py         # LayoutBuilder (SimPy stores from topology)
+│   │   └── runtime.py        # execute_scenario() for bundles
+│   ├── cli/                  # Subcommands (configure, simulate)
+│   └── codegen/              # ScenarioGenerator (Jinja2 templates)
 ├── config/
-│   ├── runs/            # Run configs (duration, seed, scenario, product ref)
-│   ├── scenarios/       # Scenario configs (topology + equipment refs)
-│   ├── topologies/      # Line structure (station order, batch sizes)
-│   ├── equipment/       # Equipment parameters + cost_rates
-│   ├── products/        # Product/SKU definitions with economics
-│   └── materials/       # Material type definitions
-└── docs/
-    └── architecture.md  # Mermaid diagrams of system architecture
+│   ├── runs/                 # Run configs (duration, seed, scenario, product ref)
+│   ├── scenarios/            # Scenario configs (topology + equipment refs)
+│   ├── topologies/           # Line structure (linear or DAG graph)
+│   ├── equipment/            # Equipment parameters + cost_rates
+│   ├── products/             # Product/SKU definitions with economics
+│   └── sources/              # Source store configuration
+└── docs/                     # MkDocs documentation site
 ```
 
 ### Core Design: Separation of Concerns
@@ -91,26 +103,29 @@ The system uses SimPy's cooperative multitasking with generator-based coroutines
 
 ### Key Classes
 
-- **`models.py`**:
-  - `MachineConfig` (Pydantic): Complete machine config with grouped parameters
-  - `ReliabilityParams`: MTBF/MTTR for availability loss
-  - `PerformanceParams`: Jam probability/time for performance loss
-  - `QualityParams`: Defect rate/detection for quality loss
+- **`models.py`**: Pydantic schemas
+  - `MachineConfig`: Complete machine config with grouped OEE parameters
+  - `ReliabilityParams`, `PerformanceParams`, `QualityParams`: OEE loss parameters
   - `CostRates`: Labor, energy, overhead per hour for conversion cost
   - `ProductConfig`: SKU definition with physical and economic attributes
-  - `Product` (Pydantic): Composite material pattern for traceability (Tube → Case → Pallet)
-  - `MaterialType` (Enum): TUBE, CASE, PALLET, NONE
+  - `Product`: Composite material with traceability (Tube → Case → Pallet)
 
-- **`loader.py`**:
-  - `ConfigLoader`: Loads and resolves YAML configs by name
-  - `RunConfig`, `ScenarioConfig`, `TopologyConfig`, `EquipmentConfig`: Dataclasses
+- **`loader.py`**: YAML config loading
+  - `ConfigLoader`: Loads and resolves configs by name
   - `ResolvedConfig`: Fully resolved configuration ready for simulation
 
-- **`equipment.py`**:
-  - `Equipment`: Generic machine with 6-phase cycle: COLLECT → BREAKDOWN CHECK → MICROSTOP CHECK → EXECUTE → TRANSFORM → INSPECT/ROUTE
+- **`equipment.py`**: `Equipment` class - generic machine using BehaviorOrchestrator
 
-- **`engine.py`**:
-  - `SimulationEngine`: Loads config, builds layout, runs simulation
+- **`engine.py`**: `SimulationEngine` - loads config, builds layout, runs simulation
+
+- **`behavior/orchestrator.py`**: `BehaviorOrchestrator` - sequences phase execution
+  - Phases: CollectPhase, BreakdownPhase, MicrostopPhase, ExecutePhase, TransformPhase, InspectPhase
+
+- **`topology/graph.py`**: `TopologyGraph` - DAG-based line structure
+  - Supports branching, merging, conditional routing (quality gates)
+  - Special nodes: `_source`, `_sink`, `_reject`
+
+- **`simulation/layout.py`**: `LayoutBuilder` - creates SimPy stores and Equipment from TopologyGraph
 
 ### Equipment 6-Phase Cycle
 

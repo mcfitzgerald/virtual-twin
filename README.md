@@ -1,6 +1,6 @@
 # SimPy Production Line Digital Twin
 
-**Version:** 0.9.0
+**Version:** 0.10.0
 **Frameworks:** SimPy, Pydantic, Pandas
 **Scope:** Discrete Event Simulation (DES) & Synthetic Data Generation
 
@@ -184,6 +184,39 @@ Benefits:
 - **Reproducibility**: Config snapshot captures entire state
 - **Auditing**: Config hash ties results to configuration
 - **Version tracking**: Git commit recorded in metadata
+
+## Testing
+
+The project includes a comprehensive test suite with 37 tests validating simulation outputs against real manufacturing benchmarks.
+
+```bash
+# Run all tests
+poetry run pytest
+
+# Run with verbose output
+poetry run pytest -v
+
+# Run specific test file
+poetry run pytest tests/test_reality_checks.py
+```
+
+### Test Categories
+
+| File | Tests | Purpose |
+|------|-------|---------|
+| `test_integration.py` | 6 | Smoke tests for config loading and simulation execution |
+| `test_outputs.py` | 8 | Schema validation for DataFrame columns |
+| `test_reality_checks.py` | 12 | Manufacturing reality validation (OEE, throughput, economics) |
+| `test_cli.py` | 6 | CLI workflow tests (configure/simulate) |
+| `test_optimization.py` | 5 | Optimization experiment validation |
+
+### Manufacturing Reality Benchmarks
+
+Tests validate outputs against industry norms:
+- **OEE**: 40-95% (typical 55-60%, world-class 85%+)
+- **Availability**: 70-99%
+- **Quality**: 90%+
+- **Production**: 5-14 pallets/hour at realistic OEE
 
 ## Documentation
 

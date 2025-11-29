@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.0] - 2025-11-29
+
+### Added
+- **Integration test suite** with 37 tests across 6 test files
+  - `tests/conftest.py` - Shared pytest fixtures
+  - `tests/test_integration.py` - 6 smoke tests (config loading, simulation execution)
+  - `tests/test_outputs.py` - 8 schema validation tests (telemetry/events DataFrame columns)
+  - `tests/test_reality_checks.py` - 12 manufacturing reality validation tests
+  - `tests/test_cli.py` - 6 CLI workflow tests (configure/simulate commands)
+  - `tests/test_optimization.py` - 5 optimization experiment validation tests
+- **Manufacturing reality benchmarks** based on industry research:
+  - OEE bounds: 40-95% (typical 55-60%, world-class 85%+)
+  - Availability: 70-99%
+  - Quality: 90%+
+  - Throughput within physical limits (UPH × time)
+- **Optimization validation tests** for using simulation as improvement baseline:
+  - Loss attribution traceable to A/P/Q components (DOWN, JAMMED, defects)
+  - Bottleneck identification via STARVED/BLOCKED states
+  - Production volumes realistic for CPG industry (5-14 pallets/hour)
+  - Improvement correlation (better MTBF → reduced downtime)
+- **New dev dependencies**: `pytest>=8.0.0`, `pytest-timeout>=2.3.0`
+
+### Changed
+- Updated `CLAUDE.md` with linting commands and accurate directory structure
+
+### Technical Notes
+- Tests run in ~36 seconds with 60-second timeout per test
+- Reality checks based on OEE.com, Shoplogix, and Evocon benchmarks
+- Test suite validates simulation outputs match real manufacturing patterns
+
 ## [0.9.1] - 2025-11-29
 
 ### Added
