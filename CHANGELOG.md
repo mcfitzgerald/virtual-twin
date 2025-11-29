@@ -5,6 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - 2025-11-29
+
+### Added
+- **CLI subcommands** for `configure` and `simulate` workflow (Phase 5 of refac3.md)
+  - `python -m simpy_demo configure --run <name>` - Generate scenario bundle from config
+  - `python -m simpy_demo simulate --scenario <path>` - Run a scenario bundle
+  - `python -m simpy_demo run --run <name>` - Direct run (combines configure + simulate)
+- **Scenario bundles** (`scenarios/`) for auditable, reproducible runs
+  - `scenario.py` - Lightweight runner script
+  - `config_snapshot.yaml` - Frozen resolved configuration
+  - `metadata.json` - Generation metadata (git commit, hash, timestamp, version)
+  - `output/` - Simulation results (telemetry.csv, events.csv, summary.json)
+- **Codegen module** (`src/simpy_demo/codegen/`)
+  - `ScenarioGenerator` class for generating scenario bundles
+  - Jinja2 template for `scenario.py` generation
+  - SHA256 config hashing for reproducibility verification
+- **Runtime module** (`src/simpy_demo/simulation/runtime.py`)
+  - `execute_scenario()` function for running from config snapshots
+- **Dry-run mode**: `python -m simpy_demo configure --run <name> --dry-run`
+- **New dependencies**: `jinja2>=3.1.6`
+- New exports in `__init__.py`: `ScenarioGenerator`, `configure`, `simulate`, `execute_scenario`
+
+### Changed
+- CLI now supports subcommands: `run`, `configure`, `simulate`
+- Legacy mode preserved: `python -m simpy_demo --run <name>` still works
+- `run.py` refactored with subcommand architecture
+- `simulate` command exports to bundle's `output/` directory by default
+- Summary JSON includes production counts, economics, and OEE by machine
+
+### Technical Notes
+- Scenario bundles enable comparison between runs (diff config_snapshot.yaml)
+- Config hash ensures configuration hasn't changed between configure and simulate
+- Git commit and dirty status captured in metadata for version tracking
+- Generated scenario.py files are executable (`chmod +x`)
+
 ## [0.8.2] - 2025-11-29
 
 ### Added

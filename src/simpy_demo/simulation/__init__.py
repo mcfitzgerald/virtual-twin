@@ -8,6 +8,9 @@ from simpy_demo.simulation.layout import (
     build_layout_from_graph,
 )
 
+# Note: execute_scenario is not exported here to avoid circular imports.
+# Import directly from simpy_demo.simulation.runtime when needed.
+
 __all__ = [
     "LayoutBuilder",
     "LayoutResult",

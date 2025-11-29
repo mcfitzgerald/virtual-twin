@@ -6,6 +6,8 @@ from pathlib import Path
 
 import pandas as pd
 
+from simpy_demo.cli.configure import configure as configure_func
+from simpy_demo.cli.simulate import simulate as simulate_func
 from simpy_demo.engine import SimulationEngine
 
 
@@ -98,52 +100,17 @@ def run_simulation(
     return df_ts, df_ev
 
 
-def main():
-    """CLI entry point for running simulations."""
-    parser = argparse.ArgumentParser(
-        description="Run SimPy production line simulation",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-  python -m simpy_demo                              # Run default baseline_8hr
-  python -m simpy_demo --run baseline_8hr           # Run specific config
-  python -m simpy_demo --run baseline_8hr --export  # Export to CSV
-  python -m simpy_demo --config ./my_configs        # Use custom config dir
-        """,
-    )
-    parser.add_argument(
-        "--run",
-        default="baseline_8hr",
-        help="Run config name (default: baseline_8hr)",
-    )
-    parser.add_argument(
-        "--config",
-        default="config",
-        help="Config directory path (default: config)",
-    )
-    parser.add_argument(
-        "--export",
-        action="store_true",
-        help="Export results to CSV files",
-    )
-    parser.add_argument(
-        "--output",
-        default="output",
-        help="Output directory for CSV export (default: output)",
-    )
-
-    args = parser.parse_args()
-
+def _run_command(args: argparse.Namespace) -> None:
+    """Handle 'run' subcommand (combined configure+simulate)."""
     # Run simulation
     df_ts, df_ev = run_simulation(args.run, args.config)
 
-    # Export if requested (datetime already embedded during simulation)
+    # Export if requested
     if args.export:
-        # Create output directory
         output_dir = Path(args.output)
         output_dir.mkdir(exist_ok=True)
 
-        # Generate timestamped filenames from first telemetry record
+        # Generate timestamped filenames
         if "datetime" in df_ts.columns and df_ts["datetime"].iloc[0]:
             timestamp = df_ts["datetime"].iloc[0].strftime("%Y%m%d_%H%M%S")
         else:
@@ -152,12 +119,176 @@ Examples:
         ts_path = output_dir / f"telemetry_{timestamp}.csv"
         ev_path = output_dir / f"events_{timestamp}.csv"
 
-        # Export to CSV
         df_ts.to_csv(ts_path, index=False)
         df_ev.to_csv(ev_path, index=False)
 
         print(f"\nExported: {ts_path} ({len(df_ts)} rows)")
         print(f"Exported: {ev_path} ({len(df_ev)} rows)")
+
+
+def _configure_command(args: argparse.Namespace) -> None:
+    """Handle 'configure' subcommand."""
+    configure_func(
+        run_name=args.run,
+        config_dir=args.config,
+        output_dir=args.output,
+        dry_run=args.dry_run,
+    )
+
+
+def _simulate_command(args: argparse.Namespace) -> None:
+    """Handle 'simulate' subcommand."""
+    simulate_func(
+        scenario_path=args.scenario,
+        export=args.export,
+    )
+
+
+def main():
+    """CLI entry point with subcommands."""
+    import sys
+
+    # Check if first arg is a subcommand or starts with -- (but not --help/-h)
+    # This enables backward compatibility: python -m simpy_demo --run baseline_8hr
+    if (
+        len(sys.argv) > 1
+        and sys.argv[1].startswith("--")
+        and sys.argv[1] not in ("--help", "-h")
+    ):
+        # Legacy mode: no subcommand, use --run directly
+        compat_parser = argparse.ArgumentParser(
+            description="SimPy production line simulation (legacy mode)",
+        )
+        compat_parser.add_argument("--run", default="baseline_8hr")
+        compat_parser.add_argument("--config", default="config")
+        compat_parser.add_argument("--export", action="store_true")
+        compat_parser.add_argument("--output", default="output")
+        compat_args = compat_parser.parse_args()
+        _run_command(compat_args)
+        return
+
+    # Modern mode: use subcommands
+    parser = argparse.ArgumentParser(
+        description="SimPy production line simulation",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Commands:
+  run         Run a simulation directly from config (default behavior)
+  configure   Generate a scenario bundle from config
+  simulate    Run a scenario bundle
+
+Examples:
+  # Run simulation directly (existing behavior)
+  python -m simpy_demo run --run baseline_8hr
+  python -m simpy_demo --run baseline_8hr  # shorthand (legacy mode)
+
+  # Generate scenario bundle, then run it
+  python -m simpy_demo configure --run baseline_8hr
+  python -m simpy_demo simulate --scenario scenarios/baseline_8hr_20250126_143022
+
+  # Combined with export
+  python -m simpy_demo run --run baseline_8hr --export
+        """,
+    )
+
+    subparsers = parser.add_subparsers(dest="command", help="Available commands")
+
+    # === 'run' subcommand (default behavior) ===
+    run_parser = subparsers.add_parser(
+        "run",
+        help="Run simulation directly from config",
+        description="Run a simulation directly from YAML configuration files.",
+    )
+    run_parser.add_argument(
+        "--run",
+        default="baseline_8hr",
+        help="Run config name (default: baseline_8hr)",
+    )
+    run_parser.add_argument(
+        "--config",
+        default="config",
+        help="Config directory path (default: config)",
+    )
+    run_parser.add_argument(
+        "--export",
+        action="store_true",
+        help="Export results to CSV files",
+    )
+    run_parser.add_argument(
+        "--output",
+        default="output",
+        help="Output directory for CSV export (default: output)",
+    )
+    run_parser.set_defaults(func=_run_command)
+
+    # === 'configure' subcommand ===
+    configure_parser = subparsers.add_parser(
+        "configure",
+        help="Generate a scenario bundle from config",
+        description="Generate a standalone scenario bundle from YAML configuration.",
+    )
+    configure_parser.add_argument(
+        "--run",
+        required=True,
+        help="Run config name (required)",
+    )
+    configure_parser.add_argument(
+        "--config",
+        default="config",
+        help="Config directory path (default: config)",
+    )
+    configure_parser.add_argument(
+        "--output",
+        default="scenarios",
+        help="Output directory for scenario bundles (default: scenarios)",
+    )
+    configure_parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Validate config without generating files",
+    )
+    configure_parser.set_defaults(func=_configure_command)
+
+    # === 'simulate' subcommand ===
+    simulate_parser = subparsers.add_parser(
+        "simulate",
+        help="Run a scenario bundle",
+        description="Run a previously generated scenario bundle.",
+    )
+    simulate_parser.add_argument(
+        "--scenario",
+        required=True,
+        help="Path to scenario bundle directory (required)",
+    )
+    simulate_parser.add_argument(
+        "--export",
+        action="store_true",
+        default=True,
+        help="Export results to bundle's output/ directory (default: True)",
+    )
+    simulate_parser.add_argument(
+        "--no-export",
+        action="store_false",
+        dest="export",
+        help="Skip exporting results",
+    )
+    simulate_parser.set_defaults(func=_simulate_command)
+
+    # Parse arguments
+    args = parser.parse_args()
+
+    # Handle no subcommand (default to run)
+    if args.command is None:
+        # Run with defaults
+        default_args = argparse.Namespace(
+            run="baseline_8hr",
+            config="config",
+            export=False,
+            output="output",
+        )
+        _run_command(default_args)
+    else:
+        args.func(args)
 
 
 if __name__ == "__main__":

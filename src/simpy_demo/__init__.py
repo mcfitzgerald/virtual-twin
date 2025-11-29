@@ -15,6 +15,8 @@ from simpy_demo.behavior import (
     PhaseResult,
     TransformPhase,
 )
+from simpy_demo.cli import configure, simulate
+from simpy_demo.codegen import ScenarioGenerator
 from simpy_demo.config import (
     ConfigLoader,
     ConstantsConfig,
@@ -42,6 +44,7 @@ from simpy_demo.models import (
     ReliabilityParams,
 )
 from simpy_demo.run import run_simulation
+from simpy_demo.simulation.runtime import execute_scenario
 from simpy_demo.topology import (
     BufferEdge,
     CycleDetectedError,
@@ -91,9 +94,15 @@ __all__ = [
     "ExecutePhase",
     "TransformPhase",
     "InspectPhase",
+    # Codegen
+    "ScenarioGenerator",
+    # CLI
+    "configure",
+    "simulate",
     # Engine
     "SimulationEngine",
     "Equipment",
-    # Entry point
+    # Entry points
     "run_simulation",
+    "execute_scenario",
 ]

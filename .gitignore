@@ -178,5 +178,8 @@ pyrightconfig.json
 # Simulation output
 output/
 
+# Generated scenario bundles
+scenarios/
+
 # Mac
 .DS_Store

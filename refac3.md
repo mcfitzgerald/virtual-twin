@@ -1484,7 +1484,8 @@ cat .semgrep/baseline_scan.json | jq '.results | length'
 - [x] v0.8.0 - Configurable equipment phases
 - [x] v0.8.1 - Deprecate backwards compatibility (cleanup)
 - [x] v0.8.2 - Simplify telemetry (delete expression engine)
-- [ ] v0.9.0 - CLI commands + scenario generation + campaigns
+- [x] v0.9.0 - CLI commands + scenario generation (campaigns deferred)
 
 **Deferred:**
+- [ ] Campaign support - Multi-run campaigns (revisit when needed)
 - [ ] Multi-line support (formerly v1.0.0) - see Future Enhancements
