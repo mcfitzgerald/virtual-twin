@@ -78,8 +78,43 @@ simpy-demo/
 │   └── cli/               # CLI subcommands
 ├── config/                # YAML configurations
 ├── docs/                  # Documentation
-└── tests/                 # Tests (future)
+└── tests/                 # Integration tests
 ```
+
+## Testing
+
+### Running Tests
+
+```bash
+# Run all tests
+poetry run pytest
+
+# Run with verbose output
+poetry run pytest -v
+
+# Run specific test file
+poetry run pytest tests/test_reality_checks.py
+
+# Run with coverage
+poetry run pytest --cov=simpy_demo
+```
+
+### Test Categories
+
+| File | Purpose |
+|------|---------|
+| `test_integration.py` | Smoke tests for config loading and simulation |
+| `test_outputs.py` | Schema validation for DataFrame columns |
+| `test_reality_checks.py` | Manufacturing reality validation (OEE, throughput) |
+| `test_cli.py` | CLI workflow tests (configure/simulate) |
+| `test_optimization.py` | Optimization experiment validation |
+
+### Adding Tests
+
+1. Add test file in `tests/` directory
+2. Use fixtures from `conftest.py`
+3. Follow existing naming conventions (`test_*.py`, `test_*` functions)
+4. Include docstrings explaining what's being tested
 
 ## Adding Features
 

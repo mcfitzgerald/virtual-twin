@@ -6,6 +6,22 @@ See the full changelog in the repository root:
 
 ## Recent Versions
 
+### [0.10.0] - 2025-11-29
+
+**Integration test suite with manufacturing reality checks**
+
+- 37 tests across 6 test files
+- Manufacturing reality validation (OEE bounds, throughput limits, economics)
+- Optimization experiment validation (loss attribution, bottleneck identification)
+- pytest and pytest-timeout dev dependencies
+
+### [0.9.1] - 2025-11-29
+
+**MkDocs documentation site**
+
+- Full documentation site with Material theme
+- Getting started, user guide, tutorials, and reference sections
+
 ### [0.9.0] - 2025-11-29
 
 **CLI subcommands and scenario bundles**
@@ -51,6 +67,8 @@ See the full changelog in the repository root:
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 0.10.0 | 2025-11-29 | Integration test suite, manufacturing reality checks |
+| 0.9.1 | 2025-11-29 | MkDocs documentation site |
 | 0.9.0 | 2025-11-29 | CLI subcommands, scenario bundles |
 | 0.8.2 | 2025-11-29 | Simplified telemetry |
 | 0.8.1 | 2025-11-26 | Removed backward compatibility |
