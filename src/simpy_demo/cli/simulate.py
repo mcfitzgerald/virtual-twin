@@ -66,8 +66,10 @@ def simulate(
     resolved = loader.resolve_run(run_name)
 
     # Run simulation
+    # Note: debug_events=True for backward compatibility with summary OEE calculation
+    # Phase 4 will update this to use state_summary table instead
     engine = SimulationEngine(config_dir, save_to_db=save_to_db, db_path=db_path)
-    df_ts, df_ev = engine.run_resolved(resolved)
+    df_ts, df_ev, _, _ = engine.run_resolved(resolved, debug_events=True)
 
     # Create output directory in bundle
     output_dir = bundle_dir / "output"

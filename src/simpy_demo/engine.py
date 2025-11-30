@@ -8,6 +8,7 @@ from typing import Dict, List, Optional, Tuple
 import pandas as pd
 import simpy
 
+from simpy_demo.aggregation import EventAggregator
 from simpy_demo.behavior import BehaviorOrchestrator, DEFAULT_BEHAVIOR
 from simpy_demo.equipment import Equipment
 from simpy_demo.loader import (
@@ -40,17 +41,36 @@ class SimulationEngine:
         self.save_to_db = save_to_db
         self.db_path = Path(db_path) if db_path else None
 
-    def run(self, run_name: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        """Run simulation by run config name and return (telemetry_df, events_df)."""
+    def run(
+        self, run_name: str, debug_events: bool = False
+    ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        """Run simulation by run config name.
+
+        Args:
+            run_name: Name of the run configuration
+            debug_events: If True, also populate full events table
+
+        Returns:
+            Tuple of (telemetry_df, events_df, summary_df, detail_df)
+            Note: events_df will be empty unless debug_events=True
+        """
         resolved = self.loader.resolve_run(run_name)
-        return self.run_resolved(resolved)
+        return self.run_resolved(resolved, debug_events=debug_events)
 
     def run_resolved(
-        self, resolved: ResolvedConfig
-    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        self, resolved: ResolvedConfig, debug_events: bool = False
+    ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         """Run simulation from a fully resolved configuration.
 
         Supports both linear and graph-based topologies.
+
+        Args:
+            resolved: Fully resolved configuration
+            debug_events: If True, also populate full events table
+
+        Returns:
+            Tuple of (telemetry_df, events_df, summary_df, detail_df)
+            Note: events_df will be empty unless debug_events=True
         """
         run = resolved.run
 
@@ -71,19 +91,25 @@ class SimulationEngine:
         behavior_config = resolved.behavior or DEFAULT_BEHAVIOR
         orchestrator = BehaviorOrchestrator(behavior_config)
 
-        # 6. Build production line based on topology type
+        # 6. Create EventAggregator for hybrid storage (bucket size = telemetry interval)
+        aggregator = EventAggregator(
+            bucket_size_sec=run.telemetry_interval_sec,
+            sim_start_ts=start_time,
+        )
+
+        # 7. Build production line based on topology type
         if resolved.topology.is_graph_topology:
             # Use graph-based layout builder
             machines, buffers, reject_bin = self._build_graph_layout(
-                env, resolved, machine_configs, orchestrator
+                env, resolved, machine_configs, orchestrator, aggregator, debug_events
             )
         else:
             # Use legacy linear layout builder
             machines, buffers, reject_bin = self._build_layout(
-                env, machine_configs, resolved.source, orchestrator
+                env, machine_configs, resolved.source, orchestrator, aggregator, debug_events
             )
 
-        # 7. Start monitoring
+        # 8. Start monitoring
         telemetry_data: List[dict] = []
         env.process(
             self._monitor_process(
@@ -97,22 +123,32 @@ class SimulationEngine:
             )
         )
 
-        # 8. Run simulation
+        # 9. Run simulation
         duration_sec = run.duration_hours * 3600
         print(f"Starting Simulation: {run.name} ({run.duration_hours} hrs)...")
         env.run(until=duration_sec)
 
-        # 9. Compile results
+        # 10. Finalize aggregator (close final bucket)
+        aggregator.finalize(duration_sec)
+
+        # 11. Compile results
         df_ts, df_ev = self._compile_results(machines, telemetry_data, start_time)
 
-        # 10. Save to DuckDB (if enabled)
+        # 12. Get aggregated DataFrames
+        df_summary = aggregator.get_summary_df()
+        df_detail = aggregator.get_detail_df()
+
+        # 13. Save to DuckDB (if enabled)
+        # Note: Phase 4 will add support for df_summary, df_detail, debug_events
         if self.save_to_db:
             from simpy_demo.storage import save_results
 
+            # TODO: Phase 4 will update save_results to accept:
+            # df_summary=df_summary, df_detail=df_detail, debug_events=debug_events
             run_id = save_results(resolved, df_ts, df_ev, self.db_path)
             print(f"Results saved to database (run_id: {run_id})")
 
-        return df_ts, df_ev
+        return df_ts, df_ev, df_summary, df_detail
 
     def run_config(
         self,
@@ -163,6 +199,8 @@ class SimulationEngine:
         configs: List[MachineConfig],
         source_config: Optional[SourceConfig] = None,
         orchestrator: Optional[BehaviorOrchestrator] = None,  # None uses DEFAULT_BEHAVIOR
+        event_aggregator: Optional[EventAggregator] = None,
+        debug_events: bool = False,
     ) -> Tuple[List[Equipment], Dict[str, simpy.Store], simpy.Store]:
         """Build SimPy stores and Equipment instances."""
         # Ensure orchestrator is always provided
@@ -217,6 +255,8 @@ class SimulationEngine:
                 downstream=downstream,
                 reject_store=reject_bin if m_conf.quality.detection_prob > 0 else None,
                 orchestrator=orchestrator,
+                event_aggregator=event_aggregator,
+                debug_events=debug_events,
             )
             machines.append(machine)
             current_upstream = downstream
@@ -229,6 +269,8 @@ class SimulationEngine:
         resolved: ResolvedConfig,
         machine_configs: List[MachineConfig],
         orchestrator: Optional[BehaviorOrchestrator] = None,  # None uses DEFAULT_BEHAVIOR
+        event_aggregator: Optional[EventAggregator] = None,
+        debug_events: bool = False,
     ) -> Tuple[List[Equipment], Dict[str, simpy.Store], simpy.Store]:
         """Build SimPy layout from graph-based topology.
 
@@ -237,6 +279,8 @@ class SimulationEngine:
             resolved: Fully resolved configuration
             machine_configs: List of machine configurations
             orchestrator: Behavior orchestrator (uses DEFAULT_BEHAVIOR if None)
+            event_aggregator: Optional aggregator for hybrid event storage
+            debug_events: If True, populate event_log for full debugging
 
         Returns:
             Tuple of (machines, buffers, reject_store)
@@ -258,6 +302,8 @@ class SimulationEngine:
             machine_configs=config_dict,
             source_config=resolved.source,
             orchestrator=orchestrator,
+            event_aggregator=event_aggregator,
+            debug_events=debug_events,
         )
 
         result = builder.build()

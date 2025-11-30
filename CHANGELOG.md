@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.0] - 2025-11-30
+
+### Added
+- **Engine integration for EventAggregator** (Phase 3 of event storage optimization)
+  - `SimulationEngine.run()` and `run_resolved()` now accept `debug_events: bool = False` parameter
+  - New 4-tuple return type: `(df_ts, df_ev, df_summary, df_detail)`
+    - `df_summary`: Bucketed state summary for fast OEE calculation
+    - `df_detail`: Filtered events with context for process mining
+  - `EventAggregator` created automatically with `bucket_size_sec = telemetry_interval_sec`
+  - Aggregator passed through `LayoutBuilder` to all `Equipment` instances
+  - `aggregator.finalize()` called after simulation to close final bucket
+
+### Changed
+- **Breaking: Return type change** - `run()` and `run_resolved()` now return 4-tuple instead of 2-tuple
+  - Callers must update: `df_ts, df_ev = engine.run()` → `df_ts, df_ev, df_summary, df_detail = engine.run()`
+  - Or use: `df_ts, df_ev, _, _ = engine.run()` to ignore new DataFrames
+- `LayoutBuilder` accepts `event_aggregator` and `debug_events` parameters
+- CLI `simulate` command uses `debug_events=True` for backward compatibility with OEE summary
+- Fixed `EventAggregator.get_detail_df()` to handle empty DataFrame (no sort on empty)
+
+### Technical Notes
+- Default behavior (`debug_events=False`): `df_ev` is empty, use `df_summary` for OEE
+- Debug behavior (`debug_events=True`): `df_ev` populated for full event analysis
+- Storage module (`save_results`) not yet updated - Phase 4 will add `state_summary` and `events_detail` tables
+- Tests updated to use `debug_events=True` where events are needed for assertions
+
 ## [0.12.1] - 2025-11-30
 
 ### Changed

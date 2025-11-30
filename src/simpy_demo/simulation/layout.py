@@ -17,6 +17,7 @@ from simpy_demo.models import MachineConfig, MaterialType, Product
 from simpy_demo.topology import TopologyGraph
 
 if TYPE_CHECKING:
+    from simpy_demo.aggregation import EventAggregator
     from simpy_demo.equipment import Equipment
     from simpy_demo.loader import SourceConfig
 
@@ -151,6 +152,8 @@ class LayoutBuilder:
         source_config: Optional["SourceConfig"] = None,
         equipment_factory: Optional[Callable] = None,
         orchestrator: Optional[BehaviorOrchestrator] = None,  # None uses DEFAULT_BEHAVIOR
+        event_aggregator: Optional["EventAggregator"] = None,
+        debug_events: bool = False,
     ):
         """Initialize layout builder.
 
@@ -161,6 +164,8 @@ class LayoutBuilder:
             source_config: Source configuration for initial inventory
             equipment_factory: Optional factory for creating Equipment instances
             orchestrator: Behavior orchestrator (uses DEFAULT_BEHAVIOR if None)
+            event_aggregator: Optional aggregator for hybrid event storage
+            debug_events: If True, populate event_log for full debugging
         """
         self.env = env
         self.graph = graph
@@ -169,6 +174,8 @@ class LayoutBuilder:
         self.equipment_factory = equipment_factory
         # Always use an orchestrator (default if not provided)
         self.orchestrator = orchestrator or BehaviorOrchestrator(DEFAULT_BEHAVIOR)
+        self.event_aggregator = event_aggregator
+        self.debug_events = debug_events
 
     def build(self) -> LayoutResult:
         """Build the complete SimPy layout.
@@ -283,6 +290,8 @@ class LayoutBuilder:
                     reject_store=reject_store if has_reject_routing else None,
                     connections=node_conn,
                     orchestrator=self.orchestrator,
+                    event_aggregator=self.event_aggregator,
+                    debug_events=self.debug_events,
                 )
             else:
                 machine = Equipment(
@@ -294,6 +303,8 @@ class LayoutBuilder:
                     if config.quality.detection_prob > 0
                     else None,
                     orchestrator=self.orchestrator,
+                    event_aggregator=self.event_aggregator,
+                    debug_events=self.debug_events,
                 )
 
             machines[node.name] = machine

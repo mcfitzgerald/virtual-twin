@@ -31,7 +31,8 @@ class TestLossAttribution:
         resolved = engine.loader.resolve_run("baseline_8hr")
         resolved.run.duration_hours = 1.0  # 1 hour for meaningful data
 
-        df_ts, df_ev = engine.run_resolved(resolved)
+        # Need debug_events=True to get full event log for loss attribution
+        df_ts, df_ev, _, _ = engine.run_resolved(resolved, debug_events=True)
 
         # Check each machine has trackable losses
         machines = ["Filler", "Inspector", "Packer", "Palletizer"]
@@ -75,7 +76,8 @@ class TestBottleneckIdentification:
         resolved = engine.loader.resolve_run("baseline_8hr")
         resolved.run.duration_hours = 0.5  # 30 min
 
-        df_ts, df_ev = engine.run_resolved(resolved)
+        # Need debug_events=True to get full event log for bottleneck analysis
+        df_ts, df_ev, _, _ = engine.run_resolved(resolved, debug_events=True)
 
         machines = ["Filler", "Inspector", "Packer", "Palletizer"]
         starved_times = {}
@@ -127,7 +129,7 @@ class TestProductionVolumes:
         # Use shorter duration but scale expectations
         resolved.run.duration_hours = 1.0  # 1 hour for speed
 
-        df_ts, df_ev = engine.run_resolved(resolved)
+        df_ts, _, _, _ = engine.run_resolved(resolved)
 
         total_pallets = df_ts["pallets_produced"].sum()
 
@@ -147,7 +149,7 @@ class TestProductionVolumes:
         resolved = engine.loader.resolve_run("baseline_8hr")
         resolved.run.duration_hours = 2.0  # 2 hours as compromise
 
-        df_ts, df_ev = engine.run_resolved(resolved)
+        df_ts, _, _, _ = engine.run_resolved(resolved)
 
         total_pallets = df_ts["pallets_produced"].sum()
 
@@ -168,12 +170,12 @@ class TestImprovementCorrelation:
         - Higher availability
         - More production output
         """
-        # Baseline run
+        # Baseline run - need debug_events=True for event analysis
         resolved_base = engine.loader.resolve_run("baseline_8hr")
         resolved_base.run.duration_hours = 0.5  # 30 min
         resolved_base.run.random_seed = 42
 
-        df_base, ev_base = engine.run_resolved(resolved_base)
+        df_base, ev_base, _, _ = engine.run_resolved(resolved_base, debug_events=True)
         base_pallets = df_base["pallets_produced"].sum()
 
         # Calculate baseline availability for Filler
@@ -193,7 +195,7 @@ class TestImprovementCorrelation:
             if equip.reliability and equip.reliability.mtbf_min:
                 equip.reliability.mtbf_min *= 2
 
-        df_improved, ev_improved = engine.run_resolved(resolved_improved)
+        df_improved, ev_improved, _, _ = engine.run_resolved(resolved_improved, debug_events=True)
         improved_pallets = df_improved["pallets_produced"].sum()
 
         # Calculate improved availability for Filler

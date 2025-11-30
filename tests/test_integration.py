@@ -44,14 +44,16 @@ class TestSimulationExecution:
         resolved = engine.loader.resolve_run("baseline_8hr")
         resolved.run.duration_hours = short_run_hours
 
-        df_ts, df_ev = engine.run_resolved(resolved)
+        df_ts, df_ev, df_summary, df_detail = engine.run_resolved(resolved)
 
         assert df_ts is not None
         assert df_ev is not None
         assert isinstance(df_ts, pd.DataFrame)
         assert isinstance(df_ev, pd.DataFrame)
         assert len(df_ts) > 0
-        assert len(df_ev) > 0
+        # Note: df_ev may be empty when debug_events=False (default)
+        assert isinstance(df_summary, pd.DataFrame)
+        assert isinstance(df_detail, pd.DataFrame)
 
     def test_graph_topology_runs(
         self, engine: SimulationEngine, short_run_hours: float
@@ -60,10 +62,10 @@ class TestSimulationExecution:
         resolved = engine.loader.resolve_run("baseline_graph_8hr")
         resolved.run.duration_hours = short_run_hours
 
-        df_ts, df_ev = engine.run_resolved(resolved)
+        df_ts, df_ev, _, _ = engine.run_resolved(resolved)
 
         assert len(df_ts) > 0
-        assert len(df_ev) > 0
+        # Note: df_ev may be empty when debug_events=False (default)
 
     def test_random_seed_reproducibility(
         self, engine: SimulationEngine, short_run_hours: float
@@ -77,8 +79,8 @@ class TestSimulationExecution:
         resolved2.run.duration_hours = short_run_hours
         resolved2.run.random_seed = 42
 
-        df_ts1, _ = engine.run_resolved(resolved1)
-        df_ts2, _ = engine.run_resolved(resolved2)
+        df_ts1, _, _, _ = engine.run_resolved(resolved1)
+        df_ts2, _, _, _ = engine.run_resolved(resolved2)
 
         # Compare total production
         assert df_ts1["tubes_produced"].sum() == df_ts2["tubes_produced"].sum()
@@ -93,7 +95,7 @@ class TestSimulationExecution:
         resolved = engine.loader.resolve_run("baseline_8hr")
         resolved.run.duration_hours = 0.05  # 3 minutes for speed
 
-        df_ts, df_ev = engine.run_resolved(resolved)
+        df_ts, df_ev, _, _ = engine.run_resolved(resolved)
 
         assert df_ts is not None
         assert df_ev is not None

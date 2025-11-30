@@ -49,7 +49,7 @@ def execute_scenario(config_path: Path | str) -> Tuple[pd.DataFrame, pd.DataFram
 
     # Run simulation
     engine = SimulationEngine(config_dir)
-    df_ts, df_ev = engine.run_resolved(resolved)
+    df_ts, df_ev, _, _ = engine.run_resolved(resolved)
 
     # Print summary
     _print_summary(df_ts, df_ev, resolved)

@@ -41,9 +41,13 @@ def resolved(loader: ConfigLoader):
 
 @pytest.fixture
 def simulation_results(config_dir: Path, resolved) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    """Run a short simulation and return (telemetry_df, events_df)."""
+    """Run a short simulation and return (telemetry_df, events_df).
+
+    Uses debug_events=True for backward compatibility with OEE storage tests.
+    """
     engine = SimulationEngine(str(config_dir), save_to_db=False)
-    return engine.run_resolved(resolved)
+    df_ts, df_ev, _, _ = engine.run_resolved(resolved, debug_events=True)
+    return df_ts, df_ev
 
 
 class TestSchemaCreation:

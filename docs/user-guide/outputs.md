@@ -384,9 +384,9 @@ Simulation results are automatically saved to DuckDB (`./simpy_results.duckdb`) 
 | `machine_oee` | OEE calculated per machine |
 | `run_equipment` | Equipment config snapshot |
 
-### Upcoming: Event Aggregation (v0.12+)
+### Event Aggregation (v0.13+)
 
-The `EventAggregator` class provides hybrid storage optimization:
+The `EventAggregator` provides hybrid storage optimization with ~3000x storage reduction:
 
 | Table | Purpose | Rows (8hr) |
 |-------|---------|------------|
@@ -395,6 +395,68 @@ The `EventAggregator` class provides hybrid storage optimization:
 | `events` | Full granularity (debug mode only) | ~600,000 |
 
 This reduces storage from ~25GB/month to ~10MB while preserving OEE calculation and process mining capabilities.
+
+#### Debug Events Flag
+
+The `debug_events` parameter controls whether the full `events` table is populated:
+
+```python
+from simpy_demo import SimulationEngine
+
+engine = SimulationEngine("config")
+
+# Default: Hybrid mode (summary + detail only, events empty)
+df_ts, df_ev, df_summary, df_detail = engine.run("baseline_8hr")
+# df_ev is empty, use df_summary for OEE
+
+# Debug mode: Full events for debugging/analysis
+df_ts, df_ev, df_summary, df_detail = engine.run("baseline_8hr", debug_events=True)
+# df_ev has ~600k rows for full event analysis
+```
+
+#### New Return Type (v0.13+)
+
+`run()` and `run_resolved()` now return a 4-tuple:
+
+| DataFrame | Description | Use Case |
+|-----------|-------------|----------|
+| `df_ts` | Telemetry time-series | Dashboards, ML training |
+| `df_ev` | Full event log (empty unless `debug_events=True`) | Debugging, legacy analysis |
+| `df_summary` | Bucketed state durations per machine | Fast OEE calculation |
+| `df_detail` | Filtered events with context window | Process mining, failure analysis |
+
+#### Summary DataFrame (`df_summary`)
+
+Bucketed time-in-state aligned to telemetry interval:
+
+```python
+# Structure
+df_summary.columns
+# ['bucket_start_ts', 'bucket_index', 'machine_name',
+#  'execute_sec', 'starved_sec', 'blocked_sec', 'down_sec', 'jammed_sec',
+#  'transition_count', 'down_count', 'jammed_count', 'availability_pct']
+
+# Fast OEE calculation
+oee = df_summary.groupby('machine_name').agg({
+    'execute_sec': 'sum',
+    'down_sec': 'sum',
+    'jammed_sec': 'sum'
+})
+```
+
+#### Detail DataFrame (`df_detail`)
+
+Filtered events (DOWN, JAMMED) with 5-event context window:
+
+```python
+# Structure
+df_detail.columns
+# ['ts', 'sim_time_sec', 'machine_name', 'state', 'prev_state',
+#  'duration_sec', 'is_interesting']
+
+# Find failure patterns
+failures = df_detail[df_detail['is_interesting'] == True]
+```
 
 ### Querying Results
 

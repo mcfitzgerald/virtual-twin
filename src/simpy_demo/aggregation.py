@@ -391,4 +391,6 @@ class EventAggregator:
                 )
 
         df = pd.DataFrame(rows)
+        if df.empty:
+            return df
         return df.sort_values("sim_time_sec").reset_index(drop=True)

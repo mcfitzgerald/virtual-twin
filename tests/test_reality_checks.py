@@ -61,7 +61,7 @@ class TestPhysicalLimits:
         test_duration = 0.5  # 30 minutes
         resolved.run.duration_hours = test_duration
 
-        df_ts, _ = engine.run_resolved(resolved)
+        df_ts, _, _, _ = engine.run_resolved(resolved)
 
         # Filler UPH is 10,000 tubes/hour
         filler_uph = 10000
@@ -142,7 +142,8 @@ class TestOEEBenchmarks:
         test_duration = 0.5  # 30 minutes
         resolved.run.duration_hours = test_duration
 
-        df_ts, df_ev = engine.run_resolved(resolved)
+        # Need debug_events=True to get full event log for OEE calculation
+        df_ts, df_ev, _, _ = engine.run_resolved(resolved, debug_events=True)
 
         total_duration_sec = test_duration * 3600
 
@@ -227,8 +228,8 @@ class TestEconomics:
         resolved_long.run.duration_hours = 0.5  # 30 minutes
         resolved_long.run.random_seed = 42
 
-        df_short, _ = engine.run_resolved(resolved_short)
-        df_long, _ = engine.run_resolved(resolved_long)
+        df_short, _, _, _ = engine.run_resolved(resolved_short)
+        df_long, _, _, _ = engine.run_resolved(resolved_long)
 
         revenue_short = df_short["revenue"].sum()
         revenue_long = df_long["revenue"].sum()
@@ -265,7 +266,7 @@ class TestTimeSeriesProperties:
         resolved.run.duration_hours = short_run_hours
         interval_sec = resolved.run.telemetry_interval_sec
 
-        df_ts, _ = engine.run_resolved(resolved)
+        df_ts, _, _, _ = engine.run_resolved(resolved)
 
         expected_rows = int(short_run_hours * 3600 / interval_sec)
         actual_rows = len(df_ts)

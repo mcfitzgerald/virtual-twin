@@ -29,7 +29,7 @@ def run_simulation(
         Tuple of (telemetry_df, events_df)
     """
     engine = SimulationEngine(config_dir, save_to_db=save_to_db, db_path=db_path)
-    df_ts, df_ev = engine.run(run_name)
+    df_ts, df_ev, _, _ = engine.run(run_name)
 
     # Report
     print("\n--- SIMULATION COMPLETE ---")

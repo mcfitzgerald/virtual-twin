@@ -41,10 +41,14 @@ def baseline_resolved(loader: ConfigLoader):
 
 @pytest.fixture
 def short_simulation(engine: SimulationEngine, short_run_hours: float) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    """Run a short simulation and return (telemetry_df, events_df)."""
+    """Run a short simulation and return (telemetry_df, events_df).
+
+    Uses debug_events=True to populate events_df for tests that need it.
+    """
     resolved = engine.loader.resolve_run("baseline_8hr")
     resolved.run.duration_hours = short_run_hours
-    return engine.run_resolved(resolved)
+    df_ts, df_ev, _, _ = engine.run_resolved(resolved, debug_events=True)
+    return df_ts, df_ev
 
 
 @pytest.fixture
