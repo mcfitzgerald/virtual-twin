@@ -1,6 +1,6 @@
-# SimPy Production Line Digital Twin
+# Virtual Twin
 
-**Version:** 0.15.0
+**Version:** 0.16.0
 **Frameworks:** SimPy, Pydantic, Pandas, DuckDB
 **Scope:** Discrete Event Simulation (DES), Synthetic Data Generation & Analytics
 
@@ -17,14 +17,14 @@ The system models a high-speed Consumer Packaged Goods (CPG) line, accounting fo
 poetry install
 
 # Run default simulation
-poetry run python -m simpy_demo
+poetry run python -m virtual_twin
 
 # Run with CSV export
-poetry run python -m simpy_demo --run baseline_8hr --export
+poetry run python -m virtual_twin --run baseline_8hr --export
 
 # Two-stage workflow (reproducible scenario bundles)
-poetry run python -m simpy_demo configure --run baseline_8hr
-poetry run python -m simpy_demo simulate --scenario ./scenarios/baseline_8hr_*
+poetry run python -m virtual_twin configure --run baseline_8hr
+poetry run python -m virtual_twin simulate --scenario ./scenarios/baseline_8hr_*
 ```
 
 ## Configuration System
@@ -90,7 +90,7 @@ overrides:
 
 Then create a run config and execute:
 ```bash
-poetry run python -m simpy_demo --run high_buffer_8hr --export
+poetry run python -m virtual_twin --run high_buffer_8hr --export
 ```
 
 ## Architecture
@@ -146,17 +146,17 @@ COLLECT → BREAKDOWN CHECK → MICROSTOP CHECK → EXECUTE → TRANSFORM → IN
 
 ```bash
 # Direct run (legacy, still works)
-python -m simpy_demo --run baseline_8hr --export
+python -m virtual_twin --run baseline_8hr --export
 
 # Subcommand: run
-python -m simpy_demo run --run baseline_8hr --export
+python -m virtual_twin run --run baseline_8hr --export
 
 # Subcommand: configure (generate scenario bundle)
-python -m simpy_demo configure --run baseline_8hr
-python -m simpy_demo configure --run baseline_8hr --dry-run
+python -m virtual_twin configure --run baseline_8hr
+python -m virtual_twin configure --run baseline_8hr --dry-run
 
 # Subcommand: simulate (run from scenario bundle)
-python -m simpy_demo simulate --scenario ./scenarios/baseline_8hr_20251129_143022
+python -m virtual_twin simulate --scenario ./scenarios/baseline_8hr_20251129_143022
 
 # Options
   --run NAME      Run config name (default: baseline_8hr)
@@ -187,12 +187,12 @@ Benefits:
 
 ## Database Storage
 
-Simulation results are automatically saved to DuckDB (`./simpy_results.duckdb`) for analytics and traceability.
+Simulation results are automatically saved to DuckDB (`./virtual_twin_results.duckdb`) for analytics and traceability.
 
 ### Querying Results
 
 ```python
-from simpy_demo import db_connect
+from virtual_twin import db_connect
 
 # Connect and query
 conn = db_connect()
@@ -211,13 +211,13 @@ hourly = conn.execute("SELECT * FROM v_hourly_production").df()
 
 ```bash
 # Skip database save
-python -m simpy_demo --run baseline_8hr --no-db
+python -m virtual_twin --run baseline_8hr --no-db
 
 # Custom database path
-python -m simpy_demo --run baseline_8hr --db-path ./my_results.duckdb
+python -m virtual_twin --run baseline_8hr --db-path ./my_results.duckdb
 
 # Enable full event logging (debug mode, ~600k rows/8hr)
-python -m simpy_demo --run baseline_8hr --debug-events
+python -m virtual_twin --run baseline_8hr --debug-events
 ```
 
 ### Database Schema
@@ -236,7 +236,7 @@ python -m simpy_demo --run baseline_8hr --debug-events
 
 ### Visualization
 
-- **Apache Superset**: Native DuckDB support - connect with `duckdb:////path/to/simpy_results.duckdb`
+- **Apache Superset**: Native DuckDB support - connect with `duckdb:////path/to/virtual_twin_results.duckdb`
 - **Grafana**: Export to SQLite with `ATTACH 'export.db' AS sqlite (TYPE SQLITE)`
 - **Parquet**: Export with `COPY table TO 'file.parquet' (FORMAT PARQUET)`
 

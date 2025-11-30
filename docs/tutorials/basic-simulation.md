@@ -4,7 +4,7 @@ A complete walkthrough of running your first simulation and understanding the re
 
 ## Prerequisites
 
-- SimPy-Demo installed ([Installation Guide](../getting-started/installation.md))
+- Virtual Twin installed ([Installation Guide](../getting-started/installation.md))
 - Terminal access
 
 ## Step 1: Explore the Configuration
@@ -84,7 +84,7 @@ Filler → Inspector → Packer → Palletizer
 ## Step 2: Run the Simulation
 
 ```bash
-poetry run python -m simpy_demo --run baseline_8hr --export
+poetry run python -m virtual_twin --run baseline_8hr --export
 ```
 
 ### Expected Output
@@ -249,7 +249,7 @@ Run with a different random seed to see variation:
 ```bash
 # Modify seed temporarily
 poetry run python -c "
-from simpy_demo import SimulationEngine
+from virtual_twin import SimulationEngine
 
 engine = SimulationEngine('config')
 df_ts, df_ev = engine.run('baseline_8hr')
@@ -268,7 +268,7 @@ print(f'Seed 123 pallets: {df_ts2[\"pallets_produced\"].sum()}')
 ## What You Learned
 
 1. **Configuration structure**: Run → Scenario → Topology → Equipment
-2. **Running simulations**: `poetry run python -m simpy_demo --run NAME --export`
+2. **Running simulations**: `poetry run python -m virtual_twin --run NAME --export`
 3. **Output files**: Telemetry (time-series) and Events (state log)
 4. **Data analysis**: Loading and analyzing CSV outputs
 

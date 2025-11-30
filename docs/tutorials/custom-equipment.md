@@ -105,10 +105,10 @@ EOF
 
 ```bash
 # Baseline
-poetry run python -m simpy_demo --run baseline_8hr --export
+poetry run python -m virtual_twin --run baseline_8hr --export
 
 # High-speed
-poetry run python -m simpy_demo --run highspeed_8hr --export
+poetry run python -m virtual_twin --run highspeed_8hr --export
 ```
 
 ## Step 6: Compare Results

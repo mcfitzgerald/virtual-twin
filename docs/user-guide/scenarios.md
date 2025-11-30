@@ -63,10 +63,10 @@ Run and compare:
 
 ```bash
 # Baseline
-poetry run python -m simpy_demo --run baseline_8hr --export
+poetry run python -m virtual_twin --run baseline_8hr --export
 
 # High buffer
-poetry run python -m simpy_demo --run high_buffer_8hr --export
+poetry run python -m virtual_twin --run high_buffer_8hr --export
 
 # Compare outputs
 diff output/telemetry_baseline_8hr_*.csv output/telemetry_high_buffer_8hr_*.csv
@@ -206,7 +206,7 @@ Run all and analyze variance:
 
 ```bash
 for seed in 1 2 3; do
-  poetry run python -m simpy_demo --run baseline_8hr_seed$seed --export
+  poetry run python -m virtual_twin --run baseline_8hr_seed$seed --export
 done
 ```
 
@@ -310,10 +310,10 @@ Use `configure` + `simulate` for experiments you want to reproduce:
 
 ```bash
 # Generate bundle with frozen config
-poetry run python -m simpy_demo configure --run high_buffer_8hr
+poetry run python -m virtual_twin configure --run high_buffer_8hr
 
 # Run reproducibly
-poetry run python -m simpy_demo simulate --scenario ./scenarios/high_buffer_8hr_*
+poetry run python -m virtual_twin simulate --scenario ./scenarios/high_buffer_8hr_*
 ```
 
 ## Next Steps

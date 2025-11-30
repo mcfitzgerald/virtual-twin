@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.0] - 2025-11-30
+
+### Changed
+- **Project renamed from simpy-demo to virtual-twin**
+  - Package name: `simpy-demo` → `virtual-twin`
+  - Module name: `simpy_demo` → `virtual_twin`
+  - CLI: `python -m virtual_twin` → `python -m virtual_twin`
+  - Database path: `simpy_results.duckdb` → `virtual_twin_results.duckdb`
+  - Repository: `https://github.com/mcfitzgerald/virtual-twin`
+
+### Migration
+```python
+# Before
+from simpy_demo import SimulationEngine
+python -m virtual_twin --run baseline_8hr
+
+# After
+from virtual_twin import SimulationEngine
+python -m virtual_twin --run baseline_8hr
+```
+
 ## [0.15.0] - 2025-11-30
 
 ### Added
@@ -21,14 +42,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Usage
 ```bash
 # Normal run (hybrid mode - compressed, default)
-python -m simpy_demo --run baseline_8hr
+python -m virtual_twin --run baseline_8hr
 
 # Debug run (adds full events table)
-python -m simpy_demo --run baseline_8hr --debug-events
+python -m virtual_twin --run baseline_8hr --debug-events
 
 # With subcommands
-python -m simpy_demo run --run baseline_8hr --debug-events
-python -m simpy_demo simulate --scenario ./scenarios/baseline_8hr_* --debug-events
+python -m virtual_twin run --run baseline_8hr --debug-events
+python -m virtual_twin simulate --scenario ./scenarios/baseline_8hr_* --debug-events
 ```
 
 ## [0.14.0] - 2025-11-30
@@ -109,7 +130,7 @@ python -m simpy_demo simulate --scenario ./scenarios/baseline_8hr_* --debug-even
 ## [0.12.0] - 2025-11-30
 
 ### Added
-- **EventAggregator class** (`src/simpy_demo/aggregation.py`) - Phase 1 of event storage optimization
+- **EventAggregator class** (`src/virtual_twin/aggregation.py`) - Phase 1 of event storage optimization
   - `BucketStats` dataclass for per-bucket state duration tracking
   - `BufferedEvent` dataclass for context capture around interesting events
   - `EventAggregator` class with hybrid aggregation strategy:
@@ -152,7 +173,7 @@ python -m simpy_demo simulate --scenario ./scenarios/baseline_8hr_* --debug-even
 ## [0.11.0] - 2025-11-29
 
 ### Added
-- **DuckDB database storage** for simulation results (`src/simpy_demo/storage/`)
+- **DuckDB database storage** for simulation results (`src/virtual_twin/storage/`)
   - `schema.py` - DDL for 7 tables: simulation_runs, telemetry, machine_telemetry, events, run_summary, machine_oee, run_equipment
   - `writer.py` - `DuckDBWriter` class with bulk insert for performance
   - `__init__.py` - Public API: `save_results()`, `connect()`, `get_db_path()`
@@ -232,27 +253,27 @@ python -m simpy_demo simulate --scenario ./scenarios/baseline_8hr_* --debug-even
 
 ### Added
 - **CLI subcommands** for `configure` and `simulate` workflow (Phase 5 of refac3.md)
-  - `python -m simpy_demo configure --run <name>` - Generate scenario bundle from config
-  - `python -m simpy_demo simulate --scenario <path>` - Run a scenario bundle
-  - `python -m simpy_demo run --run <name>` - Direct run (combines configure + simulate)
+  - `python -m virtual_twin configure --run <name>` - Generate scenario bundle from config
+  - `python -m virtual_twin simulate --scenario <path>` - Run a scenario bundle
+  - `python -m virtual_twin run --run <name>` - Direct run (combines configure + simulate)
 - **Scenario bundles** (`scenarios/`) for auditable, reproducible runs
   - `scenario.py` - Lightweight runner script
   - `config_snapshot.yaml` - Frozen resolved configuration
   - `metadata.json` - Generation metadata (git commit, hash, timestamp, version)
   - `output/` - Simulation results (telemetry.csv, events.csv, summary.json)
-- **Codegen module** (`src/simpy_demo/codegen/`)
+- **Codegen module** (`src/virtual_twin/codegen/`)
   - `ScenarioGenerator` class for generating scenario bundles
   - Jinja2 template for `scenario.py` generation
   - SHA256 config hashing for reproducibility verification
-- **Runtime module** (`src/simpy_demo/simulation/runtime.py`)
+- **Runtime module** (`src/virtual_twin/simulation/runtime.py`)
   - `execute_scenario()` function for running from config snapshots
-- **Dry-run mode**: `python -m simpy_demo configure --run <name> --dry-run`
+- **Dry-run mode**: `python -m virtual_twin configure --run <name> --dry-run`
 - **New dependencies**: `jinja2>=3.1.6`
 - New exports in `__init__.py`: `ScenarioGenerator`, `configure`, `simulate`, `execute_scenario`
 
 ### Changed
 - CLI now supports subcommands: `run`, `configure`, `simulate`
-- Legacy mode preserved: `python -m simpy_demo --run <name>` still works
+- Legacy mode preserved: `python -m virtual_twin --run <name>` still works
 - `run.py` refactored with subcommand architecture
 - `simulate` command exports to bundle's `output/` directory by default
 - Summary JSON includes production counts, economics, and OEE by machine
@@ -269,10 +290,10 @@ python -m simpy_demo simulate --scenario ./scenarios/baseline_8hr_* --debug-even
 - `net_weight_g` field to `ProductConfig` for product-level weight attribute
 
 ### Removed
-- **Expression Engine** (`src/simpy_demo/expressions/`) - ~230 lines deleted
+- **Expression Engine** (`src/virtual_twin/expressions/`) - ~230 lines deleted
   - Over-engineered for prototype needs
   - Safe AST-based expression evaluation no longer needed
-- **Telemetry Generator** (`src/simpy_demo/factories/telemetry.py`) - ~150 lines deleted
+- **Telemetry Generator** (`src/virtual_twin/factories/telemetry.py`) - ~150 lines deleted
   - Generator types (gaussian, fixed, expression, count_inputs) removed
   - Per-item telemetry generation deferred to future enhancement
 - **Materials Configuration** (`config/materials/cosmetics.yaml`) - ~40 lines deleted
@@ -320,18 +341,18 @@ python -m simpy_demo simulate --scenario ./scenarios/baseline_8hr_* --debug-even
 ## [0.8.0] - 2025-11-26
 
 ### Added
-- **Configurable equipment phases** (`src/simpy_demo/behavior/`) - YAML-defined behavior (Phase 4 of refac3.md)
+- **Configurable equipment phases** (`src/virtual_twin/behavior/`) - YAML-defined behavior (Phase 4 of refac3.md)
   - `Phase` abstract base class with execute/is_enabled interface
   - `PhaseConfig` and `PhaseContext` dataclasses for phase coordination
   - `PhaseResult` for capturing phase outcomes
-- **Individual phase handlers** (`src/simpy_demo/behavior/phases/`):
+- **Individual phase handlers** (`src/virtual_twin/behavior/phases/`):
   - `CollectPhase`: Wait for and gather inputs from upstream
   - `BreakdownPhase`: Poisson-based failure check (availability loss)
   - `MicrostopPhase`: Bernoulli per-cycle jam check (performance loss)
   - `ExecutePhase`: Value-add processing time
   - `TransformPhase`: Convert inputs to output with telemetry generation
   - `InspectPhase`: Quality inspection and conditional routing
-- **BehaviorOrchestrator** (`src/simpy_demo/behavior/orchestrator.py`):
+- **BehaviorOrchestrator** (`src/virtual_twin/behavior/orchestrator.py`):
   - Coordinates phase execution based on behavior config
   - Checks enabled conditions for each phase
   - Passes shared context between phases
@@ -366,13 +387,13 @@ python -m simpy_demo simulate --scenario ./scenarios/baseline_8hr_* --debug-even
 ## [0.7.0] - 2025-11-26
 
 ### Added
-- **Graph-based topology** (`src/simpy_demo/topology/`) for DAG-based production lines (Phase 3 of refac3.md)
+- **Graph-based topology** (`src/virtual_twin/topology/`) for DAG-based production lines (Phase 3 of refac3.md)
   - `TopologyGraph` class with nodes, edges, cycle detection, and topological ordering
   - `StationNode` dataclass for representing stations in the graph
   - `BufferEdge` dataclass for connections with optional conditions
   - Special nodes: `_source`, `_sink`, `_reject` for standard flow endpoints
   - `from_linear()` class method for backward-compatible conversion
-- **Graph-aware layout builder** (`src/simpy_demo/simulation/layout.py`)
+- **Graph-aware layout builder** (`src/virtual_twin/simulation/layout.py`)
   - `LayoutBuilder` class for constructing SimPy layout from `TopologyGraph`
   - `NodeConnections` for multi-path upstream/downstream routing
   - `RoutingRule` for conditional routing (e.g., quality gates)
@@ -406,12 +427,12 @@ python -m simpy_demo simulate --scenario ./scenarios/baseline_8hr_* --debug-even
 ## [0.6.0] - 2025-11-26
 
 ### Added
-- **Expression Engine** (`src/simpy_demo/expressions/`) for evaluating YAML config expressions
+- **Expression Engine** (`src/virtual_twin/expressions/`) for evaluating YAML config expressions
   - Safe AST-based evaluation (no `eval()`) for security
   - `${CONSTANT_NAME}` substitution from `constants.yaml`
   - Arithmetic operators: `+`, `-`, `*`, `/`
   - Aggregate functions: `sum(inputs, 'field')`, `len(inputs)`, `max(inputs, 'field')`, `min(inputs, 'field')`
-- **Telemetry Generator** (`src/simpy_demo/factories/telemetry.py`) for config-driven telemetry
+- **Telemetry Generator** (`src/virtual_twin/factories/telemetry.py`) for config-driven telemetry
   - Generator types: `gaussian`, `fixed`, `expression`, `count_inputs`
   - Replaces hardcoded telemetry values in `equipment.py`
 - Enhanced materials config (`config/materials/cosmetics.yaml`) with telemetry generators:

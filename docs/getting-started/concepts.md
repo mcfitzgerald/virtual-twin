@@ -1,6 +1,6 @@
 # Core Concepts
 
-Understanding the fundamentals behind SimPy-Demo.
+Understanding the fundamentals behind Virtual Twin.
 
 ## Discrete Event Simulation (DES)
 
@@ -114,7 +114,7 @@ flowchart TB
     QL --> RW["Rework"]
 ```
 
-### How SimPy-Demo Models OEE
+### How Virtual Twin Models OEE
 
 | OEE Component | Config Parameter | Simulation Behavior |
 |---------------|------------------|---------------------|
@@ -183,7 +183,7 @@ flowchart LR
 
 ## Economic Model
 
-SimPy-Demo tracks costs and revenue per simulation.
+Virtual Twin tracks costs and revenue per simulation.
 
 ### Cost Components
 

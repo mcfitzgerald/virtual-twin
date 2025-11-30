@@ -27,12 +27,12 @@ Update `CHANGELOG.md` and `README.md` and `docs/` when committing with git, use 
 poetry install
 
 # Run simulation (default or named config)
-poetry run python -m simpy_demo
-poetry run python -m simpy_demo --run baseline_8hr --export
+poetry run python -m virtual_twin
+poetry run python -m virtual_twin --run baseline_8hr --export
 
 # Two-stage workflow (reproducible scenario bundles)
-poetry run python -m simpy_demo configure --run baseline_8hr
-poetry run python -m simpy_demo simulate --scenario ./scenarios/baseline_8hr_*
+poetry run python -m virtual_twin configure --run baseline_8hr
+poetry run python -m virtual_twin simulate --scenario ./scenarios/baseline_8hr_*
 
 # Linting and type checking
 poetry run ruff check src/
@@ -49,10 +49,10 @@ poetry run mkdocs build
 ### Directory Structure
 
 ```
-simpy-demo/
-├── src/simpy_demo/
+virtual-twin/
+├── src/virtual_twin/
 │   ├── __init__.py           # Public API exports
-│   ├── __main__.py           # Entry point for `python -m simpy_demo`
+│   ├── __main__.py           # Entry point for `python -m virtual_twin`
 │   ├── models.py             # Pydantic schemas (MachineConfig, Product, params)
 │   ├── equipment.py          # Equipment class (generic machine simulator)
 │   ├── loader.py             # YAML config loader with name-based resolution
@@ -210,13 +210,13 @@ selling_price: 450.00   # $ per pallet
 
 Then run:
 ```bash
-poetry run python -m simpy_demo --run high_buffer_8hr
+poetry run python -m virtual_twin --run high_buffer_8hr
 ```
 
 ### Programmatic Usage
 
 ```python
-from simpy_demo import SimulationEngine, ConfigLoader
+from virtual_twin import SimulationEngine, ConfigLoader
 
 # Using YAML configs
 engine = SimulationEngine("config")

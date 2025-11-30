@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from simpy_demo import ConfigLoader, SimulationEngine
+from virtual_twin import ConfigLoader, SimulationEngine
 
 
 class TestConfigLoading:

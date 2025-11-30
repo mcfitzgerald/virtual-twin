@@ -7,10 +7,10 @@ import duckdb
 import pandas as pd
 import pytest
 
-from simpy_demo import ConfigLoader, SimulationEngine
-from simpy_demo.storage import connect, get_db_path, save_results
-from simpy_demo.storage.schema import SCHEMA_DDL, create_tables
-from simpy_demo.storage.writer import DuckDBWriter
+from virtual_twin import ConfigLoader, SimulationEngine
+from virtual_twin.storage import connect, get_db_path, save_results
+from virtual_twin.storage.schema import SCHEMA_DDL, create_tables
+from virtual_twin.storage.writer import DuckDBWriter
 
 
 @pytest.fixture
@@ -280,7 +280,7 @@ class TestDuckDBWriter:
         config_dir: Path,
     ):
         """store_run() should insert state_summary records when provided."""
-        from simpy_demo import SimulationEngine
+        from virtual_twin import SimulationEngine
 
         # Run simulation with aggregator (produces df_state_summary)
         engine = SimulationEngine(str(config_dir), save_to_db=False)
@@ -306,7 +306,7 @@ class TestDuckDBWriter:
         config_dir: Path,
     ):
         """store_run() should insert events_detail records when provided."""
-        from simpy_demo import SimulationEngine
+        from virtual_twin import SimulationEngine
 
         # Run simulation with aggregator (produces df_events_detail)
         engine = SimulationEngine(str(config_dir), save_to_db=False)
@@ -332,7 +332,7 @@ class TestDuckDBWriter:
         config_dir: Path,
     ):
         """store_run() should calculate OEE from state_summary when provided."""
-        from simpy_demo import SimulationEngine
+        from virtual_twin import SimulationEngine
 
         # Run simulation with aggregator
         engine = SimulationEngine(str(config_dir), save_to_db=False)
@@ -357,7 +357,7 @@ class TestPublicAPI:
     def test_get_db_path_returns_default(self):
         """get_db_path() should return the default path."""
         path = get_db_path()
-        assert path == Path("./simpy_results.duckdb")
+        assert path == Path("./virtual_twin_results.duckdb")
 
     def test_save_results_creates_db(
         self,

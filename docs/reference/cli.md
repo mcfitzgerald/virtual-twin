@@ -1,11 +1,11 @@
 # CLI Reference
 
-Complete command-line interface reference for SimPy-Demo.
+Complete command-line interface reference for Virtual Twin.
 
 ## Basic Usage
 
 ```bash
-poetry run python -m simpy_demo [OPTIONS] [COMMAND]
+poetry run python -m virtual_twin [OPTIONS] [COMMAND]
 ```
 
 ## Global Options
@@ -25,23 +25,23 @@ poetry run python -m simpy_demo [OPTIONS] [COMMAND]
 Run a simulation directly using global options.
 
 ```bash
-poetry run python -m simpy_demo --run baseline_8hr --export
+poetry run python -m virtual_twin --run baseline_8hr --export
 ```
 
 **Examples:**
 
 ```bash
 # Run default config
-poetry run python -m simpy_demo
+poetry run python -m virtual_twin
 
 # Run specific config
-poetry run python -m simpy_demo --run baseline_graph_8hr
+poetry run python -m virtual_twin --run baseline_graph_8hr
 
 # Export to specific directory
-poetry run python -m simpy_demo --run baseline_8hr --export --output ./results
+poetry run python -m virtual_twin --run baseline_8hr --export --output ./results
 
 # Use custom config directory
-poetry run python -m simpy_demo --config ./my_configs --run custom_run --export
+poetry run python -m virtual_twin --config ./my_configs --run custom_run --export
 ```
 
 ---
@@ -51,7 +51,7 @@ poetry run python -m simpy_demo --config ./my_configs --run custom_run --export
 Explicit subcommand for running simulations.
 
 ```bash
-poetry run python -m simpy_demo run [OPTIONS]
+poetry run python -m virtual_twin run [OPTIONS]
 ```
 
 **Options:**
@@ -63,22 +63,22 @@ poetry run python -m simpy_demo run [OPTIONS]
 | `--export` | Export results to CSV | False |
 | `--output PATH` | Output directory | `output` |
 | `--no-db` | Skip saving to DuckDB database | False |
-| `--db-path PATH` | Custom path for DuckDB file | `./simpy_results.duckdb` |
+| `--db-path PATH` | Custom path for DuckDB file | `./virtual_twin_results.duckdb` |
 
 **Examples:**
 
 ```bash
 # Run with subcommand
-poetry run python -m simpy_demo run --run baseline_8hr --export
+poetry run python -m virtual_twin run --run baseline_8hr --export
 
 # Same as direct run
-poetry run python -m simpy_demo --run baseline_8hr --export
+poetry run python -m virtual_twin --run baseline_8hr --export
 
 # Skip database storage
-poetry run python -m simpy_demo run --run baseline_8hr --no-db
+poetry run python -m virtual_twin run --run baseline_8hr --no-db
 
 # Use custom database path
-poetry run python -m simpy_demo run --run baseline_8hr --db-path ./my_results.duckdb
+poetry run python -m virtual_twin run --run baseline_8hr --db-path ./my_results.duckdb
 ```
 
 ---
@@ -88,7 +88,7 @@ poetry run python -m simpy_demo run --run baseline_8hr --db-path ./my_results.du
 Generate a scenario bundle for reproducible runs.
 
 ```bash
-poetry run python -m simpy_demo configure [OPTIONS]
+poetry run python -m virtual_twin configure [OPTIONS]
 ```
 
 **Options:**
@@ -116,13 +116,13 @@ scenarios/baseline_8hr_20250129_143022/
 
 ```bash
 # Generate scenario bundle
-poetry run python -m simpy_demo configure --run baseline_8hr
+poetry run python -m virtual_twin configure --run baseline_8hr
 
 # Preview what would be generated
-poetry run python -m simpy_demo configure --run baseline_8hr --dry-run
+poetry run python -m virtual_twin configure --run baseline_8hr --dry-run
 
 # Output to custom directory
-poetry run python -m simpy_demo configure --run baseline_8hr --output ./my_scenarios
+poetry run python -m virtual_twin configure --run baseline_8hr --output ./my_scenarios
 ```
 
 ---
@@ -132,7 +132,7 @@ poetry run python -m simpy_demo configure --run baseline_8hr --output ./my_scena
 Run a simulation from a scenario bundle.
 
 ```bash
-poetry run python -m simpy_demo simulate [OPTIONS]
+poetry run python -m virtual_twin simulate [OPTIONS]
 ```
 
 **Options:**
@@ -156,10 +156,10 @@ scenarios/baseline_8hr_20250129_143022/output/
 
 ```bash
 # Run scenario bundle
-poetry run python -m simpy_demo simulate --scenario ./scenarios/baseline_8hr_20250129_143022
+poetry run python -m virtual_twin simulate --scenario ./scenarios/baseline_8hr_20250129_143022
 
 # Using glob pattern
-poetry run python -m simpy_demo simulate --scenario ./scenarios/baseline_8hr_*
+poetry run python -m virtual_twin simulate --scenario ./scenarios/baseline_8hr_*
 ```
 
 ---
@@ -171,7 +171,7 @@ poetry run python -m simpy_demo simulate --scenario ./scenarios/baseline_8hr_*
 For quick testing without scenario bundles:
 
 ```bash
-poetry run python -m simpy_demo --run baseline_8hr --export
+poetry run python -m virtual_twin --run baseline_8hr --export
 ```
 
 ### Reproducible Run
@@ -180,10 +180,10 @@ For auditable, reproducible simulations:
 
 ```bash
 # Step 1: Generate bundle
-poetry run python -m simpy_demo configure --run baseline_8hr
+poetry run python -m virtual_twin configure --run baseline_8hr
 
 # Step 2: Run from bundle
-poetry run python -m simpy_demo simulate --scenario ./scenarios/baseline_8hr_*
+poetry run python -m virtual_twin simulate --scenario ./scenarios/baseline_8hr_*
 ```
 
 ### Batch Runs
@@ -192,7 +192,7 @@ Run multiple configurations:
 
 ```bash
 for run in baseline_8hr high_buffer_8hr high_speed_8hr; do
-  poetry run python -m simpy_demo --run $run --export
+  poetry run python -m virtual_twin --run $run --export
 done
 ```
 
@@ -200,12 +200,12 @@ done
 
 ```bash
 # Generate bundles
-poetry run python -m simpy_demo configure --run baseline_8hr
-poetry run python -m simpy_demo configure --run high_buffer_8hr
+poetry run python -m virtual_twin configure --run baseline_8hr
+poetry run python -m virtual_twin configure --run high_buffer_8hr
 
 # Run both
-poetry run python -m simpy_demo simulate --scenario ./scenarios/baseline_8hr_*
-poetry run python -m simpy_demo simulate --scenario ./scenarios/high_buffer_8hr_*
+poetry run python -m virtual_twin simulate --scenario ./scenarios/baseline_8hr_*
+poetry run python -m virtual_twin simulate --scenario ./scenarios/high_buffer_8hr_*
 
 # Compare configs
 diff scenarios/baseline_8hr_*/config_snapshot.yaml scenarios/high_buffer_8hr_*/config_snapshot.yaml
@@ -246,8 +246,8 @@ diff scenarios/baseline_8hr_*/config_snapshot.yaml scenarios/high_buffer_8hr_*/c
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `SIMPY_DEMO_CONFIG` | Default config directory | `config` |
-| `SIMPY_DEMO_OUTPUT` | Default output directory | `output` |
+| `VIRTUAL_TWIN_CONFIG` | Default config directory | `config` |
+| `VIRTUAL_TWIN_OUTPUT` | Default output directory | `output` |
 
 ---
 
@@ -255,10 +255,10 @@ diff scenarios/baseline_8hr_*/config_snapshot.yaml scenarios/high_buffer_8hr_*/c
 
 ```bash
 # General help
-poetry run python -m simpy_demo --help
+poetry run python -m virtual_twin --help
 
 # Subcommand help
-poetry run python -m simpy_demo run --help
-poetry run python -m simpy_demo configure --help
-poetry run python -m simpy_demo simulate --help
+poetry run python -m virtual_twin run --help
+poetry run python -m virtual_twin configure --help
+poetry run python -m virtual_twin simulate --help
 ```

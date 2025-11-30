@@ -1,6 +1,6 @@
 # Products & Economics
 
-SimPy-Demo tracks material costs, conversion costs, revenue, and gross margin when a product is configured.
+Virtual Twin tracks material costs, conversion costs, revenue, and gross margin when a product is configured.
 
 ## Product Configuration
 
@@ -206,8 +206,8 @@ duration_hours: 8.0
 ```
 
 ```bash
-poetry run python -m simpy_demo --run premium_8hr --export
-poetry run python -m simpy_demo --run economy_8hr --export
+poetry run python -m virtual_twin --run premium_8hr --export
+poetry run python -m virtual_twin --run economy_8hr --export
 ```
 
 Compare profitability:

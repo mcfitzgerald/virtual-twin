@@ -1,6 +1,6 @@
 # Configuration
 
-SimPy-Demo uses a layered YAML configuration system that separates concerns and enables what-if experiments without code changes.
+Virtual Twin uses a layered YAML configuration system that separates concerns and enables what-if experiments without code changes.
 
 ## Configuration Hierarchy
 

@@ -1,6 +1,6 @@
 # Outputs
 
-SimPy-Demo produces three types of output: telemetry time-series, event logs, and summary statistics.
+Virtual Twin produces three types of output: telemetry time-series, event logs, and summary statistics.
 
 ## Output Files
 
@@ -370,7 +370,7 @@ df["margin_cumulative"].plot(title="Cumulative Gross Margin")
 
 ## Database Storage
 
-Simulation results are automatically saved to DuckDB (`./simpy_results.duckdb`) for analytics and traceability.
+Simulation results are automatically saved to DuckDB (`./virtual_twin_results.duckdb`) for analytics and traceability.
 
 ### Schema Overview
 
@@ -405,7 +405,7 @@ This reduces storage from ~25GB/month to ~10MB while preserving OEE calculation 
 The `debug_events` parameter controls whether the full `events` table is populated:
 
 ```python
-from simpy_demo import SimulationEngine
+from virtual_twin import SimulationEngine
 
 engine = SimulationEngine("config")
 
@@ -465,7 +465,7 @@ failures = df_detail[df_detail['is_interesting'] == True]
 ### Querying Results
 
 ```python
-from simpy_demo import db_connect
+from virtual_twin import db_connect
 
 # Connect and query
 conn = db_connect()
@@ -496,16 +496,16 @@ hourly = conn.execute("SELECT * FROM v_hourly_production").df()
 
 ```bash
 # Skip database save
-python -m simpy_demo --run baseline_8hr --no-db
+python -m virtual_twin --run baseline_8hr --no-db
 
 # Custom database path
-python -m simpy_demo --run baseline_8hr --db-path ./my_results.duckdb
+python -m virtual_twin --run baseline_8hr --db-path ./my_results.duckdb
 
 # Enable full event logging (debug mode)
-python -m simpy_demo --run baseline_8hr --debug-events
+python -m virtual_twin --run baseline_8hr --debug-events
 
 # Combine options
-python -m simpy_demo --run baseline_8hr --debug-events --db-path ./debug.duckdb
+python -m virtual_twin --run baseline_8hr --debug-events --db-path ./debug.duckdb
 ```
 
 The `--debug-events` flag enables full event storage (~600k rows for 8hr simulation) in addition to the default hybrid storage. Use this for:
@@ -516,7 +516,7 @@ The `--debug-events` flag enables full event storage (~600k rows for 8hr simulat
 
 ### Visualization Tools
 
-- **Apache Superset**: Native DuckDB support - connect with `duckdb:////path/to/simpy_results.duckdb`
+- **Apache Superset**: Native DuckDB support - connect with `duckdb:////path/to/virtual_twin_results.duckdb`
 - **Grafana**: Export to SQLite with `ATTACH 'export.db' AS sqlite (TYPE SQLITE)`
 - **Parquet**: Export with `COPY table TO 'file.parquet' (FORMAT PARQUET)`
 

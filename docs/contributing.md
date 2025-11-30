@@ -1,6 +1,6 @@
 # Contributing
 
-Guidelines for contributing to SimPy-Demo.
+Guidelines for contributing to Virtual Twin.
 
 ## Development Setup
 
@@ -12,15 +12,15 @@ Guidelines for contributing to SimPy-Demo.
 ### Clone and Install
 
 ```bash
-git clone https://github.com/michael/simpy-demo.git
-cd simpy-demo
+git clone https://github.com/mcfitzgerald/virtual-twin.git
+cd virtual-twin
 poetry install
 ```
 
 ### Verify Installation
 
 ```bash
-poetry run python -m simpy_demo --help
+poetry run python -m virtual_twin --help
 ```
 
 ## Code Style
@@ -48,7 +48,7 @@ poetry run ruff check --fix src/
 We use `mypy` for type checking:
 
 ```bash
-poetry run mypy src/simpy_demo/
+poetry run mypy src/virtual_twin/
 ```
 
 ### Pre-Commit
@@ -58,14 +58,14 @@ Before committing, run:
 ```bash
 poetry run ruff format src/
 poetry run ruff check src/
-poetry run mypy src/simpy_demo/
+poetry run mypy src/virtual_twin/
 ```
 
 ## Project Structure
 
 ```
-simpy-demo/
-├── src/simpy_demo/        # Source code
+virtual-twin/
+├── src/virtual_twin/        # Source code
 │   ├── models.py          # Pydantic models
 │   ├── loader.py          # Config loading
 │   ├── equipment.py       # Equipment class
@@ -96,7 +96,7 @@ poetry run pytest -v
 poetry run pytest tests/test_reality_checks.py
 
 # Run with coverage
-poetry run pytest --cov=simpy_demo
+poetry run pytest --cov=virtual_twin
 ```
 
 ### Test Categories

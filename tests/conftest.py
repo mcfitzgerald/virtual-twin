@@ -6,7 +6,7 @@ from typing import Tuple
 import pandas as pd
 import pytest
 
-from simpy_demo import ConfigLoader, SimulationEngine
+from virtual_twin import ConfigLoader, SimulationEngine
 
 
 @pytest.fixture

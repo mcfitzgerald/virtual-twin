@@ -1,19 +1,19 @@
 # Running Simulations
 
-SimPy-Demo offers multiple ways to run simulations, from quick one-liners to reproducible, auditable workflows.
+Virtual Twin offers multiple ways to run simulations, from quick one-liners to reproducible, auditable workflows.
 
 ## Direct Run (Quick)
 
 The simplest way to run a simulation:
 
 ```bash
-poetry run python -m simpy_demo --run baseline_8hr
+poetry run python -m virtual_twin --run baseline_8hr
 ```
 
 Add `--export` to save results as CSV:
 
 ```bash
-poetry run python -m simpy_demo --run baseline_8hr --export
+poetry run python -m virtual_twin --run baseline_8hr --export
 ```
 
 ### CLI Options
@@ -29,16 +29,16 @@ poetry run python -m simpy_demo --run baseline_8hr --export
 
 ```bash
 # Run with default config
-poetry run python -m simpy_demo
+poetry run python -m virtual_twin
 
 # Run specific config
-poetry run python -m simpy_demo --run baseline_graph_8hr
+poetry run python -m virtual_twin --run baseline_graph_8hr
 
 # Use custom config directory
-poetry run python -m simpy_demo --config ./my_configs --run custom_run
+poetry run python -m virtual_twin --config ./my_configs --run custom_run
 
 # Export to specific directory
-poetry run python -m simpy_demo --run baseline_8hr --export --output ./results
+poetry run python -m virtual_twin --run baseline_8hr --export --output ./results
 ```
 
 ## Subcommand: run
@@ -46,7 +46,7 @@ poetry run python -m simpy_demo --run baseline_8hr --export --output ./results
 The explicit subcommand form:
 
 ```bash
-poetry run python -m simpy_demo run --run baseline_8hr --export
+poetry run python -m virtual_twin run --run baseline_8hr --export
 ```
 
 Equivalent to the direct form, but clearer in scripts.
@@ -60,7 +60,7 @@ For auditable, reproducible simulations, use the configure + simulate workflow:
 Generate a scenario bundle:
 
 ```bash
-poetry run python -m simpy_demo configure --run baseline_8hr
+poetry run python -m virtual_twin configure --run baseline_8hr
 ```
 
 This creates a timestamped directory:
@@ -78,7 +78,7 @@ scenarios/baseline_8hr_20250129_143022/
 Run the scenario bundle:
 
 ```bash
-poetry run python -m simpy_demo simulate --scenario ./scenarios/baseline_8hr_20250129_143022
+poetry run python -m virtual_twin simulate --scenario ./scenarios/baseline_8hr_20250129_143022
 ```
 
 Results are saved to the bundle's `output/` directory:
@@ -96,7 +96,7 @@ scenarios/baseline_8hr_20250129_143022/
 Preview what would be generated without creating files:
 
 ```bash
-poetry run python -m simpy_demo configure --run baseline_8hr --dry-run
+poetry run python -m virtual_twin configure --run baseline_8hr --dry-run
 ```
 
 ## Scenario Bundle Contents
@@ -155,7 +155,7 @@ A standalone runner script:
 ```python
 #!/usr/bin/env python
 """Scenario: baseline_8hr - Generated 2025-01-29T14:30:22"""
-from simpy_demo import execute_scenario
+from virtual_twin import execute_scenario
 from pathlib import Path
 
 if __name__ == "__main__":
@@ -186,13 +186,13 @@ Re-run a scenario and compare outputs:
 
 ```bash
 # Original run
-poetry run python -m simpy_demo simulate --scenario ./scenarios/baseline_8hr_20250129_143022
+poetry run python -m virtual_twin simulate --scenario ./scenarios/baseline_8hr_20250129_143022
 
 # Copy output
 cp -r scenarios/baseline_8hr_20250129_143022/output output_original
 
 # Re-run
-poetry run python -m simpy_demo simulate --scenario ./scenarios/baseline_8hr_20250129_143022
+poetry run python -m virtual_twin simulate --scenario ./scenarios/baseline_8hr_20250129_143022
 
 # Compare
 diff output_original/telemetry.csv scenarios/baseline_8hr_20250129_143022/output/telemetry.csv
@@ -205,7 +205,7 @@ With the same `random_seed`, outputs should be identical.
 Use Python directly for custom workflows:
 
 ```python
-from simpy_demo import SimulationEngine, ConfigLoader
+from virtual_twin import SimulationEngine, ConfigLoader
 
 # Load and run by name
 engine = SimulationEngine("config")

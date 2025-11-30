@@ -1,6 +1,6 @@
 # Glossary
 
-Terminology used in SimPy-Demo and manufacturing simulation.
+Terminology used in Virtual Twin and manufacturing simulation.
 
 ## Manufacturing Terms
 
@@ -21,7 +21,7 @@ When a machine cannot output because the downstream buffer is full. The machine 
 A storage location between machines that holds work-in-process (WIP). Buffers decouple machines and absorb variation.
 
 ### Changeover
-The time required to switch production from one product to another. Not currently modeled in SimPy-Demo.
+The time required to switch production from one product to another. Not currently modeled in Virtual Twin.
 
 ### Conversion Cost
 The cost of transforming raw materials into finished goods, including labor, energy, and overhead.
@@ -34,7 +34,7 @@ $$
 Consumer Packaged Goods. Products sold to consumers through retail, such as food, beverages, toiletries, and cosmetics.
 
 ### Cycle Time
-The time required to process one unit (or batch). In SimPy-Demo:
+The time required to process one unit (or batch). In Virtual Twin:
 
 $$
 \text{Cycle Time (sec)} = \frac{3600}{\text{UPH}}

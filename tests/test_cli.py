@@ -9,7 +9,7 @@ from pathlib import Path
 
 import yaml
 
-from simpy_demo import configure, simulate
+from virtual_twin import configure, simulate
 
 
 class TestConfigureCommand:
@@ -105,7 +105,7 @@ class TestConfigureCommand:
         assert "git_dirty" in metadata
 
         # Version info
-        assert "simpy_demo_version" in metadata
+        assert "virtual_twin_version" in metadata
         assert "python_version" in metadata
 
 

@@ -1,8 +1,8 @@
-# SimPy-Demo Documentation
+# Virtual Twin Documentation
 
 **Discrete Event Simulation for CPG Production Lines**
 
-SimPy-Demo is a production line simulator for Consumer Packaged Goods (CPG) manufacturing. It models high-speed packaging lines with realistic equipment behavior, quality control, and economic tracking.
+Virtual Twin is a production line simulator for Consumer Packaged Goods (CPG) manufacturing. It models high-speed packaging lines with realistic equipment behavior, quality control, and economic tracking.
 
 ## What Can You Do?
 
@@ -49,7 +49,7 @@ SimPy-Demo is a production line simulator for Consumer Packaged Goods (CPG) manu
 poetry install
 
 # Run an 8-hour simulation
-poetry run python -m simpy_demo --run baseline_8hr --export
+poetry run python -m virtual_twin --run baseline_8hr --export
 
 # View results
 ls output/

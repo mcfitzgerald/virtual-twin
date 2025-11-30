@@ -21,7 +21,7 @@ $$
 ## Step 1: Run a Simulation
 
 ```bash
-poetry run python -m simpy_demo --run baseline_8hr --export
+poetry run python -m virtual_twin --run baseline_8hr --export
 ```
 
 ## Step 2: Load the Events Data

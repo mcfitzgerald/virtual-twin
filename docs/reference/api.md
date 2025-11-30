@@ -1,6 +1,6 @@
 # API Reference
 
-Python API for programmatic use of SimPy-Demo.
+Python API for programmatic use of Virtual Twin.
 
 ## Core Classes
 
@@ -9,7 +9,7 @@ Python API for programmatic use of SimPy-Demo.
 Main entry point for running simulations.
 
 ```python
-from simpy_demo import SimulationEngine
+from virtual_twin import SimulationEngine
 
 engine = SimulationEngine(config_dir="config")
 ```
@@ -82,7 +82,7 @@ Run from explicit configuration objects.
 Loads and resolves YAML configurations.
 
 ```python
-from simpy_demo import ConfigLoader
+from virtual_twin import ConfigLoader
 
 loader = ConfigLoader(config_dir="config")
 ```
@@ -159,7 +159,7 @@ Build MachineConfig objects from resolved configuration.
 Pydantic model for equipment configuration.
 
 ```python
-from simpy_demo import MachineConfig
+from virtual_twin import MachineConfig
 
 config = MachineConfig(
     name="Filler",
@@ -206,7 +206,7 @@ Cycle time in seconds (3600 / uph).
 Pydantic model for a product flowing through the line.
 
 ```python
-from simpy_demo import Product, MaterialType
+from virtual_twin import Product, MaterialType
 
 product = Product(
     uid="P001",
@@ -235,7 +235,7 @@ product = Product(
 SimPy process representing a machine.
 
 ```python
-from simpy_demo import Equipment
+from virtual_twin import Equipment
 
 equipment = Equipment(
     env=env,
@@ -256,7 +256,7 @@ Not typically instantiated directly; created by SimulationEngine.
 ### ReliabilityParams
 
 ```python
-from simpy_demo import ReliabilityParams
+from virtual_twin import ReliabilityParams
 
 params = ReliabilityParams(
     mtbf_min=3600,    # Min time between failures (seconds)
@@ -269,7 +269,7 @@ params = ReliabilityParams(
 ### PerformanceParams
 
 ```python
-from simpy_demo import PerformanceParams
+from virtual_twin import PerformanceParams
 
 params = PerformanceParams(
     jam_prob=0.002,      # Probability of jam per cycle
@@ -280,7 +280,7 @@ params = PerformanceParams(
 ### QualityParams
 
 ```python
-from simpy_demo import QualityParams
+from virtual_twin import QualityParams
 
 params = QualityParams(
     defect_rate=0.01,       # Probability of defect
@@ -291,7 +291,7 @@ params = QualityParams(
 ### CostRates
 
 ```python
-from simpy_demo import CostRates
+from virtual_twin import CostRates
 
 rates = CostRates(
     labor_per_hour=25.0,
@@ -309,7 +309,7 @@ rates = CostRates(
 Coordinates equipment phase execution.
 
 ```python
-from simpy_demo import BehaviorOrchestrator, DEFAULT_BEHAVIOR
+from virtual_twin import BehaviorOrchestrator, DEFAULT_BEHAVIOR
 
 orchestrator = BehaviorOrchestrator(DEFAULT_BEHAVIOR)
 ```
@@ -334,7 +334,7 @@ Individual phase implementations:
 DAG-based topology representation.
 
 ```python
-from simpy_demo import TopologyGraph
+from virtual_twin import TopologyGraph
 
 graph = TopologyGraph()
 graph.add_node(StationNode(name="Filler", output_type="Tube"))
@@ -344,7 +344,7 @@ graph.add_edge(BufferEdge(source="_source", target="Filler"))
 ### StationNode
 
 ```python
-from simpy_demo import StationNode
+from virtual_twin import StationNode
 
 node = StationNode(
     name="Filler",
@@ -357,7 +357,7 @@ node = StationNode(
 ### BufferEdge
 
 ```python
-from simpy_demo import BufferEdge
+from virtual_twin import BufferEdge
 
 edge = BufferEdge(
     source="Filler",
@@ -376,7 +376,7 @@ edge = BufferEdge(
 Generates scenario bundles for reproducible runs.
 
 ```python
-from simpy_demo import ScenarioGenerator
+from virtual_twin import ScenarioGenerator
 
 generator = ScenarioGenerator(config_dir="config")
 bundle_path = generator.generate("baseline_8hr", output_dir="scenarios")
@@ -387,7 +387,7 @@ bundle_path = generator.generate("baseline_8hr", output_dir="scenarios")
 Run a scenario from a bundle.
 
 ```python
-from simpy_demo import execute_scenario
+from virtual_twin import execute_scenario
 from pathlib import Path
 
 execute_scenario(Path("scenarios/baseline_8hr_20250129_143022"))
@@ -400,7 +400,7 @@ execute_scenario(Path("scenarios/baseline_8hr_20250129_143022"))
 ### MaterialType
 
 ```python
-from simpy_demo import MaterialType
+from virtual_twin import MaterialType
 
 MaterialType.TUBE
 MaterialType.CASE
@@ -417,7 +417,7 @@ MaterialType.NONE
 Save simulation results to DuckDB.
 
 ```python
-from simpy_demo import save_results
+from virtual_twin import save_results
 
 run_id = save_results(resolved, df_telemetry, df_events)
 print(f"Saved as run_id: {run_id}")
@@ -428,7 +428,7 @@ print(f"Saved as run_id: {run_id}")
 | `resolved` | ResolvedConfig | Resolved configuration |
 | `df_ts` | pd.DataFrame | Telemetry DataFrame |
 | `df_ev` | pd.DataFrame | Events DataFrame |
-| `db_path` | Path \| str \| None | Custom database path (default: `./simpy_results.duckdb`) |
+| `db_path` | Path \| str \| None | Custom database path (default: `./virtual_twin_results.duckdb`) |
 
 **Returns**: `int` - The run_id for the saved simulation
 
@@ -437,7 +437,7 @@ print(f"Saved as run_id: {run_id}")
 Get a DuckDB connection for queries.
 
 ```python
-from simpy_demo import db_connect
+from virtual_twin import db_connect
 
 conn = db_connect()
 
@@ -459,9 +459,9 @@ oee = conn.execute("SELECT * FROM v_machine_oee WHERE run_id = 1").df()
 Get the default database path.
 
 ```python
-from simpy_demo import get_db_path
+from virtual_twin import get_db_path
 
-path = get_db_path()  # Path("./simpy_results.duckdb")
+path = get_db_path()  # Path("./virtual_twin_results.duckdb")
 ```
 
 ---
@@ -469,7 +469,7 @@ path = get_db_path()  # Path("./simpy_results.duckdb")
 ## Full Example
 
 ```python
-from simpy_demo import (
+from virtual_twin import (
     SimulationEngine,
     ConfigLoader,
     MachineConfig,

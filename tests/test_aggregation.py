@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 
 import pandas as pd
 
-from simpy_demo.aggregation import (
+from virtual_twin.aggregation import (
     CONTEXT_WINDOW,
     INTERESTING_STATES,
     BucketStats,

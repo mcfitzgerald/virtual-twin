@@ -64,7 +64,7 @@ done
 ```bash
 for size in 50 100 200 400 800; do
   echo "Running buffer size: $size"
-  poetry run python -m simpy_demo --run buffer_${size}_8hr --export
+  poetry run python -m virtual_twin --run buffer_${size}_8hr --export
 done
 ```
 
@@ -248,7 +248,7 @@ product: fresh_toothpaste_5oz
 duration_hours: 8.0
 random_seed: ${seed}
 EOF
-  poetry run python -m simpy_demo --run buffer_200_seed${seed} --export
+  poetry run python -m virtual_twin --run buffer_200_seed${seed} --export
 done
 ```
 

@@ -3,7 +3,7 @@
 ## Module Structure
 
 ```
-src/simpy_demo/
+src/virtual_twin/
 ├── __init__.py          # Public API exports
 ├── __main__.py          # Entry point
 ├── models.py            # Pydantic schemas (Product, MachineConfig)
@@ -66,9 +66,9 @@ flowchart TB
 ```mermaid
 flowchart TB
     subgraph CLI ["Command Line Interface"]
-        Direct["python -m simpy_demo --run NAME"]
-        Configure["python -m simpy_demo configure --run NAME"]
-        Simulate["python -m simpy_demo simulate --scenario PATH"]
+        Direct["python -m virtual_twin --run NAME"]
+        Configure["python -m virtual_twin configure --run NAME"]
+        Simulate["python -m virtual_twin simulate --scenario PATH"]
     end
 
     subgraph Codegen ["Scenario Bundle Generation"]
@@ -369,15 +369,15 @@ State transition log for OEE calculation and process mining:
 
 ```bash
 # Direct run (legacy, still works)
-python -m simpy_demo --run baseline_8hr --export
+python -m virtual_twin --run baseline_8hr --export
 
 # Two-stage workflow (reproducible)
-python -m simpy_demo configure --run baseline_8hr
-python -m simpy_demo simulate --scenario ./scenarios/baseline_8hr_20251129_143022
+python -m virtual_twin configure --run baseline_8hr
+python -m virtual_twin simulate --scenario ./scenarios/baseline_8hr_20251129_143022
 
 # Dry run (preview bundle without creating)
-python -m simpy_demo configure --run baseline_8hr --dry-run
+python -m virtual_twin configure --run baseline_8hr --dry-run
 
 # Subcommand form
-python -m simpy_demo run --run baseline_8hr --export
+python -m virtual_twin run --run baseline_8hr --export
 ```

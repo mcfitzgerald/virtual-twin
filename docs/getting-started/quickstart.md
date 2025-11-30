@@ -5,7 +5,7 @@ Run your first simulation in 5 minutes.
 ## Run the Baseline Simulation
 
 ```bash
-poetry run python -m simpy_demo --run baseline_8hr --export
+poetry run python -m virtual_twin --run baseline_8hr --export
 ```
 
 This runs an 8-hour simulation of a cosmetics packaging line and exports results to CSV.
@@ -106,7 +106,7 @@ baseline_graph_8hr.yaml
 Run the graph topology version:
 
 ```bash
-poetry run python -m simpy_demo --run baseline_graph_8hr --export
+poetry run python -m virtual_twin --run baseline_graph_8hr --export
 ```
 
 ## Create a Reproducible Run
@@ -115,10 +115,10 @@ Use the two-stage workflow for auditable, reproducible simulations:
 
 ```bash
 # 1. Generate a scenario bundle
-poetry run python -m simpy_demo configure --run baseline_8hr
+poetry run python -m virtual_twin configure --run baseline_8hr
 
 # 2. Run the scenario
-poetry run python -m simpy_demo simulate --scenario ./scenarios/baseline_8hr_*
+poetry run python -m virtual_twin simulate --scenario ./scenarios/baseline_8hr_*
 ```
 
 The scenario bundle contains:

@@ -14,7 +14,7 @@ Sources:
 
 import pandas as pd
 
-from simpy_demo import SimulationEngine
+from virtual_twin import SimulationEngine
 
 
 class TestLossAttribution:

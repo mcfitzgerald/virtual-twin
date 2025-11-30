@@ -25,13 +25,13 @@ poetry --version
 # Poetry (version 1.8.0)
 ```
 
-## Install SimPy-Demo
+## Install Virtual Twin
 
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/michael/simpy-demo.git
-cd simpy-demo
+git clone https://github.com/mcfitzgerald/virtual-twin.git
+cd virtual-twin
 ```
 
 ### 2. Install Dependencies
@@ -51,12 +51,12 @@ This installs:
 ### 3. Verify Installation
 
 ```bash
-poetry run python -m simpy_demo --help
+poetry run python -m virtual_twin --help
 ```
 
 Expected output:
 ```
-usage: python -m simpy_demo [-h] [--run NAME] [--config PATH] [--export] [--output PATH]
+usage: python -m virtual_twin [-h] [--run NAME] [--config PATH] [--export] [--output PATH]
                            {run,configure,simulate} ...
 
 SimPy Production Line Simulator
@@ -80,7 +80,7 @@ options:
 After installation, your directory looks like:
 
 ```
-simpy-demo/
+virtual-twin/
 ├── config/                 # YAML configuration files
 │   ├── runs/              # Simulation run configs
 │   ├── scenarios/         # What-if experiment configs
@@ -88,7 +88,7 @@ simpy-demo/
 │   ├── equipment/         # Equipment parameter configs
 │   ├── products/          # SKU definitions
 │   └── behaviors/         # Phase behavior configs
-├── src/simpy_demo/        # Python source code
+├── src/virtual_twin/        # Python source code
 ├── docs/                  # Documentation (you're here!)
 ├── output/                # Simulation results (created on export)
 └── pyproject.toml         # Project dependencies

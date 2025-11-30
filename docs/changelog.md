@@ -2,7 +2,7 @@
 
 See the full changelog in the repository root:
 
-**[CHANGELOG.md](https://github.com/michael/simpy-demo/blob/main/CHANGELOG.md)**
+**[CHANGELOG.md](https://github.com/mcfitzgerald/virtual-twin/blob/main/CHANGELOG.md)**
 
 ## Recent Versions
 
@@ -10,7 +10,7 @@ See the full changelog in the repository root:
 
 **DuckDB database storage for simulation results**
 
-- Auto-save results to `./simpy_results.duckdb`
+- Auto-save results to `./virtual_twin_results.duckdb`
 - 7-table schema: simulation_runs, telemetry, machine_telemetry, events, run_summary, machine_oee, run_equipment
 - Pre-computed analytics views (v_run_comparison, v_machine_oee, v_hourly_production, v_cumulative_production)
 - Config snapshots stored as JSON for full traceability

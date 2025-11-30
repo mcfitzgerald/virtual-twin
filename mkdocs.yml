@@ -1,7 +1,7 @@
-site_name: SimPy-Demo Documentation
+site_name: Virtual Twin Documentation
 site_description: Discrete Event Simulation for CPG Production Lines
-repo_url: https://github.com/michael/simpy-demo
-repo_name: simpy-demo
+repo_url: https://github.com/mcfitzgerald/virtual-twin
+repo_name: virtual-twin
 
 theme:
   name: material
