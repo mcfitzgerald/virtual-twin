@@ -4,6 +4,9 @@ This document tracks planned features and improvements for simpy-demo.
 
 ## Deferred from Refactoring
 
+### Product impact on performance
+Different skus have different performance characteristics (e.g., new pack gets jammed more, etc etc)
+
 ### Campaign Support
 Multi-run campaigns for batch scenario execution.
 

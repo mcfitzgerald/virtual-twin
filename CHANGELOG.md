@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.1] - 2025-11-29
+
+### Changed
+- **DuckDB OLAP optimization**: Removed redundant JSON columns (`machine_states`, `buffer_levels`) from `telemetry` table
+  - Machine states and buffer levels now stored only in normalized `machine_telemetry` table
+  - Leverages DuckDB's columnar compression for better query performance
+- **Removed B-tree indexes**: DuckDB uses zone maps (min/max per column chunk) for predicate pushdown
+  - Indexes add overhead with minimal benefit for OLAP workloads
+  - Schema now relies on DuckDB's automatic optimization
+
+### Technical Notes
+- `telemetry` table reduced from 17 to 15 columns (removed JSON blobs)
+- Faster bulk inserts (no JSON serialization per row)
+- Better compression ratio for columnar storage
+- All analytical queries should use `machine_telemetry` for per-machine state data
+
 ## [0.11.0] - 2025-11-29
 
 ### Added

@@ -21,6 +21,97 @@ scenarios/baseline_8hr_20250129_143022/output/
 └── summary.json
 ```
 
+## Telemetry vs Events
+
+| Aspect | `telemetry` | `events` |
+|--------|-------------|----------|
+| **Granularity** | Fixed time intervals (default: 5 min) | Every state change |
+| **Row count (8hr run)** | ~96 rows | ~600,000 rows |
+| **What it captures** | Snapshots of production metrics | State transitions |
+| **Primary use** | Dashboards, ML training data | OEE calculation, process mining |
+
+### Conceptual Difference
+
+**Telemetry** answers: "What happened each 5 minutes?"
+
+- Production counts, revenue, margin per interval
+- Machine state at snapshot time
+- Buffer levels at snapshot time
+
+**Events** answers: "Every state transition"
+
+- Exact time each machine changed state
+- Duration spent in each state
+- Sequence of failures, jams, starvation
+
+### Visual Comparison
+
+```
+Time:     0----5----10---15---20---25---30 (minutes)
+
+TELEMETRY (snapshots every 5 min):
+          ▼    ▼    ▼    ▼    ▼    ▼    ▼
+
+EVENTS (every state change):
+          ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
+
+Filler:   [EXECUTE][EXECUTE][JAM][EXEC][DOWN.....][EXECUTE]
+                            ↑         ↑
+                         Events capture each transition
+```
+
+### Sample Telemetry Data
+
+```
+datetime              | tubes_produced | pallets_produced | gross_margin | Filler_state
+2025-01-06 06:05:00   | 312            | 0                | 0.00         | EXECUTE
+2025-01-06 06:10:00   | 298            | 0                | 0.00         | EXECUTE
+2025-01-06 06:15:00   | 305            | 0                | 0.00         | DOWN
+2025-01-06 06:20:00   | 0              | 0                | 0.00         | DOWN
+2025-01-06 06:25:00   | 287            | 2                | 600.00       | EXECUTE
+```
+
+### Sample Events Data
+
+```
+timestamp | machine  | state   | event_type   | duration_sec
+0.36      | Filler   | EXECUTE | state_change | 0.36
+0.72      | Filler   | EXECUTE | state_change | 0.36
+1.08      | Filler   | JAMMED  | state_change | 15.0
+16.08     | Filler   | EXECUTE | state_change | 0.36
+...
+7200.00   | Filler   | DOWN    | state_change | 900.0
+```
+
+### How They Relate in the Database
+
+```
+telemetry (96 rows)          machine_telemetry (384 rows)      events (600k rows)
+┌──────────────────┐         ┌─────────────────────┐          ┌──────────────────┐
+│ ts               │         │ ts                  │          │ ts               │
+│ tubes_produced   │         │ machine_name        │          │ machine_name     │
+│ revenue          │         │ state (at snapshot) │          │ state            │
+│ gross_margin     │         │ buffer_level        │          │ duration_sec     │
+└──────────────────┘         └─────────────────────┘          └──────────────────┘
+       │                            │                                │
+       └─ "What happened            └─ "Machine state               └─ "Every state
+          each 5 minutes?"             at each 5-min mark"             transition"
+```
+
+!!! note "OEE Calculation"
+    OEE is calculated from `events` (summing `duration_sec` by state), not telemetry, because you need the actual time spent in each state, not just the state at snapshot time.
+
+### Use Cases
+
+| Use Case | Data Source |
+|----------|-------------|
+| Time-series charts (production rate over time) | `telemetry` |
+| ML features (predict failures from production patterns) | `telemetry` |
+| Economic reporting (margin per interval) | `telemetry` |
+| OEE calculation (time in each state) | `events` |
+| Process mining (sequence analysis) | `events` |
+| Root cause analysis (what happened before failure?) | `events` |
+
 ## Telemetry DataFrame
 
 Time-series data captured at configurable intervals (default: 5 minutes / 300 seconds).

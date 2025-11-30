@@ -14,7 +14,7 @@ from simpy_demo.storage.schema import create_tables
 if TYPE_CHECKING:
     from simpy_demo.loader import ResolvedConfig
 
-__version__ = "0.11.0"
+__version__ = "0.11.1"
 
 
 class DuckDBWriter:
@@ -219,52 +219,72 @@ class DuckDBWriter:
         return json.dumps(snapshot, default=str)
 
     def _insert_telemetry(self, run_id: int, df_ts: pd.DataFrame) -> None:
-        """Insert telemetry records using bulk insert."""
+        """Insert telemetry records using bulk insert.
+
+        Note: Machine states and buffer levels are stored in machine_telemetry
+        (normalized) rather than as JSON blobs here. This leverages DuckDB's
+        columnar storage for efficient analytical queries.
+        """
         if df_ts.empty:
             return
 
-        # Extract machine states and buffer levels as JSON strings
-        machine_state_cols = [c for c in df_ts.columns if c.endswith("_state")]
-        buffer_level_cols = [c for c in df_ts.columns if c.endswith("_level")]
-
-        # Build JSON columns
-        def build_machine_states(row):
-            states = {}
-            for col in machine_state_cols:
-                machine_name = col.replace("_state", "")
-                states[machine_name] = row[col]
-            return json.dumps(states) if states else None
-
-        def build_buffer_levels(row):
-            levels = {}
-            for col in buffer_level_cols:
-                buffer_name = col.replace("_level", "")
-                levels[buffer_name] = row[col]
-            return json.dumps(levels) if levels else None
-
-        # Prepare DataFrame for bulk insert
+        # Prepare DataFrame for bulk insert (production + economics only)
         df_insert = pd.DataFrame(
             {
                 "ts": df_ts["datetime"].fillna(datetime.now()),
                 "sim_time_sec": df_ts["time"].fillna(0),
-                "tubes_produced": df_ts.get("tubes_produced", pd.Series([0] * len(df_ts))).fillna(0).astype(int),
-                "cases_produced": df_ts.get("cases_produced", pd.Series([0] * len(df_ts))).fillna(0).astype(int),
-                "pallets_produced": df_ts.get("pallets_produced", pd.Series([0] * len(df_ts))).fillna(0).astype(int),
-                "good_pallets": df_ts.get("good_pallets", pd.Series([0] * len(df_ts))).fillna(0).astype(int),
-                "defective_pallets": df_ts.get("defective_pallets", pd.Series([0] * len(df_ts))).fillna(0).astype(int),
-                "defects_created": df_ts.get("defects_created", pd.Series([0] * len(df_ts))).fillna(0).astype(int),
-                "defects_detected": df_ts.get("defects_detected", pd.Series([0] * len(df_ts))).fillna(0).astype(int),
-                "material_cost": df_ts.get("material_cost", pd.Series([0.0] * len(df_ts))).fillna(0.0),
-                "conversion_cost": df_ts.get("conversion_cost", pd.Series([0.0] * len(df_ts))).fillna(0.0),
-                "revenue": df_ts.get("revenue", pd.Series([0.0] * len(df_ts))).fillna(0.0),
-                "gross_margin": df_ts.get("gross_margin", pd.Series([0.0] * len(df_ts))).fillna(0.0),
-                "machine_states": df_ts.apply(build_machine_states, axis=1),
-                "buffer_levels": df_ts.apply(build_buffer_levels, axis=1),
+                "tubes_produced": df_ts.get(
+                    "tubes_produced", pd.Series([0] * len(df_ts))
+                )
+                .fillna(0)
+                .astype(int),
+                "cases_produced": df_ts.get(
+                    "cases_produced", pd.Series([0] * len(df_ts))
+                )
+                .fillna(0)
+                .astype(int),
+                "pallets_produced": df_ts.get(
+                    "pallets_produced", pd.Series([0] * len(df_ts))
+                )
+                .fillna(0)
+                .astype(int),
+                "good_pallets": df_ts.get("good_pallets", pd.Series([0] * len(df_ts)))
+                .fillna(0)
+                .astype(int),
+                "defective_pallets": df_ts.get(
+                    "defective_pallets", pd.Series([0] * len(df_ts))
+                )
+                .fillna(0)
+                .astype(int),
+                "defects_created": df_ts.get(
+                    "defects_created", pd.Series([0] * len(df_ts))
+                )
+                .fillna(0)
+                .astype(int),
+                "defects_detected": df_ts.get(
+                    "defects_detected", pd.Series([0] * len(df_ts))
+                )
+                .fillna(0)
+                .astype(int),
+                "material_cost": df_ts.get(
+                    "material_cost", pd.Series([0.0] * len(df_ts))
+                ).fillna(0.0),
+                "conversion_cost": df_ts.get(
+                    "conversion_cost", pd.Series([0.0] * len(df_ts))
+                ).fillna(0.0),
+                "revenue": df_ts.get("revenue", pd.Series([0.0] * len(df_ts))).fillna(
+                    0.0
+                ),
+                "gross_margin": df_ts.get(
+                    "gross_margin", pd.Series([0.0] * len(df_ts))
+                ).fillna(0.0),
             }
         )
 
         # Generate unique IDs based on current max + 1
-        max_id_result = self.conn.execute("SELECT COALESCE(MAX(id), 0) FROM telemetry").fetchone()
+        max_id_result = self.conn.execute(
+            "SELECT COALESCE(MAX(id), 0) FROM telemetry"
+        ).fetchone()
         start_id = max_id_result[0] + 1
         df_insert["id"] = range(start_id, start_id + len(df_insert))
         df_insert["run_id"] = run_id
@@ -277,14 +297,12 @@ class DuckDBWriter:
                 id, run_id, ts, sim_time_sec,
                 tubes_produced, cases_produced, pallets_produced,
                 good_pallets, defective_pallets, defects_created, defects_detected,
-                material_cost, conversion_cost, revenue, gross_margin,
-                machine_states, buffer_levels
+                material_cost, conversion_cost, revenue, gross_margin
             )
             SELECT id, run_id, ts, sim_time_sec,
                 tubes_produced, cases_produced, pallets_produced,
                 good_pallets, defective_pallets, defects_created, defects_detected,
-                material_cost, conversion_cost, revenue, gross_margin,
-                machine_states, buffer_levels
+                material_cost, conversion_cost, revenue, gross_margin
             FROM telemetry_df
             """
         )
@@ -310,10 +328,20 @@ class DuckDBWriter:
                     "ts": df_ts["datetime"].fillna(datetime.now()),
                     "sim_time_sec": df_ts["time"].fillna(0),
                     "machine_name": machine_name,
-                    "state": df_ts.get(f"{machine_name}_state", pd.Series(["UNKNOWN"] * len(df_ts))).fillna("UNKNOWN"),
-                    "output_count": df_ts.get(f"{machine_name}_output", pd.Series([0] * len(df_ts))).fillna(0).astype(int),
-                    "buffer_level": df_ts.get(f"Buf_{machine_name}_level", pd.Series([None] * len(df_ts))),
-                    "buffer_capacity": df_ts.get(f"Buf_{machine_name}_cap", pd.Series([None] * len(df_ts))),
+                    "state": df_ts.get(
+                        f"{machine_name}_state", pd.Series(["UNKNOWN"] * len(df_ts))
+                    ).fillna("UNKNOWN"),
+                    "output_count": df_ts.get(
+                        f"{machine_name}_output", pd.Series([0] * len(df_ts))
+                    )
+                    .fillna(0)
+                    .astype(int),
+                    "buffer_level": df_ts.get(
+                        f"Buf_{machine_name}_level", pd.Series([None] * len(df_ts))
+                    ),
+                    "buffer_capacity": df_ts.get(
+                        f"Buf_{machine_name}_cap", pd.Series([None] * len(df_ts))
+                    ),
                 }
             )
             rows.append(machine_df)
@@ -321,7 +349,9 @@ class DuckDBWriter:
         df_insert = pd.concat(rows, ignore_index=True)
 
         # Generate unique IDs based on current max + 1
-        max_id_result = self.conn.execute("SELECT COALESCE(MAX(id), 0) FROM machine_telemetry").fetchone()
+        max_id_result = self.conn.execute(
+            "SELECT COALESCE(MAX(id), 0) FROM machine_telemetry"
+        ).fetchone()
         start_id = max_id_result[0] + 1
         df_insert["id"] = range(start_id, start_id + len(df_insert))
         df_insert["run_id"] = run_id
@@ -364,7 +394,9 @@ class DuckDBWriter:
         )
 
         # Generate unique IDs based on current max + 1
-        max_id_result = self.conn.execute("SELECT COALESCE(MAX(id), 0) FROM events").fetchone()
+        max_id_result = self.conn.execute(
+            "SELECT COALESCE(MAX(id), 0) FROM events"
+        ).fetchone()
         start_id = max_id_result[0] + 1
         df_insert["id"] = range(start_id, start_id + len(df_insert))
         df_insert["run_id"] = run_id
@@ -407,7 +439,9 @@ class DuckDBWriter:
 
         margin_pct = (total_margin / total_revenue * 100) if total_revenue > 0 else None
         yield_pct = (total_good / total_pallets * 100) if total_pallets > 0 else None
-        throughput = total_pallets / resolved.run.duration_hours if total_pallets > 0 else 0
+        throughput = (
+            total_pallets / resolved.run.duration_hours if total_pallets > 0 else 0
+        )
 
         self.conn.execute(
             """
@@ -465,7 +499,11 @@ class DuckDBWriter:
             jammed_time = float(state_times.get("JAMMED", 0))
 
             # Availability = (Total - Down) / Total
-            availability = ((total_time_sec - down_time) / total_time_sec * 100) if total_time_sec > 0 else 100
+            availability = (
+                ((total_time_sec - down_time) / total_time_sec * 100)
+                if total_time_sec > 0
+                else 100
+            )
 
             # Simple OEE = Availability (Performance and Quality need more data)
             oee = availability  # Simplified for now

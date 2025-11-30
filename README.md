@@ -1,6 +1,6 @@
 # SimPy Production Line Digital Twin
 
-**Version:** 0.11.0
+**Version:** 0.11.1
 **Frameworks:** SimPy, Pydantic, Pandas, DuckDB
 **Scope:** Discrete Event Simulation (DES), Synthetic Data Generation & Analytics
 

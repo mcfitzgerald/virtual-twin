@@ -25,7 +25,8 @@ CREATE TABLE IF NOT EXISTS simulation_runs (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 2. TELEMETRY: Time-series data
+-- 2. TELEMETRY: Time-series data (production metrics per interval)
+-- Note: Machine states and buffer levels are stored in machine_telemetry (normalized)
 CREATE TABLE IF NOT EXISTS telemetry (
     id INTEGER PRIMARY KEY,
     run_id INTEGER NOT NULL REFERENCES simulation_runs(run_id),
@@ -43,10 +44,7 @@ CREATE TABLE IF NOT EXISTS telemetry (
     material_cost DOUBLE DEFAULT 0.0,
     conversion_cost DOUBLE DEFAULT 0.0,
     revenue DOUBLE DEFAULT 0.0,
-    gross_margin DOUBLE DEFAULT 0.0,
-    -- Dynamic data as JSON
-    machine_states JSON,
-    buffer_levels JSON
+    gross_margin DOUBLE DEFAULT 0.0
 );
 
 -- 3. MACHINE_TELEMETRY: Per-machine time-series (normalized)
@@ -133,14 +131,9 @@ CREATE SEQUENCE IF NOT EXISTS seq_simulation_runs_id START 1;
 """
 
 INDEX_DDL = """
--- Indexes for query performance
-CREATE INDEX IF NOT EXISTS idx_runs_started_at ON simulation_runs(started_at);
-CREATE INDEX IF NOT EXISTS idx_runs_scenario ON simulation_runs(scenario_name);
-CREATE INDEX IF NOT EXISTS idx_telemetry_run_ts ON telemetry(run_id, ts);
-CREATE INDEX IF NOT EXISTS idx_machine_telemetry_run_ts ON machine_telemetry(run_id, ts);
-CREATE INDEX IF NOT EXISTS idx_machine_telemetry_machine ON machine_telemetry(run_id, machine_name);
-CREATE INDEX IF NOT EXISTS idx_events_run_ts ON events(run_id, ts);
-CREATE INDEX IF NOT EXISTS idx_events_machine ON events(run_id, machine_name);
+-- DuckDB uses zone maps (min/max per column chunk) for predicate pushdown.
+-- B-tree indexes add overhead with minimal benefit for OLAP workloads.
+-- Keeping this section empty intentionally - DuckDB handles this automatically.
 """
 
 VIEW_DDL = """
