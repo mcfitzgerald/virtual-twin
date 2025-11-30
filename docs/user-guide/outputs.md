@@ -384,6 +384,18 @@ Simulation results are automatically saved to DuckDB (`./simpy_results.duckdb`) 
 | `machine_oee` | OEE calculated per machine |
 | `run_equipment` | Equipment config snapshot |
 
+### Upcoming: Event Aggregation (v0.12+)
+
+The `EventAggregator` class provides hybrid storage optimization:
+
+| Table | Purpose | Rows (8hr) |
+|-------|---------|------------|
+| `state_summary` | Bucketed time-in-state per machine | ~384 |
+| `events_detail` | Filtered DOWN/JAMMED events + context | ~1,000 |
+| `events` | Full granularity (debug mode only) | ~600,000 |
+
+This reduces storage from ~25GB/month to ~10MB while preserving OEE calculation and process mining capabilities.
+
 ### Querying Results
 
 ```python

@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.0] - 2025-11-30
+
+### Added
+- **EventAggregator class** (`src/simpy_demo/aggregation.py`) - Phase 1 of event storage optimization
+  - `BucketStats` dataclass for per-bucket state duration tracking
+  - `BufferedEvent` dataclass for context capture around interesting events
+  - `EventAggregator` class with hybrid aggregation strategy:
+    - `on_state_change()` - accumulates durations to time buckets, buffers events
+    - `finalize()` - closes final bucket after simulation completes
+    - `get_summary_df()` - returns bucketed state summary for OEE calculation
+    - `get_detail_df()` - returns filtered events with context window for process mining
+  - Configurable bucket size (default: 300 seconds aligned to telemetry interval)
+  - Duration spanning bucket boundaries is split proportionally
+  - `INTERESTING_STATES = ["DOWN", "JAMMED"]` triggers context capture
+  - `CONTEXT_WINDOW = 5` events before/after interesting events preserved
+- **Aggregation tests** (`tests/test_aggregation.py`) - 26 unit tests covering:
+  - BucketStats duration accumulation and availability calculation
+  - EventAggregator bucket creation, duration spanning, multi-machine support
+  - Summary/detail DataFrame structure and sorting
+  - Integration test simulating realistic production scenario
+
+### Technical Notes
+- Prepares for ~3000x storage reduction (460M → 150k rows/month) when integrated
+- State summary enables fast OEE calculation without scanning full event log
+- Detail events preserve process mining capability for failure analysis
+- Not yet integrated with Equipment/Engine (Phase 2-5 pending)
+
 ## [0.11.1] - 2025-11-29
 
 ### Changed
