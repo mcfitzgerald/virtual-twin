@@ -12,7 +12,9 @@ Use `ruff` and `mypy` for linting, formatting, and typing
 
 Use `semgrep` to find hardcodes
 
-Use context7 for library and package documentation (enabled via mcp)
+Always use context7 when I need code generation, setup or configuration steps, or
+library/API documentation. This means you should automatically use the Context7 MCP
+tools to resolve library id and get library docs without me having to explicitly ask.
 
 Don't reinvent the wheel, search web for robust libraries and always opt for simple. Don't over-engineer!
 
