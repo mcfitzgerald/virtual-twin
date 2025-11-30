@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, List, Optional
 
 import simpy
 
+from simpy_demo.aggregation import EventAggregator
 from simpy_demo.behavior import BehaviorOrchestrator, DEFAULT_BEHAVIOR
 from simpy_demo.models import MachineConfig, MaterialType
 
@@ -35,6 +36,8 @@ class Equipment:
         reject_store: Optional[simpy.Store],
         connections: Optional["NodeConnections"] = None,
         orchestrator: Optional[BehaviorOrchestrator] = None,  # None uses DEFAULT_BEHAVIOR
+        event_aggregator: Optional[EventAggregator] = None,
+        debug_events: bool = False,
     ):
         """Initialize equipment.
 
@@ -46,6 +49,8 @@ class Equipment:
             reject_store: Store for rejected products
             connections: Optional graph-based connections for multi-path routing
             orchestrator: Behavior orchestrator (uses DEFAULT_BEHAVIOR if None)
+            event_aggregator: Optional aggregator for hybrid event storage
+            debug_events: If True, populate event_log for full debugging
         """
         self.env = env
         self.cfg = config
@@ -61,6 +66,10 @@ class Equipment:
 
         # Behavior orchestrator (always required)
         self._orchestrator = orchestrator or BehaviorOrchestrator(DEFAULT_BEHAVIOR)
+
+        # Event aggregation (for hybrid storage)
+        self._event_aggregator = event_aggregator
+        self._debug_events = debug_events
 
         self.items_produced = 0
         self.state = "IDLE"
@@ -95,27 +104,42 @@ class Equipment:
         if self.state != new_state:
             # Track time spent in previous state
             time_spent = self.env.now - self.state_start_time
-            if self.state in self.time_in_state:
-                self.time_in_state[self.state] += time_spent
+            prev_state = self.state
 
-            self.event_log.append(
-                {
-                    "timestamp": self.env.now,
-                    "machine": self.cfg.name,
-                    "state": self.state,
-                    "event_type": "end",
-                }
-            )
+            if prev_state in self.time_in_state:
+                self.time_in_state[prev_state] += time_spent
+
+            # Notify aggregator for hybrid storage (always, when present)
+            if self._event_aggregator is not None:
+                self._event_aggregator.on_state_change(
+                    machine_name=self.cfg.name,
+                    new_state=new_state,
+                    sim_time_sec=self.env.now,
+                    prev_state=prev_state,
+                    duration_sec=time_spent,
+                )
+
+            # Only populate event_log in debug mode
+            if self._debug_events:
+                self.event_log.append(
+                    {
+                        "timestamp": self.env.now,
+                        "machine": self.cfg.name,
+                        "state": prev_state,
+                        "event_type": "end",
+                    }
+                )
+                self.event_log.append(
+                    {
+                        "timestamp": self.env.now,
+                        "machine": self.cfg.name,
+                        "state": new_state,
+                        "event_type": "start",
+                    }
+                )
+
             self.state = new_state
             self.state_start_time = self.env.now
-            self.event_log.append(
-                {
-                    "timestamp": self.env.now,
-                    "machine": self.cfg.name,
-                    "state": self.state,
-                    "event_type": "start",
-                }
-            )
 
     def run(self):
         """Main process loop implementing configurable behavior phases.

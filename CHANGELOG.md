@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.1] - 2025-11-30
+
+### Changed
+- **Equipment integration for EventAggregator** (Phase 2 of event storage optimization)
+  - `Equipment.__init__` accepts new optional parameters:
+    - `event_aggregator: Optional[EventAggregator]` - for hybrid event storage
+    - `debug_events: bool = False` - controls `event_log` population
+  - `Equipment.log()` method now:
+    - Calls `aggregator.on_state_change()` when aggregator is present
+    - Only appends to `event_log` when `debug_events=True`
+  - Default behavior: `event_log` is empty, aggregator receives all state changes
+
+### Technical Notes
+- Breaking change for tests relying on `event_log` being populated by default
+- Phase 3 (Engine Integration) required to wire aggregator through simulation
+- No user-visible changes until Phase 3-5 complete
+
 ## [0.12.0] - 2025-11-30
 
 ### Added
