@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS machine_telemetry (
     buffer_capacity INTEGER
 );
 
--- 4. EVENTS: State transitions
+-- 4. EVENTS: State transitions (only written when --debug-events flag is used)
 CREATE TABLE IF NOT EXISTS events (
     id INTEGER PRIMARY KEY,
     run_id INTEGER NOT NULL REFERENCES simulation_runs(run_id),
@@ -72,7 +72,43 @@ CREATE TABLE IF NOT EXISTS events (
     duration_sec DOUBLE
 );
 
--- 5. RUN_SUMMARY: Pre-aggregated metrics
+-- 5. STATE_SUMMARY: Bucketed time-in-state for OEE (always written)
+CREATE TABLE IF NOT EXISTS state_summary (
+    id INTEGER PRIMARY KEY,
+    run_id INTEGER NOT NULL REFERENCES simulation_runs(run_id),
+    bucket_start_ts TIMESTAMP NOT NULL,
+    bucket_index INTEGER NOT NULL,
+    machine_name VARCHAR NOT NULL,
+    -- State durations (seconds)
+    execute_sec DOUBLE DEFAULT 0.0,
+    starved_sec DOUBLE DEFAULT 0.0,
+    blocked_sec DOUBLE DEFAULT 0.0,
+    down_sec DOUBLE DEFAULT 0.0,
+    jammed_sec DOUBLE DEFAULT 0.0,
+    -- Counts for frequency analysis
+    transition_count INTEGER DEFAULT 0,
+    down_count INTEGER DEFAULT 0,
+    jammed_count INTEGER DEFAULT 0,
+    -- Pre-computed metrics
+    availability_pct DOUBLE,
+    UNIQUE(run_id, bucket_index, machine_name)
+);
+
+-- 6. EVENTS_DETAIL: Filtered interesting events for process mining (always written)
+CREATE TABLE IF NOT EXISTS events_detail (
+    id INTEGER PRIMARY KEY,
+    run_id INTEGER NOT NULL REFERENCES simulation_runs(run_id),
+    ts TIMESTAMP NOT NULL,
+    sim_time_sec DOUBLE NOT NULL,
+    machine_name VARCHAR NOT NULL,
+    state VARCHAR NOT NULL,
+    prev_state VARCHAR,
+    duration_sec DOUBLE,
+    is_interesting BOOLEAN DEFAULT FALSE,
+    UNIQUE(run_id, sim_time_sec, machine_name, state)
+);
+
+-- 7. RUN_SUMMARY: Pre-aggregated metrics
 CREATE TABLE IF NOT EXISTS run_summary (
     run_id INTEGER PRIMARY KEY REFERENCES simulation_runs(run_id),
     total_tubes INTEGER DEFAULT 0,
@@ -89,7 +125,7 @@ CREATE TABLE IF NOT EXISTS run_summary (
     throughput_per_hour DOUBLE
 );
 
--- 6. MACHINE_OEE: Pre-calculated OEE per machine
+-- 8. MACHINE_OEE: Pre-calculated OEE per machine
 CREATE TABLE IF NOT EXISTS machine_oee (
     id INTEGER PRIMARY KEY,
     run_id INTEGER NOT NULL REFERENCES simulation_runs(run_id),
@@ -105,7 +141,7 @@ CREATE TABLE IF NOT EXISTS machine_oee (
     UNIQUE(run_id, machine_name)
 );
 
--- 7. RUN_EQUIPMENT: Frozen equipment config per run
+-- 9. RUN_EQUIPMENT: Frozen equipment config per run
 CREATE TABLE IF NOT EXISTS run_equipment (
     id INTEGER PRIMARY KEY,
     run_id INTEGER NOT NULL REFERENCES simulation_runs(run_id),
@@ -125,6 +161,8 @@ CREATE TABLE IF NOT EXISTS run_equipment (
 CREATE SEQUENCE IF NOT EXISTS seq_telemetry_id START 1;
 CREATE SEQUENCE IF NOT EXISTS seq_machine_telemetry_id START 1;
 CREATE SEQUENCE IF NOT EXISTS seq_events_id START 1;
+CREATE SEQUENCE IF NOT EXISTS seq_state_summary_id START 1;
+CREATE SEQUENCE IF NOT EXISTS seq_events_detail_id START 1;
 CREATE SEQUENCE IF NOT EXISTS seq_machine_oee_id START 1;
 CREATE SEQUENCE IF NOT EXISTS seq_run_equipment_id START 1;
 CREATE SEQUENCE IF NOT EXISTS seq_simulation_runs_id START 1;
@@ -169,6 +207,50 @@ SELECT run_id, ts,
        SUM(good_pallets) OVER (PARTITION BY run_id ORDER BY ts) as cumulative_good,
        SUM(gross_margin) OVER (PARTITION BY run_id ORDER BY ts) as cumulative_margin
 FROM telemetry;
+
+-- OEE from state_summary (efficient aggregation from pre-bucketed data)
+CREATE OR REPLACE VIEW v_oee_from_summary AS
+SELECT
+    r.run_id,
+    r.run_name,
+    r.scenario_name,
+    ss.machine_name,
+    SUM(ss.execute_sec) as execute_total_sec,
+    SUM(ss.starved_sec) as starved_total_sec,
+    SUM(ss.blocked_sec) as blocked_total_sec,
+    SUM(ss.down_sec) as down_total_sec,
+    SUM(ss.jammed_sec) as jammed_total_sec,
+    SUM(ss.transition_count) as total_transitions,
+    SUM(ss.down_count) as total_down_events,
+    SUM(ss.jammed_count) as total_jammed_events,
+    -- Availability = (Total - Down) / Total
+    CASE
+        WHEN SUM(ss.execute_sec + ss.starved_sec + ss.blocked_sec + ss.down_sec + ss.jammed_sec) > 0
+        THEN (SUM(ss.execute_sec + ss.starved_sec + ss.blocked_sec + ss.jammed_sec) /
+              SUM(ss.execute_sec + ss.starved_sec + ss.blocked_sec + ss.down_sec + ss.jammed_sec)) * 100
+        ELSE NULL
+    END as availability_pct
+FROM state_summary ss
+JOIN simulation_runs r ON ss.run_id = r.run_id
+GROUP BY r.run_id, r.run_name, r.scenario_name, ss.machine_name;
+
+-- State summary by bucket (for time-series analysis)
+CREATE OR REPLACE VIEW v_state_summary_detail AS
+SELECT
+    r.run_name,
+    r.scenario_name,
+    ss.*
+FROM state_summary ss
+JOIN simulation_runs r ON ss.run_id = r.run_id;
+
+-- Interesting events with context (for process mining)
+CREATE OR REPLACE VIEW v_events_detail AS
+SELECT
+    r.run_name,
+    r.scenario_name,
+    ed.*
+FROM events_detail ed
+JOIN simulation_runs r ON ed.run_id = r.run_id;
 """
 
 

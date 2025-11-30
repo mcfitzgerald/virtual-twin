@@ -4,7 +4,7 @@ import hashlib
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 import duckdb
 import pandas as pd
@@ -14,7 +14,7 @@ from simpy_demo.storage.schema import create_tables
 if TYPE_CHECKING:
     from simpy_demo.loader import ResolvedConfig
 
-__version__ = "0.11.1"
+__version__ = "0.14.0"
 
 
 class DuckDBWriter:
@@ -39,6 +39,10 @@ class DuckDBWriter:
         resolved: "ResolvedConfig",
         df_ts: pd.DataFrame,
         df_ev: pd.DataFrame,
+        *,
+        debug_events: bool = False,
+        df_state_summary: Optional[pd.DataFrame] = None,
+        df_events_detail: Optional[pd.DataFrame] = None,
     ) -> int:
         """Store complete simulation results.
 
@@ -46,6 +50,9 @@ class DuckDBWriter:
             resolved: Resolved configuration used for the simulation
             df_ts: Telemetry DataFrame (time-series)
             df_ev: Events DataFrame (state transitions)
+            debug_events: If True, store full events table (default: False)
+            df_state_summary: Pre-aggregated state summary from EventAggregator
+            df_events_detail: Filtered event details from EventAggregator
 
         Returns:
             run_id of the stored simulation
@@ -59,16 +66,27 @@ class DuckDBWriter:
         # 3. Insert machine_telemetry (extracted from df_ts)
         self._insert_machine_telemetry(run_id, df_ts)
 
-        # 4. Insert events
-        self._insert_events(run_id, df_ev)
+        # 4. Insert state_summary (always, if provided)
+        if df_state_summary is not None:
+            self._insert_state_summary(run_id, df_state_summary)
 
-        # 5. Compute and insert summary
+        # 5. Insert events_detail (always, if provided)
+        if df_events_detail is not None:
+            self._insert_events_detail(run_id, df_events_detail)
+
+        # 6. Insert full events (ONLY when debug_events=True)
+        if debug_events:
+            self._insert_events(run_id, df_ev)
+
+        # 7. Compute and insert summary
         self._insert_summary(run_id, df_ts, resolved)
 
-        # 6. Calculate and insert OEE
-        self._insert_machine_oee(run_id, df_ev, resolved)
+        # 8. Calculate and insert OEE (from state_summary if available)
+        self._insert_machine_oee(
+            run_id, df_ev, resolved, df_state_summary=df_state_summary
+        )
 
-        # 7. Snapshot equipment config
+        # 9. Snapshot equipment config
         self._insert_equipment(run_id, resolved)
 
         # Update completed_at
@@ -412,6 +430,80 @@ class DuckDBWriter:
         )
         self.conn.unregister("events_df")
 
+    def _insert_state_summary(self, run_id: int, df_summary: pd.DataFrame) -> None:
+        """Insert state summary records using bulk insert.
+
+        Args:
+            run_id: The simulation run ID
+            df_summary: DataFrame from EventAggregator.get_summary_df()
+        """
+        if df_summary.empty:
+            return
+
+        # Prepare DataFrame for bulk insert
+        df_insert = df_summary.copy()
+        df_insert["run_id"] = run_id
+
+        # Generate unique IDs based on current max + 1
+        max_id_result = self.conn.execute(
+            "SELECT COALESCE(MAX(id), 0) FROM state_summary"
+        ).fetchone()
+        start_id = max_id_result[0] + 1
+        df_insert["id"] = range(start_id, start_id + len(df_insert))
+
+        # Register DataFrame and bulk insert
+        self.conn.register("state_summary_df", df_insert)
+        self.conn.execute(
+            """
+            INSERT INTO state_summary (
+                id, run_id, bucket_start_ts, bucket_index, machine_name,
+                execute_sec, starved_sec, blocked_sec, down_sec, jammed_sec,
+                transition_count, down_count, jammed_count, availability_pct
+            )
+            SELECT id, run_id, bucket_start_ts, bucket_index, machine_name,
+                execute_sec, starved_sec, blocked_sec, down_sec, jammed_sec,
+                transition_count, down_count, jammed_count, availability_pct
+            FROM state_summary_df
+            """
+        )
+        self.conn.unregister("state_summary_df")
+
+    def _insert_events_detail(self, run_id: int, df_detail: pd.DataFrame) -> None:
+        """Insert events detail records using bulk insert.
+
+        Args:
+            run_id: The simulation run ID
+            df_detail: DataFrame from EventAggregator.get_detail_df()
+        """
+        if df_detail.empty:
+            return
+
+        # Prepare DataFrame for bulk insert
+        df_insert = df_detail.copy()
+        df_insert["run_id"] = run_id
+
+        # Generate unique IDs based on current max + 1
+        max_id_result = self.conn.execute(
+            "SELECT COALESCE(MAX(id), 0) FROM events_detail"
+        ).fetchone()
+        start_id = max_id_result[0] + 1
+        df_insert["id"] = range(start_id, start_id + len(df_insert))
+
+        # Register DataFrame and bulk insert
+        self.conn.register("events_detail_df", df_insert)
+        self.conn.execute(
+            """
+            INSERT INTO events_detail (
+                id, run_id, ts, sim_time_sec, machine_name,
+                state, prev_state, duration_sec, is_interesting
+            )
+            SELECT id, run_id, ts, sim_time_sec, machine_name,
+                state, prev_state, duration_sec, is_interesting
+            FROM events_detail_df
+            """
+        )
+        self.conn.unregister("events_detail_df")
+
     def _insert_summary(
         self,
         run_id: int,
@@ -474,13 +566,100 @@ class DuckDBWriter:
         run_id: int,
         df_ev: pd.DataFrame,
         resolved: "ResolvedConfig",
+        *,
+        df_state_summary: Optional[pd.DataFrame] = None,
     ) -> None:
-        """Calculate and insert OEE metrics per machine."""
-        if df_ev.empty:
-            return
+        """Calculate and insert OEE metrics per machine.
 
+        Uses state_summary (pre-aggregated) when available for efficiency,
+        falls back to computing from df_ev for backwards compatibility.
+        """
         total_time_sec = resolved.run.duration_hours * 3600
 
+        # Prefer state_summary for OEE calculation (much more efficient)
+        if df_state_summary is not None and not df_state_summary.empty:
+            self._insert_machine_oee_from_summary(
+                run_id, df_state_summary, total_time_sec
+            )
+        elif not df_ev.empty:
+            # Fallback: compute from full events (backwards compatibility)
+            self._insert_machine_oee_from_events(run_id, df_ev, total_time_sec)
+
+    def _insert_machine_oee_from_summary(
+        self,
+        run_id: int,
+        df_summary: pd.DataFrame,
+        total_time_sec: float,
+    ) -> None:
+        """Calculate OEE from pre-aggregated state_summary."""
+        # Aggregate across all buckets per machine
+        machine_stats = (
+            df_summary.groupby("machine_name")
+            .agg(
+                {
+                    "execute_sec": "sum",
+                    "starved_sec": "sum",
+                    "blocked_sec": "sum",
+                    "down_sec": "sum",
+                    "jammed_sec": "sum",
+                }
+            )
+            .reset_index()
+        )
+
+        for _, row in machine_stats.iterrows():
+            machine = row["machine_name"]
+            execute_time = float(row["execute_sec"])
+            starved_time = float(row["starved_sec"])
+            blocked_time = float(row["blocked_sec"])
+            down_time = float(row["down_sec"])
+            jammed_time = float(row["jammed_sec"])
+
+            # Availability = (Total - Down) / Total
+            availability = (
+                ((total_time_sec - down_time) / total_time_sec * 100)
+                if total_time_sec > 0
+                else 100
+            )
+
+            # Simple OEE = Availability (Performance and Quality need more data)
+            oee = availability  # Simplified for now
+
+            oee_id = self.conn.execute(
+                "SELECT nextval('seq_machine_oee_id')"
+            ).fetchone()[0]
+
+            self.conn.execute(
+                """
+                INSERT INTO machine_oee (
+                    id, run_id, machine_name, total_time_sec,
+                    execute_time_sec, starved_time_sec, blocked_time_sec,
+                    down_time_sec, jammed_time_sec,
+                    availability_percent, oee_percent
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                [
+                    oee_id,
+                    run_id,
+                    machine,
+                    total_time_sec,
+                    execute_time,
+                    starved_time,
+                    blocked_time,
+                    down_time,
+                    jammed_time,
+                    availability,
+                    oee,
+                ],
+            )
+
+    def _insert_machine_oee_from_events(
+        self,
+        run_id: int,
+        df_ev: pd.DataFrame,
+        total_time_sec: float,
+    ) -> None:
+        """Calculate OEE from full events (fallback for backwards compatibility)."""
         # Calculate duration for each event
         df_work = df_ev.copy()
         df_work["next_time"] = df_work.groupby("machine")["timestamp"].shift(-1)

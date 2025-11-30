@@ -374,27 +374,31 @@ Simulation results are automatically saved to DuckDB (`./simpy_results.duckdb`) 
 
 ### Schema Overview
 
-| Table | Purpose |
-|-------|---------|
-| `simulation_runs` | Parent record with config snapshot |
-| `telemetry` | Time-series data at 5-min intervals |
-| `machine_telemetry` | Per-machine time-series |
-| `events` | State transitions (~600k per 8hr run) |
-| `run_summary` | Pre-aggregated metrics |
-| `machine_oee` | OEE calculated per machine |
-| `run_equipment` | Equipment config snapshot |
+| Table | Purpose | Rows (8hr) |
+|-------|---------|------------|
+| `simulation_runs` | Parent record with config snapshot | 1 |
+| `telemetry` | Time-series data at 5-min intervals | ~96 |
+| `machine_telemetry` | Per-machine time-series | ~384 |
+| `state_summary` | Bucketed time-in-state (OEE) | ~384 |
+| `events_detail` | Filtered DOWN/JAMMED + context | ~1,000 |
+| `events` | Full state transitions (debug only) | ~600,000 |
+| `run_summary` | Pre-aggregated metrics | 1 |
+| `machine_oee` | OEE calculated per machine | 4 |
+| `run_equipment` | Equipment config snapshot | 4 |
 
-### Event Aggregation (v0.13+)
+### Event Aggregation (v0.14+)
 
 The `EventAggregator` provides hybrid storage optimization with ~3000x storage reduction:
 
-| Table | Purpose | Rows (8hr) |
-|-------|---------|------------|
-| `state_summary` | Bucketed time-in-state per machine | ~384 |
-| `events_detail` | Filtered DOWN/JAMMED events + context | ~1,000 |
-| `events` | Full granularity (debug mode only) | ~600,000 |
+| Mode | Tables Written | Rows (8hr) | Storage |
+|------|----------------|------------|---------|
+| **Default (hybrid)** | `state_summary`, `events_detail` | ~1,400 | ~10 MB/month |
+| Debug (`--debug-events`) | All including `events` | ~600,000 | ~25 GB/month |
 
 This reduces storage from ~25GB/month to ~10MB while preserving OEE calculation and process mining capabilities.
+
+!!! note "Storage Behavior Change (v0.14.0)"
+    The `events` table is no longer populated by default. Use `debug_events=True` or the `--debug-events` CLI flag to enable full event storage for debugging and replay.
 
 #### Debug Events Flag
 
@@ -484,6 +488,9 @@ hourly = conn.execute("SELECT * FROM v_hourly_production").df()
 | `v_machine_oee` | OEE breakdown by machine |
 | `v_hourly_production` | Hourly production aggregates |
 | `v_cumulative_production` | Running totals over time |
+| `v_oee_from_summary` | OEE from pre-aggregated state_summary (efficient) |
+| `v_state_summary_detail` | Time-series bucket analysis with run metadata |
+| `v_events_detail` | Interesting events with context for process mining |
 
 ### CLI Options
 

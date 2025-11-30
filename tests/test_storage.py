@@ -61,7 +61,7 @@ class TestSchemaCreation:
         conn.close()
 
     def test_create_tables_creates_all_tables(self, temp_db: Path):
-        """create_tables() should create all 7 tables."""
+        """create_tables() should create all 9 tables."""
         conn = duckdb.connect(str(temp_db))
         create_tables(conn)
 
@@ -76,6 +76,8 @@ class TestSchemaCreation:
             "telemetry",
             "machine_telemetry",
             "events",
+            "state_summary",
+            "events_detail",
             "run_summary",
             "machine_oee",
             "run_equipment",
@@ -168,17 +170,17 @@ class TestDuckDBWriter:
         assert count == len(df_ts)
         writer.close()
 
-    def test_store_run_inserts_events(
+    def test_store_run_inserts_events_when_debug(
         self,
         temp_db: Path,
         resolved,
         simulation_results: Tuple[pd.DataFrame, pd.DataFrame],
     ):
-        """store_run() should insert event records."""
+        """store_run() should insert event records when debug_events=True."""
         df_ts, df_ev = simulation_results
         writer = DuckDBWriter(temp_db)
 
-        run_id = writer.store_run(resolved, df_ts, df_ev)
+        run_id = writer.store_run(resolved, df_ts, df_ev, debug_events=True)
 
         # Verify events records
         count = writer.conn.execute(
@@ -186,6 +188,26 @@ class TestDuckDBWriter:
         ).fetchone()[0]
 
         assert count == len(df_ev)
+        writer.close()
+
+    def test_store_run_skips_events_by_default(
+        self,
+        temp_db: Path,
+        resolved,
+        simulation_results: Tuple[pd.DataFrame, pd.DataFrame],
+    ):
+        """store_run() should skip events table by default (hybrid mode)."""
+        df_ts, df_ev = simulation_results
+        writer = DuckDBWriter(temp_db)
+
+        run_id = writer.store_run(resolved, df_ts, df_ev)
+
+        # Verify no events records by default
+        count = writer.conn.execute(
+            "SELECT COUNT(*) FROM events WHERE run_id = ?", [run_id]
+        ).fetchone()[0]
+
+        assert count == 0
         writer.close()
 
     def test_store_run_inserts_summary(
@@ -249,6 +271,83 @@ class TestDuckDBWriter:
         ).fetchone()[0]
 
         assert count == len(resolved.equipment)
+        writer.close()
+
+    def test_store_run_inserts_state_summary(
+        self,
+        temp_db: Path,
+        resolved,
+        config_dir: Path,
+    ):
+        """store_run() should insert state_summary records when provided."""
+        from simpy_demo import SimulationEngine
+
+        # Run simulation with aggregator (produces df_state_summary)
+        engine = SimulationEngine(str(config_dir), save_to_db=False)
+        df_ts, df_ev, df_summary, df_detail = engine.run_resolved(resolved)
+
+        writer = DuckDBWriter(temp_db)
+        run_id = writer.store_run(resolved, df_ts, df_ev, df_state_summary=df_summary)
+
+        # Verify state_summary records
+        count = writer.conn.execute(
+            "SELECT COUNT(*) FROM state_summary WHERE run_id = ?", [run_id]
+        ).fetchone()[0]
+
+        # Should have records if aggregator produced summary
+        if df_summary is not None and not df_summary.empty:
+            assert count == len(df_summary)
+        writer.close()
+
+    def test_store_run_inserts_events_detail(
+        self,
+        temp_db: Path,
+        resolved,
+        config_dir: Path,
+    ):
+        """store_run() should insert events_detail records when provided."""
+        from simpy_demo import SimulationEngine
+
+        # Run simulation with aggregator (produces df_events_detail)
+        engine = SimulationEngine(str(config_dir), save_to_db=False)
+        df_ts, df_ev, df_summary, df_detail = engine.run_resolved(resolved)
+
+        writer = DuckDBWriter(temp_db)
+        run_id = writer.store_run(resolved, df_ts, df_ev, df_events_detail=df_detail)
+
+        # Verify events_detail records
+        count = writer.conn.execute(
+            "SELECT COUNT(*) FROM events_detail WHERE run_id = ?", [run_id]
+        ).fetchone()[0]
+
+        # Should have records if aggregator produced detail events
+        if df_detail is not None and not df_detail.empty:
+            assert count == len(df_detail)
+        writer.close()
+
+    def test_store_run_oee_from_state_summary(
+        self,
+        temp_db: Path,
+        resolved,
+        config_dir: Path,
+    ):
+        """store_run() should calculate OEE from state_summary when provided."""
+        from simpy_demo import SimulationEngine
+
+        # Run simulation with aggregator
+        engine = SimulationEngine(str(config_dir), save_to_db=False)
+        df_ts, df_ev, df_summary, df_detail = engine.run_resolved(resolved)
+
+        writer = DuckDBWriter(temp_db)
+        run_id = writer.store_run(resolved, df_ts, df_ev, df_state_summary=df_summary)
+
+        # Verify OEE records exist for each machine
+        count = writer.conn.execute(
+            "SELECT COUNT(*) FROM machine_oee WHERE run_id = ?", [run_id]
+        ).fetchone()[0]
+
+        # Should have one record per machine
+        assert count > 0
         writer.close()
 
 

@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.0] - 2025-11-30
+
+### Added
+- **Storage integration for EventAggregator** (Phase 4 of event storage optimization)
+  - New `state_summary` table: bucketed time-in-state for fast OEE calculation
+  - New `events_detail` table: filtered interesting events (DOWN/JAMMED) with context
+  - New analytics views:
+    - `v_oee_from_summary`: OEE from pre-aggregated state summary data
+    - `v_state_summary_detail`: time-series bucket analysis with run metadata
+    - `v_events_detail`: interesting events with context for process mining
+  - `DuckDBWriter.store_run()` now accepts:
+    - `debug_events: bool = False`: controls full events table population
+    - `df_state_summary: Optional[pd.DataFrame]`: pre-aggregated summary
+    - `df_events_detail: Optional[pd.DataFrame]`: filtered event details
+  - New internal methods: `_insert_state_summary()`, `_insert_events_detail()`
+
+### Changed
+- **Breaking: Default storage behavior** - `events` table is no longer populated by default
+  - Use `debug_events=True` to enable full event storage (for debugging/replay)
+  - OEE now calculated from `state_summary` when available (~3000x fewer rows)
+- `_insert_machine_oee()` refactored:
+  - Prefers `_insert_machine_oee_from_summary()` when state_summary is provided
+  - Falls back to `_insert_machine_oee_from_events()` for backwards compatibility
+- Schema now includes 9 tables (was 7): added `state_summary`, `events_detail`
+
+### Storage Comparison (Month Simulation)
+| Mode | Rows | Approx Size |
+|------|------|-------------|
+| Current (all events) | ~460M | ~25 GB |
+| **Hybrid (default)** | ~150k | ~10 MB |
+| Debug (hybrid + full) | ~460M | ~25 GB |
+
 ## [0.13.0] - 2025-11-30
 
 ### Added
