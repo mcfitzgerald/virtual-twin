@@ -500,7 +500,19 @@ python -m simpy_demo --run baseline_8hr --no-db
 
 # Custom database path
 python -m simpy_demo --run baseline_8hr --db-path ./my_results.duckdb
+
+# Enable full event logging (debug mode)
+python -m simpy_demo --run baseline_8hr --debug-events
+
+# Combine options
+python -m simpy_demo --run baseline_8hr --debug-events --db-path ./debug.duckdb
 ```
+
+The `--debug-events` flag enables full event storage (~600k rows for 8hr simulation) in addition to the default hybrid storage. Use this for:
+
+- Debugging simulation behavior
+- Full event replay and analysis
+- Legacy workflows that depend on the `events` table
 
 ### Visualization Tools
 

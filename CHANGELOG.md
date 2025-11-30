@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.15.0] - 2025-11-30
+
+### Added
+- **CLI `--debug-events` flag** (Phase 5 of event storage optimization)
+  - Added to all CLI modes: legacy (`--run`), `run` subcommand, `simulate` subcommand
+  - Enables full event logging to `events` table for debugging and replay
+  - Default behavior (without flag): hybrid mode with `state_summary` + `events_detail` only
+
+### Changed
+- `run_simulation()` now accepts `debug_events: bool = False` parameter
+- `cli/simulate.py` no longer hardcodes `debug_events=True`; uses CLI flag instead
+- All CLI parsers updated: `compat_parser`, `run_parser`, `simulate_parser`, default args
+
+### Usage
+```bash
+# Normal run (hybrid mode - compressed, default)
+python -m simpy_demo --run baseline_8hr
+
+# Debug run (adds full events table)
+python -m simpy_demo --run baseline_8hr --debug-events
+
+# With subcommands
+python -m simpy_demo run --run baseline_8hr --debug-events
+python -m simpy_demo simulate --scenario ./scenarios/baseline_8hr_* --debug-events
+```
+
 ## [0.14.0] - 2025-11-30
 
 ### Added

@@ -16,6 +16,7 @@ def run_simulation(
     config_dir: str = "config",
     save_to_db: bool = True,
     db_path: str | None = None,
+    debug_events: bool = False,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Run a simulation with the given run config name.
 
@@ -24,12 +25,13 @@ def run_simulation(
         config_dir: Path to config directory
         save_to_db: If True, save results to DuckDB database
         db_path: Custom path for DuckDB file
+        debug_events: If True, also populate full events table for debugging
 
     Returns:
         Tuple of (telemetry_df, events_df)
     """
     engine = SimulationEngine(config_dir, save_to_db=save_to_db, db_path=db_path)
-    df_ts, df_ev, _, _ = engine.run(run_name)
+    df_ts, df_ev, _, _ = engine.run(run_name, debug_events=debug_events)
 
     # Report
     print("\n--- SIMULATION COMPLETE ---")
@@ -110,9 +112,10 @@ def _run_command(args: argparse.Namespace) -> None:
     # Determine db save settings
     save_to_db = not getattr(args, "no_db", False)
     db_path = getattr(args, "db_path", None)
+    debug_events = getattr(args, "debug_events", False)
 
     # Run simulation
-    df_ts, df_ev = run_simulation(args.run, args.config, save_to_db, db_path)
+    df_ts, df_ev = run_simulation(args.run, args.config, save_to_db, db_path, debug_events)
 
     # Export if requested
     if args.export:
@@ -149,12 +152,14 @@ def _simulate_command(args: argparse.Namespace) -> None:
     """Handle 'simulate' subcommand."""
     save_to_db = not getattr(args, "no_db", False)
     db_path = getattr(args, "db_path", None)
+    debug_events = getattr(args, "debug_events", False)
 
     simulate_func(
         scenario_path=args.scenario,
         export=args.export,
         save_to_db=save_to_db,
         db_path=db_path,
+        debug_events=debug_events,
     )
 
 
@@ -182,6 +187,11 @@ def main():
         )
         compat_parser.add_argument(
             "--db-path", default=None, help="Custom path for DuckDB file"
+        )
+        compat_parser.add_argument(
+            "--debug-events",
+            action="store_true",
+            help="Enable full event logging for debugging (increases storage)",
         )
         compat_args = compat_parser.parse_args()
         _run_command(compat_args)
@@ -249,6 +259,11 @@ Examples:
         default=None,
         help="Custom path for DuckDB file (default: ./simpy_results.duckdb)",
     )
+    run_parser.add_argument(
+        "--debug-events",
+        action="store_true",
+        help="Enable full event logging for debugging (increases storage)",
+    )
     run_parser.set_defaults(func=_run_command)
 
     # === 'configure' subcommand ===
@@ -312,6 +327,11 @@ Examples:
         default=None,
         help="Custom path for DuckDB file (default: ./simpy_results.duckdb)",
     )
+    simulate_parser.add_argument(
+        "--debug-events",
+        action="store_true",
+        help="Enable full event logging for debugging (increases storage)",
+    )
     simulate_parser.set_defaults(func=_simulate_command)
 
     # Parse arguments
@@ -327,6 +347,7 @@ Examples:
             output="output",
             no_db=False,
             db_path=None,
+            debug_events=False,
         )
         _run_command(default_args)
     else:
