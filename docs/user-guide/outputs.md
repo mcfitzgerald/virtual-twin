@@ -277,6 +277,65 @@ df["margin_cumulative"] = df["gross_margin"].cumsum()
 df["margin_cumulative"].plot(title="Cumulative Gross Margin")
 ```
 
+## Database Storage
+
+Simulation results are automatically saved to DuckDB (`./simpy_results.duckdb`) for analytics and traceability.
+
+### Schema Overview
+
+| Table | Purpose |
+|-------|---------|
+| `simulation_runs` | Parent record with config snapshot |
+| `telemetry` | Time-series data at 5-min intervals |
+| `machine_telemetry` | Per-machine time-series |
+| `events` | State transitions (~600k per 8hr run) |
+| `run_summary` | Pre-aggregated metrics |
+| `machine_oee` | OEE calculated per machine |
+| `run_equipment` | Equipment config snapshot |
+
+### Querying Results
+
+```python
+from simpy_demo import db_connect
+
+# Connect and query
+conn = db_connect()
+
+# Compare runs
+df = conn.execute("SELECT * FROM v_run_comparison").df()
+
+# OEE by machine
+oee = conn.execute("SELECT * FROM v_machine_oee WHERE run_id = 1").df()
+
+# Hourly production
+hourly = conn.execute("SELECT * FROM v_hourly_production").df()
+```
+
+### Analytics Views
+
+| View | Description |
+|------|-------------|
+| `v_run_comparison` | Compare multiple simulation runs |
+| `v_machine_oee` | OEE breakdown by machine |
+| `v_hourly_production` | Hourly production aggregates |
+| `v_cumulative_production` | Running totals over time |
+
+### CLI Options
+
+```bash
+# Skip database save
+python -m simpy_demo --run baseline_8hr --no-db
+
+# Custom database path
+python -m simpy_demo --run baseline_8hr --db-path ./my_results.duckdb
+```
+
+### Visualization Tools
+
+- **Apache Superset**: Native DuckDB support - connect with `duckdb:////path/to/simpy_results.duckdb`
+- **Grafana**: Export to SQLite with `ATTACH 'export.db' AS sqlite (TYPE SQLITE)`
+- **Parquet**: Export with `COPY table TO 'file.parquet' (FORMAT PARQUET)`
+
 ## Next Steps
 
 - **[OEE Analysis Tutorial](../tutorials/oee-analysis.md)** - Detailed OEE calculation

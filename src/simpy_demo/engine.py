@@ -2,6 +2,7 @@
 
 import random
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
@@ -22,8 +23,22 @@ from simpy_demo.simulation.layout import LayoutBuilder
 class SimulationEngine:
     """Simulation engine that runs from resolved YAML configuration."""
 
-    def __init__(self, config_dir: str = "config"):
+    def __init__(
+        self,
+        config_dir: str = "config",
+        save_to_db: bool = True,
+        db_path: Optional[Path | str] = None,
+    ):
+        """Initialize the simulation engine.
+
+        Args:
+            config_dir: Path to configuration directory
+            save_to_db: If True, save results to DuckDB (default: True)
+            db_path: Custom path for DuckDB file (default: ./simpy_results.duckdb)
+        """
         self.loader = ConfigLoader(config_dir)
+        self.save_to_db = save_to_db
+        self.db_path = Path(db_path) if db_path else None
 
     def run(self, run_name: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """Run simulation by run config name and return (telemetry_df, events_df)."""
@@ -88,7 +103,16 @@ class SimulationEngine:
         env.run(until=duration_sec)
 
         # 9. Compile results
-        return self._compile_results(machines, telemetry_data, start_time)
+        df_ts, df_ev = self._compile_results(machines, telemetry_data, start_time)
+
+        # 10. Save to DuckDB (if enabled)
+        if self.save_to_db:
+            from simpy_demo.storage import save_results
+
+            run_id = save_results(resolved, df_ts, df_ev, self.db_path)
+            print(f"Results saved to database (run_id: {run_id})")
+
+        return df_ts, df_ev
 
     def run_config(
         self,

@@ -12,18 +12,23 @@ from simpy_demo.engine import SimulationEngine
 
 
 def run_simulation(
-    run_name: str = "baseline_8hr", config_dir: str = "config"
+    run_name: str = "baseline_8hr",
+    config_dir: str = "config",
+    save_to_db: bool = True,
+    db_path: str | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Run a simulation with the given run config name.
 
     Args:
         run_name: Name of the run config (without .yaml extension)
         config_dir: Path to config directory
+        save_to_db: If True, save results to DuckDB database
+        db_path: Custom path for DuckDB file
 
     Returns:
         Tuple of (telemetry_df, events_df)
     """
-    engine = SimulationEngine(config_dir)
+    engine = SimulationEngine(config_dir, save_to_db=save_to_db, db_path=db_path)
     df_ts, df_ev = engine.run(run_name)
 
     # Report
@@ -102,8 +107,12 @@ def run_simulation(
 
 def _run_command(args: argparse.Namespace) -> None:
     """Handle 'run' subcommand (combined configure+simulate)."""
+    # Determine db save settings
+    save_to_db = not getattr(args, "no_db", False)
+    db_path = getattr(args, "db_path", None)
+
     # Run simulation
-    df_ts, df_ev = run_simulation(args.run, args.config)
+    df_ts, df_ev = run_simulation(args.run, args.config, save_to_db, db_path)
 
     # Export if requested
     if args.export:
@@ -138,9 +147,14 @@ def _configure_command(args: argparse.Namespace) -> None:
 
 def _simulate_command(args: argparse.Namespace) -> None:
     """Handle 'simulate' subcommand."""
+    save_to_db = not getattr(args, "no_db", False)
+    db_path = getattr(args, "db_path", None)
+
     simulate_func(
         scenario_path=args.scenario,
         export=args.export,
+        save_to_db=save_to_db,
+        db_path=db_path,
     )
 
 
@@ -163,6 +177,12 @@ def main():
         compat_parser.add_argument("--config", default="config")
         compat_parser.add_argument("--export", action="store_true")
         compat_parser.add_argument("--output", default="output")
+        compat_parser.add_argument(
+            "--no-db", action="store_true", help="Skip saving to DuckDB database"
+        )
+        compat_parser.add_argument(
+            "--db-path", default=None, help="Custom path for DuckDB file"
+        )
         compat_args = compat_parser.parse_args()
         _run_command(compat_args)
         return
@@ -219,6 +239,16 @@ Examples:
         default="output",
         help="Output directory for CSV export (default: output)",
     )
+    run_parser.add_argument(
+        "--no-db",
+        action="store_true",
+        help="Skip saving to DuckDB database",
+    )
+    run_parser.add_argument(
+        "--db-path",
+        default=None,
+        help="Custom path for DuckDB file (default: ./simpy_results.duckdb)",
+    )
     run_parser.set_defaults(func=_run_command)
 
     # === 'configure' subcommand ===
@@ -272,6 +302,16 @@ Examples:
         dest="export",
         help="Skip exporting results",
     )
+    simulate_parser.add_argument(
+        "--no-db",
+        action="store_true",
+        help="Skip saving to DuckDB database",
+    )
+    simulate_parser.add_argument(
+        "--db-path",
+        default=None,
+        help="Custom path for DuckDB file (default: ./simpy_results.duckdb)",
+    )
     simulate_parser.set_defaults(func=_simulate_command)
 
     # Parse arguments
@@ -285,6 +325,8 @@ Examples:
             config="config",
             export=False,
             output="output",
+            no_db=False,
+            db_path=None,
         )
         _run_command(default_args)
     else:

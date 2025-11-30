@@ -6,6 +6,18 @@ See the full changelog in the repository root:
 
 ## Recent Versions
 
+### [0.11.0] - 2025-11-29
+
+**DuckDB database storage for simulation results**
+
+- Auto-save results to `./simpy_results.duckdb`
+- 7-table schema: simulation_runs, telemetry, machine_telemetry, events, run_summary, machine_oee, run_equipment
+- Pre-computed analytics views (v_run_comparison, v_machine_oee, v_hourly_production, v_cumulative_production)
+- Config snapshots stored as JSON for full traceability
+- CLI flags: `--no-db` to skip saving, `--db-path` for custom location
+- Public API: `save_results()`, `db_connect()`, `get_db_path()`
+- 55 tests total (18 new storage tests)
+
 ### [0.10.0] - 2025-11-29
 
 **Integration test suite with manufacturing reality checks**
@@ -67,6 +79,7 @@ See the full changelog in the repository root:
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 0.11.0 | 2025-11-29 | DuckDB database storage, analytics views |
 | 0.10.0 | 2025-11-29 | Integration test suite, manufacturing reality checks |
 | 0.9.1 | 2025-11-29 | MkDocs documentation site |
 | 0.9.0 | 2025-11-29 | CLI subcommands, scenario bundles |

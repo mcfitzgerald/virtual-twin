@@ -410,6 +410,62 @@ MaterialType.NONE
 
 ---
 
+## Database Storage
+
+### save_results
+
+Save simulation results to DuckDB.
+
+```python
+from simpy_demo import save_results
+
+run_id = save_results(resolved, df_telemetry, df_events)
+print(f"Saved as run_id: {run_id}")
+```
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `resolved` | ResolvedConfig | Resolved configuration |
+| `df_ts` | pd.DataFrame | Telemetry DataFrame |
+| `df_ev` | pd.DataFrame | Events DataFrame |
+| `db_path` | Path \| str \| None | Custom database path (default: `./simpy_results.duckdb`) |
+
+**Returns**: `int` - The run_id for the saved simulation
+
+### db_connect
+
+Get a DuckDB connection for queries.
+
+```python
+from simpy_demo import db_connect
+
+conn = db_connect()
+
+# Query runs
+df = conn.execute("SELECT * FROM v_run_comparison").df()
+
+# Query OEE
+oee = conn.execute("SELECT * FROM v_machine_oee WHERE run_id = 1").df()
+```
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `db_path` | Path \| str \| None | Custom database path |
+
+**Returns**: `duckdb.DuckDBPyConnection`
+
+### get_db_path
+
+Get the default database path.
+
+```python
+from simpy_demo import get_db_path
+
+path = get_db_path()  # Path("./simpy_results.duckdb")
+```
+
+---
+
 ## Full Example
 
 ```python
@@ -418,6 +474,7 @@ from simpy_demo import (
     ConfigLoader,
     MachineConfig,
     ReliabilityParams,
+    db_connect,
 )
 
 # Load and modify configuration
@@ -433,11 +490,16 @@ resolved.equipment["Filler"].reliability = ReliabilityParams(
     mttr_max=150
 )
 
-# Run simulation
+# Run simulation (auto-saves to DuckDB)
 engine = SimulationEngine("config")
 df_telemetry, df_events = engine.run_resolved(resolved)
 
 # Analyze results
 print(f"Total pallets: {df_telemetry['pallets_produced'].sum()}")
 print(f"Total revenue: ${df_telemetry['revenue'].sum():,.2f}")
+
+# Query from database
+conn = db_connect()
+comparison = conn.execute("SELECT * FROM v_run_comparison").df()
+print(comparison)
 ```

@@ -15,12 +15,16 @@ from simpy_demo.loader import ConfigLoader
 def simulate(
     scenario_path: str,
     export: bool = True,
+    save_to_db: bool = True,
+    db_path: str | None = None,
 ) -> Tuple[pd.DataFrame, pd.DataFrame, Path]:
     """Run a scenario bundle and generate output.
 
     Args:
         scenario_path: Path to the scenario bundle directory
         export: If True, export results to CSV files in the bundle's output/ dir
+        save_to_db: If True, save results to DuckDB database
+        db_path: Custom path for DuckDB file
 
     Returns:
         Tuple of (telemetry_df, events_df, output_dir)
@@ -62,7 +66,7 @@ def simulate(
     resolved = loader.resolve_run(run_name)
 
     # Run simulation
-    engine = SimulationEngine(config_dir)
+    engine = SimulationEngine(config_dir, save_to_db=save_to_db, db_path=db_path)
     df_ts, df_ev = engine.run_resolved(resolved)
 
     # Create output directory in bundle

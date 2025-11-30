@@ -62,6 +62,8 @@ poetry run python -m simpy_demo run [OPTIONS]
 | `--config PATH` | Config directory | `config` |
 | `--export` | Export results to CSV | False |
 | `--output PATH` | Output directory | `output` |
+| `--no-db` | Skip saving to DuckDB database | False |
+| `--db-path PATH` | Custom path for DuckDB file | `./simpy_results.duckdb` |
 
 **Examples:**
 
@@ -71,6 +73,12 @@ poetry run python -m simpy_demo run --run baseline_8hr --export
 
 # Same as direct run
 poetry run python -m simpy_demo --run baseline_8hr --export
+
+# Skip database storage
+poetry run python -m simpy_demo run --run baseline_8hr --no-db
+
+# Use custom database path
+poetry run python -m simpy_demo run --run baseline_8hr --db-path ./my_results.duckdb
 ```
 
 ---

@@ -45,6 +45,8 @@ from simpy_demo.models import (
 )
 from simpy_demo.run import run_simulation
 from simpy_demo.simulation.runtime import execute_scenario
+from simpy_demo.storage import connect as db_connect
+from simpy_demo.storage import get_db_path, save_results
 from simpy_demo.topology import (
     BufferEdge,
     CycleDetectedError,
@@ -105,4 +107,8 @@ __all__ = [
     # Entry points
     "run_simulation",
     "execute_scenario",
+    # Storage
+    "save_results",
+    "get_db_path",
+    "db_connect",
 ]

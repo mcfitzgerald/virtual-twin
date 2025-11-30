@@ -29,8 +29,8 @@ def loader(config_dir: Path) -> ConfigLoader:
 
 @pytest.fixture
 def engine(config_dir: Path) -> SimulationEngine:
-    """SimulationEngine instance."""
-    return SimulationEngine(str(config_dir))
+    """SimulationEngine instance (with DB saving disabled for tests)."""
+    return SimulationEngine(str(config_dir), save_to_db=False)
 
 
 @pytest.fixture

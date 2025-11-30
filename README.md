@@ -1,8 +1,8 @@
 # SimPy Production Line Digital Twin
 
-**Version:** 0.10.0
-**Frameworks:** SimPy, Pydantic, Pandas
-**Scope:** Discrete Event Simulation (DES) & Synthetic Data Generation
+**Version:** 0.11.0
+**Frameworks:** SimPy, Pydantic, Pandas, DuckDB
+**Scope:** Discrete Event Simulation (DES), Synthetic Data Generation & Analytics
 
 ## Overview
 
@@ -185,9 +185,59 @@ Benefits:
 - **Auditing**: Config hash ties results to configuration
 - **Version tracking**: Git commit recorded in metadata
 
+## Database Storage
+
+Simulation results are automatically saved to DuckDB (`./simpy_results.duckdb`) for analytics and traceability.
+
+### Querying Results
+
+```python
+from simpy_demo import db_connect
+
+# Connect and query
+conn = db_connect()
+
+# Compare runs
+df = conn.execute("SELECT * FROM v_run_comparison").df()
+
+# OEE by machine
+oee = conn.execute("SELECT * FROM v_machine_oee WHERE run_id = 1").df()
+
+# Hourly production
+hourly = conn.execute("SELECT * FROM v_hourly_production").df()
+```
+
+### CLI Options
+
+```bash
+# Skip database save
+python -m simpy_demo --run baseline_8hr --no-db
+
+# Custom database path
+python -m simpy_demo --run baseline_8hr --db-path ./my_results.duckdb
+```
+
+### Database Schema
+
+| Table | Purpose |
+|-------|---------|
+| `simulation_runs` | Parent record with config snapshot |
+| `telemetry` | Time-series data at 5-min intervals |
+| `machine_telemetry` | Per-machine time-series |
+| `events` | State transitions (~600k per 8hr run) |
+| `run_summary` | Pre-aggregated metrics |
+| `machine_oee` | OEE calculated per machine |
+| `run_equipment` | Equipment config snapshot |
+
+### Visualization
+
+- **Apache Superset**: Native DuckDB support - connect with `duckdb:////path/to/simpy_results.duckdb`
+- **Grafana**: Export to SQLite with `ATTACH 'export.db' AS sqlite (TYPE SQLITE)`
+- **Parquet**: Export with `COPY table TO 'file.parquet' (FORMAT PARQUET)`
+
 ## Testing
 
-The project includes a comprehensive test suite with 37 tests validating simulation outputs against real manufacturing benchmarks.
+The project includes a comprehensive test suite with 55 tests validating simulation outputs against real manufacturing benchmarks.
 
 ```bash
 # Run all tests
@@ -209,6 +259,7 @@ poetry run pytest tests/test_reality_checks.py
 | `test_reality_checks.py` | 12 | Manufacturing reality validation (OEE, throughput, economics) |
 | `test_cli.py` | 6 | CLI workflow tests (configure/simulate) |
 | `test_optimization.py` | 5 | Optimization experiment validation |
+| `test_storage.py` | 18 | DuckDB storage, schema, and data integrity |
 
 ### Manufacturing Reality Benchmarks
 

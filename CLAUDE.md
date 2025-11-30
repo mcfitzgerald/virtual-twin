@@ -16,7 +16,7 @@ Use context7 for library and package documentation (enabled via mcp)
 
 Don't reinvent the wheel, search web for robust libraries and always opt for simple. Don't over-engineer!
 
-Update `CHANGELOG.md` and `README.md` and any docs when committing with git, use semantic versioning and also update version in `pyproject.toml`
+Update `CHANGELOG.md` and `README.md` and `docs/` when committing with git, use semantic versioning and also update version in `pyproject.toml`
 
 ## Commands
 

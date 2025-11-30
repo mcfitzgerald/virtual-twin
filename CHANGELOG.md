@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0] - 2025-11-29
+
+### Added
+- **DuckDB database storage** for simulation results (`src/simpy_demo/storage/`)
+  - `schema.py` - DDL for 7 tables: simulation_runs, telemetry, machine_telemetry, events, run_summary, machine_oee, run_equipment
+  - `writer.py` - `DuckDBWriter` class with bulk insert for performance
+  - `__init__.py` - Public API: `save_results()`, `connect()`, `get_db_path()`
+- **Pre-computed analytics** via DuckDB views:
+  - `v_run_comparison` - Compare runs by throughput, yield, margin
+  - `v_machine_oee` - OEE metrics by machine across runs
+  - `v_hourly_production` - Hourly rollups for dashboards
+  - `v_cumulative_production` - Running totals via window functions
+- **CLI flags** for database control:
+  - `--no-db` - Skip saving to database
+  - `--db-path PATH` - Custom database file location (default: `./simpy_results.duckdb`)
+- **Storage tests** (`tests/test_storage.py`) - 18 tests for schema, writer, API, and data integrity
+- **New dependency**: `duckdb>=1.2.2`
+- New exports in `__init__.py`: `save_results`, `get_db_path`, `db_connect`
+
+### Changed
+- `SimulationEngine` now accepts `save_to_db` (default: True) and `db_path` parameters
+- Results are automatically saved to DuckDB after simulation completes
+- `run_simulation()` function accepts `save_to_db` and `db_path` parameters
+- `simulate()` CLI function accepts `save_to_db` and `db_path` parameters
+- Existing tests updated to disable DB saving for faster execution
+
+### Technical Notes
+- Bulk insert using DuckDB DataFrame registration for ~600k events in <1 second
+- Config snapshots stored as JSON for full traceability
+- OEE pre-calculated from events for fast dashboard queries
+- Compatible with Apache Superset (native DuckDB support) and Grafana (via SQLite export)
+
 ## [0.10.0] - 2025-11-29
 
 ### Added
