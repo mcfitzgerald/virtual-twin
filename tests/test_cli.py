@@ -1,4 +1,4 @@
-"""CLI workflow tests for simpy-demo.
+"""CLI workflow tests for virtual-twin.
 
 Tests the configure and simulate CLI commands that generate
 and execute scenario bundles.

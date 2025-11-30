@@ -16,7 +16,7 @@ from virtual_twin.storage.writer import DuckDBWriter
 @pytest.fixture
 def temp_db(tmp_path: Path) -> Path:
     """Create a temporary database file path (does not create the file)."""
-    return tmp_path / "test_simpy_results.duckdb"
+    return tmp_path / "test_virtual_twin_results.duckdb"
 
 
 @pytest.fixture

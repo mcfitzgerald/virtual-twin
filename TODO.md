@@ -1,6 +1,6 @@
 # TODO - Future Enhancements
 
-This document tracks planned features and improvements for simpy-demo.
+This document tracks planned features and improvements for virtual-twin.
 
 ## Deferred from Refactoring
 
@@ -27,7 +27,7 @@ output:
 ```
 
 ```bash
-python -m simpy_demo campaign --campaign weekly_skus --export
+python -m virtual_twin campaign --campaign weekly_skus --export
 ```
 
 ### Multi-Line Support
@@ -85,9 +85,9 @@ shared_resources:
 
 ## CLI Improvements
 
-- [ ] `python -m simpy_demo diff <scenario1> <scenario2>` - Compare scenario configs
-- [ ] `python -m simpy_demo lint config/` - Validate YAML configs
-- [ ] `python -m simpy_demo replay --scenario <path>` - Re-run with same seed
+- [ ] `python -m virtual_twin diff <scenario1> <scenario2>` - Compare scenario configs
+- [ ] `python -m virtual_twin lint config/` - Validate YAML configs
+- [ ] `python -m virtual_twin replay --scenario <path>` - Re-run with same seed
 
 ---
 

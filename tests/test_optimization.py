@@ -1,4 +1,4 @@
-"""Optimization experiment validation tests for simpy-demo.
+"""Optimization experiment validation tests for virtual-twin.
 
 These tests verify that the simulation can serve as a baseline for
 optimization experiments by ensuring:

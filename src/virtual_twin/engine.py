@@ -35,7 +35,7 @@ class SimulationEngine:
         Args:
             config_dir: Path to configuration directory
             save_to_db: If True, save results to DuckDB (default: True)
-            db_path: Custom path for DuckDB file (default: ./simpy_results.duckdb)
+            db_path: Custom path for DuckDB file (default: ./virtual_twin_results.duckdb)
         """
         self.loader = ConfigLoader(config_dir)
         self.save_to_db = save_to_db

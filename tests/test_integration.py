@@ -1,4 +1,4 @@
-"""End-to-end integration smoke tests for simpy-demo."""
+"""End-to-end integration smoke tests for virtual-twin."""
 
 from pathlib import Path
 

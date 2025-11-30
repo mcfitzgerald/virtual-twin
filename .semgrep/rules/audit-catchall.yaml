@@ -6,7 +6,7 @@ rules:
   # Use it to sanity-check that no hardcoded numbers were missed.
   #
   # Run independently:
-  #   semgrep --config .semgrep/rules/audit-catchall.yaml src/simpy_demo/
+  #   semgrep --config .semgrep/rules/audit-catchall.yaml src/virtual_twin/
   # ============================================
 
   - id: simpy-audit-all-numbers
@@ -17,7 +17,7 @@ rules:
     severity: INFO
     paths:
       include:
-        - "**/src/simpy_demo/"
+        - "**/src/virtual_twin/"
       exclude:
         - "**/tests/"
         - "**/__pycache__/"

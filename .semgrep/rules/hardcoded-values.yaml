@@ -21,7 +21,7 @@ rules:
     severity: WARNING
     paths:
       include:
-        - "**/src/simpy_demo/"
+        - "**/src/virtual_twin/"
       exclude:
         - "**/tests/"
 
@@ -41,7 +41,7 @@ rules:
     severity: WARNING
     paths:
       include:
-        - "**/src/simpy_demo/"
+        - "**/src/virtual_twin/"
       exclude:
         - "**/tests/"
 
@@ -71,7 +71,7 @@ rules:
     severity: INFO
     paths:
       include:
-        - "**/src/simpy_demo/"
+        - "**/src/virtual_twin/"
       exclude:
         - "**/tests/"
 
@@ -92,7 +92,7 @@ rules:
     severity: WARNING
     paths:
       include:
-        - "**/src/simpy_demo/"
+        - "**/src/virtual_twin/"
 
   - id: simpy-hardcoded-location-string
     pattern-regex: '["'']Warehouse_\w+["'']'
@@ -103,7 +103,7 @@ rules:
     severity: WARNING
     paths:
       include:
-        - "**/src/simpy_demo/"
+        - "**/src/virtual_twin/"
 
   - id: simpy-hardcoded-equipment-name-string
     pattern-regex: '["''](Raw|Filler|Inspector|Packer|Palletizer)["'']'
@@ -114,7 +114,7 @@ rules:
     severity: WARNING
     paths:
       include:
-        - "**/src/simpy_demo/"
+        - "**/src/virtual_twin/"
 
   # ============================================
   # RANGE/INVENTORY HARDCODES
@@ -133,7 +133,7 @@ rules:
     severity: WARNING
     paths:
       include:
-        - "**/src/simpy_demo/"
+        - "**/src/virtual_twin/"
 
   # ============================================
   # MAGIC NUMBERS (TIME CONVERSIONS)
@@ -157,7 +157,7 @@ rules:
     severity: WARNING
     paths:
       include:
-        - "**/src/simpy_demo/"
+        - "**/src/virtual_twin/"
 
   - id: simpy-magic-60
     patterns:
@@ -177,7 +177,7 @@ rules:
     severity: WARNING
     paths:
       include:
-        - "**/src/simpy_demo/"
+        - "**/src/virtual_twin/"
 
   # ============================================
   # EULER'S NUMBER APPROXIMATION
@@ -192,7 +192,7 @@ rules:
     severity: WARNING
     paths:
       include:
-        - "**/src/simpy_demo/"
+        - "**/src/virtual_twin/"
 
   # ============================================
   # LIST COMPREHENSION HARDCODES
@@ -211,4 +211,4 @@ rules:
     severity: WARNING
     paths:
       include:
-        - "**/src/simpy_demo/"
+        - "**/src/virtual_twin/"

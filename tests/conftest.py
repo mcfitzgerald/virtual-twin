@@ -1,4 +1,4 @@
-"""Shared test fixtures for simpy-demo integration tests."""
+"""Shared test fixtures for virtual-twin integration tests."""
 
 from pathlib import Path
 from typing import Tuple

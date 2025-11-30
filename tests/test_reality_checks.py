@@ -1,4 +1,4 @@
-"""Manufacturing reality validation tests for simpy-demo.
+"""Manufacturing reality validation tests for virtual-twin.
 
 These tests verify that simulation outputs look like real manufacturing data,
 based on industry benchmarks:

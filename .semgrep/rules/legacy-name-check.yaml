@@ -1,0 +1,92 @@
+rules:
+  # ============================================
+  # LEGACY NAME CHECK: Detect old project name references
+  #
+  # Run to ensure all "simpy demo" references were updated to "virtual twin"
+  #
+  # Run:
+  #   semgrep --config .semgrep/rules/legacy-name-check.yaml .
+  # ============================================
+
+  # Python files
+  - id: legacy-name-python-underscore
+    pattern-regex: 'simpy_demo'
+    message: |
+      Found legacy project name 'simpy_demo'.
+      Should be renamed to 'virtual_twin'.
+    languages: [python]
+    severity: ERROR
+    paths:
+      exclude:
+        - "**/.semgrep/"
+        - "**/CHANGELOG.md"
+
+  - id: legacy-name-python-dash
+    pattern-regex: 'simpy-demo'
+    message: |
+      Found legacy project name 'simpy-demo'.
+      Should be renamed to 'virtual-twin'.
+    languages: [python]
+    severity: ERROR
+    paths:
+      exclude:
+        - "**/.semgrep/"
+        - "**/CHANGELOG.md"
+
+  - id: legacy-name-python-camelcase
+    pattern-regex: 'SimPy-Demo|SimPyDemo|Simpy-Demo|SimpyDemo'
+    message: |
+      Found legacy project name (CamelCase variant).
+      Should be renamed to 'Virtual Twin' or 'VirtualTwin'.
+    languages: [python]
+    severity: ERROR
+    paths:
+      exclude:
+        - "**/.semgrep/"
+        - "**/CHANGELOG.md"
+
+  - id: legacy-db-name-python
+    pattern-regex: 'simpy_results\.duckdb'
+    message: |
+      Found legacy database filename 'simpy_results.duckdb'.
+      Should be renamed to 'virtual_twin_results.duckdb'.
+    languages: [python]
+    severity: ERROR
+    paths:
+      exclude:
+        - "**/.semgrep/"
+        - "**/CHANGELOG.md"
+
+  # YAML files
+  - id: legacy-name-yaml-underscore
+    pattern-regex: 'simpy_demo'
+    message: |
+      Found legacy project name 'simpy_demo'.
+      Should be renamed to 'virtual_twin'.
+    languages: [yaml]
+    severity: ERROR
+    paths:
+      exclude:
+        - "**/.semgrep/"
+
+  - id: legacy-name-yaml-dash
+    pattern-regex: 'simpy-demo'
+    message: |
+      Found legacy project name 'simpy-demo'.
+      Should be renamed to 'virtual-twin'.
+    languages: [yaml]
+    severity: ERROR
+    paths:
+      exclude:
+        - "**/.semgrep/"
+
+  - id: legacy-db-name-yaml
+    pattern-regex: 'simpy_results\.duckdb'
+    message: |
+      Found legacy database filename 'simpy_results.duckdb'.
+      Should be renamed to 'virtual_twin_results.duckdb'.
+    languages: [yaml]
+    severity: ERROR
+    paths:
+      exclude:
+        - "**/.semgrep/"

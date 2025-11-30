@@ -1,4 +1,4 @@
-"""Output schema validation tests for simpy-demo.
+"""Output schema validation tests for virtual-twin.
 
 These tests verify that simulation outputs have the expected structure
 and column names, ensuring downstream consumers can rely on the schema.
