@@ -177,9 +177,11 @@ pyrightconfig.json
 
 # Simulation output
 output/
+*.duckdb
 
 # Generated scenario bundles
 scenarios/
+
 
 # Mac
 .DS_Store
