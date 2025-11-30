@@ -1,6 +1,6 @@
 # SimPy Production Line Digital Twin
 
-**Version:** 0.11.1
+**Version:** 0.15.0
 **Frameworks:** SimPy, Pydantic, Pandas, DuckDB
 **Scope:** Discrete Event Simulation (DES), Synthetic Data Generation & Analytics
 
@@ -215,6 +215,9 @@ python -m simpy_demo --run baseline_8hr --no-db
 
 # Custom database path
 python -m simpy_demo --run baseline_8hr --db-path ./my_results.duckdb
+
+# Enable full event logging (debug mode, ~600k rows/8hr)
+python -m simpy_demo --run baseline_8hr --debug-events
 ```
 
 ### Database Schema
@@ -224,7 +227,9 @@ python -m simpy_demo --run baseline_8hr --db-path ./my_results.duckdb
 | `simulation_runs` | Parent record with config snapshot |
 | `telemetry` | Time-series data at 5-min intervals |
 | `machine_telemetry` | Per-machine time-series |
-| `events` | State transitions (~600k per 8hr run) |
+| `state_summary` | Bucketed time-in-state for OEE (default) |
+| `events_detail` | Filtered DOWN/JAMMED events with context |
+| `events` | Full state transitions (debug mode only) |
 | `run_summary` | Pre-aggregated metrics |
 | `machine_oee` | OEE calculated per machine |
 | `run_equipment` | Equipment config snapshot |
@@ -237,7 +242,7 @@ python -m simpy_demo --run baseline_8hr --db-path ./my_results.duckdb
 
 ## Testing
 
-The project includes a comprehensive test suite with 55 tests validating simulation outputs against real manufacturing benchmarks.
+The project includes a comprehensive test suite with 85 tests validating simulation outputs against real manufacturing benchmarks.
 
 ```bash
 # Run all tests
@@ -254,12 +259,13 @@ poetry run pytest tests/test_reality_checks.py
 
 | File | Tests | Purpose |
 |------|-------|---------|
+| `test_aggregation.py` | 26 | EventAggregator unit tests for hybrid storage |
 | `test_integration.py` | 6 | Smoke tests for config loading and simulation execution |
 | `test_outputs.py` | 8 | Schema validation for DataFrame columns |
 | `test_reality_checks.py` | 12 | Manufacturing reality validation (OEE, throughput, economics) |
 | `test_cli.py` | 6 | CLI workflow tests (configure/simulate) |
 | `test_optimization.py` | 5 | Optimization experiment validation |
-| `test_storage.py` | 18 | DuckDB storage, schema, and data integrity |
+| `test_storage.py` | 22 | DuckDB storage, schema, and data integrity |
 
 ### Manufacturing Reality Benchmarks
 

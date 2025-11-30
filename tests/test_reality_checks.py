@@ -13,10 +13,8 @@ Sources:
 - https://evocon.com/articles/world-class-oee-industry-benchmarks-from-more-than-50-countries/
 """
 
-from typing import Tuple
 
 import pandas as pd
-import pytest
 
 from simpy_demo import SimulationEngine
 

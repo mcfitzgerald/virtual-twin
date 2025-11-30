@@ -7,7 +7,6 @@ and execute scenario bundles.
 import json
 from pathlib import Path
 
-import pytest
 import yaml
 
 from simpy_demo import configure, simulate
@@ -128,10 +127,11 @@ class TestSimulateCommand:
         # or use a test-specific run config
         # For now, just verify the command works (it will use full duration)
 
-        # Run simulate
+        # Run simulate with debug_events=True to populate events table
         df_ts, df_ev, output_dir = simulate(
             scenario_path=str(bundle_path),
             export=True,
+            debug_events=True,
         )
 
         assert len(df_ts) > 0
@@ -147,9 +147,11 @@ class TestSimulateCommand:
             dry_run=False,
         )
 
+        # Run with debug_events=True to ensure OEE is calculated from events
         _, _, output_dir = simulate(
             scenario_path=str(bundle_path),
             export=True,
+            debug_events=True,
         )
 
         # Check for summary file

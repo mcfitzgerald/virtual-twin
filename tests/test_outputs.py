@@ -5,7 +5,6 @@ and column names, ensuring downstream consumers can rely on the schema.
 """
 
 import pandas as pd
-import pytest
 
 
 class TestTelemetrySchema:
