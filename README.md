@@ -236,29 +236,17 @@ python -m virtual_twin --run baseline_8hr --debug-events
 
 ### Visualization
 
-#### Grafana (Recommended)
+#### Apache Superset (Recommended)
 
-A pre-built dashboard is available at `grafana/dashboards/virtual_twin.json`.
+Native DuckDB support for deep-dive analytics. See [Superset Integration Guide](docs/superset_integration.md).
 
-**Setup:**
-1. Install the DuckDB plugin: `grafana-cli plugins install motherduck-duckdb-datasource`
-2. Configure data source: Settings → Data Sources → Add → DuckDB
-   - Path: `/path/to/virtual_twin_results.duckdb`
-3. Import dashboard: Dashboards → Import → Upload JSON file
-   - Select `grafana/dashboards/virtual_twin.json`
-4. Select your data source when prompted
-
-**Dashboard Features:**
-- **Multi-run comparison**: Select multiple runs from dropdown to compare side-by-side
-- **KPI Summary**: Good pallets, yield %, gross margin, throughput
-- **OEE Analysis**: Per-machine OEE and availability bar gauges
-- **Production Charts**: Cumulative and hourly production time series
-- **State Breakdown**: Stacked bar chart of machine states (Execute/Starved/Blocked/Down/Jammed)
-- **Economics**: Revenue vs cost trends, cumulative margin
+**Quick Setup:**
+1. Install drivers: `pip install duckdb duckdb-engine`
+2. Add database connection: `duckdb:////path/to/virtual_twin_results.duckdb`
+3. Configure read-only mode in Engine Parameters for concurrent queries
 
 #### Other Options
 
-- **Apache Superset**: Native DuckDB support - connect with `duckdb:////path/to/virtual_twin_results.duckdb`
 - **Parquet Export**: `COPY table TO 'file.parquet' (FORMAT PARQUET)`
 
 ## Testing
