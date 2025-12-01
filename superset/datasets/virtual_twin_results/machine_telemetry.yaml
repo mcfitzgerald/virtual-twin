@@ -1,0 +1,87 @@
+table_name: machine_telemetry
+main_dttm_col: ts
+description: Per-machine time-series with state and buffer levels
+default_endpoint: null
+offset: 0
+cache_timeout: null
+schema: virtual_twin_results.main
+sql: null
+params: null
+template_params: null
+filter_select_enabled: true
+fetch_values_predicate: null
+extra: null
+normalize_columns: false
+always_filter_main_dttm: false
+uuid: 10000000-0000-0000-0000-000000000005
+version: 1.0.0
+database_uuid: 00000000-0000-0000-0000-000000000001
+columns:
+  - column_name: run_id
+    verbose_name: Run ID
+    is_dttm: false
+    is_active: true
+    type: BIGINT
+    groupby: true
+    filterable: true
+  - column_name: ts
+    verbose_name: Timestamp
+    is_dttm: true
+    is_active: true
+    type: TIMESTAMP
+    groupby: true
+    filterable: true
+  - column_name: machine_name
+    verbose_name: Machine
+    is_dttm: false
+    is_active: true
+    type: VARCHAR
+    groupby: true
+    filterable: true
+  - column_name: state
+    verbose_name: State
+    description: Machine state (EXECUTE, STARVED, BLOCKED, DOWN, JAMMED)
+    is_dttm: false
+    is_active: true
+    type: VARCHAR
+    groupby: true
+    filterable: true
+  - column_name: buffer_level
+    verbose_name: Buffer Level
+    is_dttm: false
+    is_active: true
+    type: BIGINT
+    groupby: false
+    filterable: true
+  - column_name: buffer_capacity
+    verbose_name: Buffer Capacity
+    is_dttm: false
+    is_active: true
+    type: BIGINT
+    groupby: false
+    filterable: true
+  - column_name: output_count
+    verbose_name: Output Count
+    description: Cumulative output from this machine
+    is_dttm: false
+    is_active: true
+    type: BIGINT
+    groupby: false
+    filterable: true
+metrics:
+  - metric_name: count
+    verbose_name: Count
+    metric_type: count
+    expression: COUNT(*)
+  - metric_name: avg_buffer
+    verbose_name: Avg Buffer Level
+    metric_type: avg
+    expression: AVG(buffer_level)
+  - metric_name: max_buffer
+    verbose_name: Max Buffer Level
+    metric_type: max
+    expression: MAX(buffer_level)
+  - metric_name: max_output
+    verbose_name: Max Output
+    metric_type: max
+    expression: MAX(output_count)

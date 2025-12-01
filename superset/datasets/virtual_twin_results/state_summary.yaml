@@ -1,0 +1,117 @@
+table_name: state_summary
+main_dttm_col: bucket_start_ts
+description: Pre-aggregated state durations per 5-minute bucket
+default_endpoint: null
+offset: 0
+cache_timeout: null
+schema: virtual_twin_results.main
+sql: null
+params: null
+template_params: null
+filter_select_enabled: true
+fetch_values_predicate: null
+extra: null
+normalize_columns: false
+always_filter_main_dttm: false
+uuid: 10000000-0000-0000-0000-000000000004
+version: 1.0.0
+database_uuid: 00000000-0000-0000-0000-000000000001
+columns:
+  - column_name: run_id
+    verbose_name: Run ID
+    is_dttm: false
+    is_active: true
+    type: BIGINT
+    groupby: true
+    filterable: true
+  - column_name: machine_name
+    verbose_name: Machine
+    is_dttm: false
+    is_active: true
+    type: VARCHAR
+    groupby: true
+    filterable: true
+  - column_name: bucket_start_ts
+    verbose_name: Bucket Start
+    is_dttm: true
+    is_active: true
+    type: TIMESTAMP
+    groupby: true
+    filterable: true
+  - column_name: execute_sec
+    verbose_name: Execute (s)
+    is_dttm: false
+    is_active: true
+    type: DOUBLE
+    groupby: false
+    filterable: true
+  - column_name: starved_sec
+    verbose_name: Starved (s)
+    is_dttm: false
+    is_active: true
+    type: DOUBLE
+    groupby: false
+    filterable: true
+  - column_name: blocked_sec
+    verbose_name: Blocked (s)
+    is_dttm: false
+    is_active: true
+    type: DOUBLE
+    groupby: false
+    filterable: true
+  - column_name: down_sec
+    verbose_name: Down (s)
+    is_dttm: false
+    is_active: true
+    type: DOUBLE
+    groupby: false
+    filterable: true
+  - column_name: jammed_sec
+    verbose_name: Jammed (s)
+    is_dttm: false
+    is_active: true
+    type: DOUBLE
+    groupby: false
+    filterable: true
+  - column_name: availability_pct
+    verbose_name: Availability %
+    is_dttm: false
+    is_active: true
+    type: DOUBLE
+    groupby: false
+    filterable: true
+  - column_name: down_count
+    verbose_name: Down Events
+    is_dttm: false
+    is_active: true
+    type: BIGINT
+    groupby: false
+    filterable: true
+  - column_name: jammed_count
+    verbose_name: Jam Events
+    is_dttm: false
+    is_active: true
+    type: BIGINT
+    groupby: false
+    filterable: true
+metrics:
+  - metric_name: count
+    verbose_name: Count
+    metric_type: count
+    expression: COUNT(*)
+  - metric_name: avg_availability
+    verbose_name: Avg Availability %
+    metric_type: avg
+    expression: AVG(availability_pct)
+  - metric_name: total_down_sec
+    verbose_name: Total Down Time (s)
+    metric_type: sum
+    expression: SUM(down_sec)
+  - metric_name: total_jammed_sec
+    verbose_name: Total Jammed Time (s)
+    metric_type: sum
+    expression: SUM(jammed_sec)
+  - metric_name: total_down_events
+    verbose_name: Total Down Events
+    metric_type: sum
+    expression: SUM(down_count)

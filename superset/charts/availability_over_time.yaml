@@ -1,0 +1,29 @@
+slice_name: Availability Over Time
+description: Machine availability percentage over time
+viz_type: echarts_timeseries_line
+params:
+  datasource: 10000000-0000-0000-0000-000000000004__table
+  viz_type: echarts_timeseries_line
+  x_axis: bucket_start_ts
+  time_grain_sqla: PT5M
+  metrics:
+    - avg_availability
+  groupby:
+    - machine_name
+  row_limit: 10000
+  order_desc: false
+  rich_tooltip: true
+  tooltipTimeFormat: '%Y-%m-%d %H:%M'
+  x_axis_title: Time
+  y_axis_title: Availability %
+  y_axis_format: '.1%'
+  show_legend: true
+  legendOrientation: top
+  color_scheme: supersetColors
+  markerEnabled: false
+  zoomable: true
+  extra_form_data: {}
+cache_timeout: null
+uuid: 20000000-0000-0000-0000-000000000014
+version: 1.0.0
+dataset_uuid: 10000000-0000-0000-0000-000000000004

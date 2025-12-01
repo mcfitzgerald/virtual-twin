@@ -1,0 +1,118 @@
+table_name: v_machine_oee
+main_dttm_col: null
+description: OEE metrics by machine with run context
+default_endpoint: null
+offset: 0
+cache_timeout: null
+schema: virtual_twin_results.main
+sql: null
+params: null
+template_params: null
+filter_select_enabled: true
+fetch_values_predicate: null
+extra: null
+normalize_columns: false
+always_filter_main_dttm: false
+uuid: 10000000-0000-0000-0000-000000000002
+version: 1.0.0
+database_uuid: 00000000-0000-0000-0000-000000000001
+columns:
+  - column_name: run_id
+    verbose_name: Run ID
+    is_dttm: false
+    is_active: true
+    type: BIGINT
+    groupby: true
+    filterable: true
+  - column_name: run_name
+    verbose_name: Run Name
+    is_dttm: false
+    is_active: true
+    type: VARCHAR
+    groupby: true
+    filterable: true
+  - column_name: machine_name
+    verbose_name: Machine
+    is_dttm: false
+    is_active: true
+    type: VARCHAR
+    groupby: true
+    filterable: true
+  - column_name: oee_percent
+    verbose_name: OEE %
+    description: Overall Equipment Effectiveness
+    is_dttm: false
+    is_active: true
+    type: DOUBLE
+    groupby: false
+    filterable: true
+  - column_name: availability_percent
+    verbose_name: Availability %
+    is_dttm: false
+    is_active: true
+    type: DOUBLE
+    groupby: false
+    filterable: true
+  - column_name: execute_time_sec
+    verbose_name: Execute Time (s)
+    is_dttm: false
+    is_active: true
+    type: DOUBLE
+    groupby: false
+    filterable: true
+  - column_name: down_time_sec
+    verbose_name: Down Time (s)
+    is_dttm: false
+    is_active: true
+    type: DOUBLE
+    groupby: false
+    filterable: true
+  - column_name: jammed_time_sec
+    verbose_name: Jammed Time (s)
+    is_dttm: false
+    is_active: true
+    type: DOUBLE
+    groupby: false
+    filterable: true
+  - column_name: starved_time_sec
+    verbose_name: Starved Time (s)
+    is_dttm: false
+    is_active: true
+    type: DOUBLE
+    groupby: false
+    filterable: true
+  - column_name: blocked_time_sec
+    verbose_name: Blocked Time (s)
+    is_dttm: false
+    is_active: true
+    type: DOUBLE
+    groupby: false
+    filterable: true
+  - column_name: total_time_sec
+    verbose_name: Total Time (s)
+    is_dttm: false
+    is_active: true
+    type: DOUBLE
+    groupby: false
+    filterable: true
+metrics:
+  - metric_name: count
+    verbose_name: Count
+    metric_type: count
+    expression: COUNT(*)
+  - metric_name: avg_oee
+    verbose_name: Avg OEE %
+    metric_type: avg
+    expression: AVG(oee_percent)
+  - metric_name: avg_availability
+    verbose_name: Avg Availability %
+    metric_type: avg
+    expression: AVG(availability_percent)
+  - metric_name: total_down_time
+    verbose_name: Total Down Time (hrs)
+    metric_type: sum
+    expression: SUM(down_time_sec) / 3600.0
+  - metric_name: total_jammed_time
+    verbose_name: Total Jammed Time (hrs)
+    metric_type: sum
+    expression: SUM(jammed_time_sec) / 3600.0

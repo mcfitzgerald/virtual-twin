@@ -1,0 +1,33 @@
+slice_name: Revenue vs Cost Over Time
+description: Revenue and costs comparison over time
+viz_type: echarts_timeseries_line
+params:
+  datasource: 10000000-0000-0000-0000-000000000003__table
+  viz_type: echarts_timeseries_line
+  x_axis: ts
+  time_grain_sqla: PT5M
+  metrics:
+    - expressionType: SQL
+      sqlExpression: SUM(SUM(revenue)) OVER (ORDER BY ts)
+      label: Cumulative Revenue
+    - expressionType: SQL
+      sqlExpression: SUM(SUM(material_cost + conversion_cost)) OVER (ORDER BY ts)
+      label: Cumulative Cost
+  groupby: []
+  row_limit: 10000
+  order_desc: false
+  rich_tooltip: true
+  tooltipTimeFormat: '%Y-%m-%d %H:%M'
+  x_axis_title: Time
+  y_axis_title: Amount ($)
+  y_axis_format: '$,.0f'
+  show_legend: true
+  legendOrientation: top
+  color_scheme: supersetColors
+  markerEnabled: false
+  zoomable: true
+  extra_form_data: {}
+cache_timeout: null
+uuid: 20000000-0000-0000-0000-000000000011
+version: 1.0.0
+dataset_uuid: 10000000-0000-0000-0000-000000000003

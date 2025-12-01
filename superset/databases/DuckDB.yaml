@@ -1,0 +1,16 @@
+database_name: DuckDB
+sqlalchemy_uri: duckdb:////data/virtual-twin/virtual_twin_results.duckdb
+cache_timeout: null
+expose_in_sqllab: true
+allow_run_async: true
+allow_ctas: false
+allow_cvas: false
+allow_dml: false
+allow_file_upload: false
+extra:
+  metadata_params: {}
+  engine_params: {}
+  metadata_cache_timeout: {}
+  schemas_allowed_for_file_upload: []
+uuid: 00000000-0000-0000-0000-000000000001
+version: 1.0.0

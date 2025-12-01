@@ -1,0 +1,27 @@
+slice_name: Loss Time Pareto
+description: Downtime and jam time by machine (loss attribution)
+viz_type: echarts_pie
+params:
+  datasource: 10000000-0000-0000-0000-000000000002__table
+  viz_type: echarts_pie
+  groupby:
+    - machine_name
+  metric:
+    expressionType: SQL
+    sqlExpression: SUM(down_time_sec + jammed_time_sec)
+    label: Total Loss Time (s)
+  sort_by_metric: true
+  row_limit: 100
+  innerRadius: 30
+  outerRadius: 70
+  show_legend: true
+  legendOrientation: right
+  legendType: scroll
+  label_type: key_value_percent
+  show_labels: true
+  color_scheme: supersetColors
+  extra_form_data: {}
+cache_timeout: null
+uuid: 20000000-0000-0000-0000-000000000008
+version: 1.0.0
+dataset_uuid: 10000000-0000-0000-0000-000000000002

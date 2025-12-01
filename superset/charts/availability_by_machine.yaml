@@ -1,0 +1,26 @@
+slice_name: Availability by Machine
+description: Machine availability percentage
+viz_type: echarts_bar
+params:
+  datasource: 10000000-0000-0000-0000-000000000002__table
+  viz_type: echarts_bar
+  orientation: horizontal
+  x_axis: machine_name
+  time_grain_sqla: P1D
+  metrics:
+    - availability_percent
+  groupby: []
+  order_desc: true
+  row_limit: 100
+  truncate_metric: true
+  show_legend: false
+  rich_tooltip: true
+  y_axis_format: '.1%'
+  x_axis_title: Availability %
+  y_axis_title: Machine
+  color_scheme: supersetColors
+  extra_form_data: {}
+cache_timeout: null
+uuid: 20000000-0000-0000-0000-000000000006
+version: 1.0.0
+dataset_uuid: 10000000-0000-0000-0000-000000000002

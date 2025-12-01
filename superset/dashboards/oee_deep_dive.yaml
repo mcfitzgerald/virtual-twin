@@ -1,0 +1,70 @@
+dashboard_title: Virtual Twin - OEE Deep Dive
+description: Detailed OEE analysis by machine with loss attribution
+slug: virtual-twin-oee-deep-dive
+certified_by: null
+certification_details: null
+published: true
+uuid: 30000000-0000-0000-0000-000000000002
+version: 1.0.0
+position:
+  CHART-oee_by_machine:
+    type: CHART
+    id: CHART-oee_by_machine
+    children: []
+    meta:
+      chartId: 20000000-0000-0000-0000-000000000005
+      width: 6
+      height: 50
+  CHART-availability_by_machine:
+    type: CHART
+    id: CHART-availability_by_machine
+    children: []
+    meta:
+      chartId: 20000000-0000-0000-0000-000000000006
+      width: 6
+      height: 50
+  CHART-state_breakdown:
+    type: CHART
+    id: CHART-state_breakdown
+    children: []
+    meta:
+      chartId: 20000000-0000-0000-0000-000000000007
+      width: 8
+      height: 50
+  CHART-loss_pareto:
+    type: CHART
+    id: CHART-loss_pareto
+    children: []
+    meta:
+      chartId: 20000000-0000-0000-0000-000000000008
+      width: 4
+      height: 50
+  ROW-top:
+    type: ROW
+    id: ROW-top
+    children:
+      - CHART-oee_by_machine
+      - CHART-availability_by_machine
+    meta:
+      background: BACKGROUND_TRANSPARENT
+  ROW-bottom:
+    type: ROW
+    id: ROW-bottom
+    children:
+      - CHART-state_breakdown
+      - CHART-loss_pareto
+    meta:
+      background: BACKGROUND_TRANSPARENT
+  ROOT_ID:
+    type: ROOT
+    id: ROOT_ID
+    children:
+      - ROW-top
+      - ROW-bottom
+metadata:
+  native_filter_configuration: []
+  chart_configuration: {}
+  color_scheme: supersetColors
+  refresh_frequency: 0
+  cross_filters_enabled: true
+css: ''

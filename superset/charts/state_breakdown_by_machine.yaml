@@ -1,0 +1,46 @@
+slice_name: State Time Breakdown
+description: Time spent in each state by machine (stacked bar)
+viz_type: echarts_bar
+params:
+  datasource: 10000000-0000-0000-0000-000000000002__table
+  viz_type: echarts_bar
+  orientation: horizontal
+  x_axis: machine_name
+  time_grain_sqla: P1D
+  metrics:
+    - column: execute_time_sec
+      expressionType: SIMPLE
+      aggregate: SUM
+      label: Execute
+    - column: starved_time_sec
+      expressionType: SIMPLE
+      aggregate: SUM
+      label: Starved
+    - column: blocked_time_sec
+      expressionType: SIMPLE
+      aggregate: SUM
+      label: Blocked
+    - column: down_time_sec
+      expressionType: SIMPLE
+      aggregate: SUM
+      label: Down
+    - column: jammed_time_sec
+      expressionType: SIMPLE
+      aggregate: SUM
+      label: Jammed
+  groupby: []
+  stack: true
+  order_desc: true
+  row_limit: 100
+  show_legend: true
+  legendOrientation: top
+  rich_tooltip: true
+  y_axis_format: ',.0f'
+  x_axis_title: Time (seconds)
+  y_axis_title: Machine
+  color_scheme: supersetColors
+  extra_form_data: {}
+cache_timeout: null
+uuid: 20000000-0000-0000-0000-000000000007
+version: 1.0.0
+dataset_uuid: 10000000-0000-0000-0000-000000000002

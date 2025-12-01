@@ -1,0 +1,78 @@
+dashboard_title: Virtual Twin - Executive Summary
+description: High-level overview of simulation runs and key performance metrics
+slug: virtual-twin-executive-summary
+certified_by: null
+certification_details: null
+published: true
+uuid: 30000000-0000-0000-0000-000000000001
+version: 1.0.0
+position:
+  CHART-run_comparison_table:
+    type: CHART
+    id: CHART-run_comparison_table
+    children: []
+    meta:
+      chartId: 20000000-0000-0000-0000-000000000001
+      width: 12
+      height: 50
+  CHART-yield_by_run:
+    type: CHART
+    id: CHART-yield_by_run
+    children: []
+    meta:
+      chartId: 20000000-0000-0000-0000-000000000002
+      width: 4
+      height: 50
+  CHART-margin_by_run:
+    type: CHART
+    id: CHART-margin_by_run
+    children: []
+    meta:
+      chartId: 20000000-0000-0000-0000-000000000003
+      width: 4
+      height: 50
+  CHART-throughput_by_run:
+    type: CHART
+    id: CHART-throughput_by_run
+    children: []
+    meta:
+      chartId: 20000000-0000-0000-0000-000000000004
+      width: 4
+      height: 50
+  ROW-top:
+    type: ROW
+    id: ROW-top
+    children:
+      - CHART-run_comparison_table
+    meta:
+      background: BACKGROUND_TRANSPARENT
+  ROW-bottom:
+    type: ROW
+    id: ROW-bottom
+    children:
+      - CHART-yield_by_run
+      - CHART-margin_by_run
+      - CHART-throughput_by_run
+    meta:
+      background: BACKGROUND_TRANSPARENT
+  ROOT_ID:
+    type: ROOT
+    id: ROOT_ID
+    children:
+      - ROW-top
+      - ROW-bottom
+metadata:
+  native_filter_configuration: []
+  chart_configuration: {}
+  global_chart_configuration:
+    scope:
+      rootPath:
+        - ROOT_ID
+      excluded: []
+    chartsInScope: []
+  color_scheme: supersetColors
+  refresh_frequency: 0
+  shared_label_colors: {}
+  color_scheme_domain: []
+  cross_filters_enabled: true
+css: ''

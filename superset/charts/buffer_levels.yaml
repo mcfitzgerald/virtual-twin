@@ -1,0 +1,29 @@
+slice_name: Buffer Levels Over Time
+description: Buffer utilization by machine over time
+viz_type: echarts_timeseries_line
+params:
+  datasource: 10000000-0000-0000-0000-000000000005__table
+  viz_type: echarts_timeseries_line
+  x_axis: ts
+  time_grain_sqla: PT5M
+  metrics:
+    - avg_buffer
+  groupby:
+    - machine_name
+  row_limit: 10000
+  order_desc: false
+  rich_tooltip: true
+  tooltipTimeFormat: '%Y-%m-%d %H:%M'
+  x_axis_title: Time
+  y_axis_title: Buffer Level
+  y_axis_format: ',.0f'
+  show_legend: true
+  legendOrientation: top
+  color_scheme: supersetColors
+  markerEnabled: false
+  zoomable: true
+  extra_form_data: {}
+cache_timeout: null
+uuid: 20000000-0000-0000-0000-000000000013
+version: 1.0.0
+dataset_uuid: 10000000-0000-0000-0000-000000000005

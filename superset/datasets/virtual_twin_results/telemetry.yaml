@@ -1,0 +1,135 @@
+table_name: telemetry
+main_dttm_col: ts
+description: Time-series production data at 5-minute intervals
+default_endpoint: null
+offset: 0
+cache_timeout: null
+schema: virtual_twin_results.main
+sql: null
+params: null
+template_params: null
+filter_select_enabled: true
+fetch_values_predicate: null
+extra: null
+normalize_columns: false
+always_filter_main_dttm: false
+uuid: 10000000-0000-0000-0000-000000000003
+version: 1.0.0
+database_uuid: 00000000-0000-0000-0000-000000000001
+columns:
+  - column_name: run_id
+    verbose_name: Run ID
+    is_dttm: false
+    is_active: true
+    type: BIGINT
+    groupby: true
+    filterable: true
+  - column_name: ts
+    verbose_name: Timestamp
+    is_dttm: true
+    is_active: true
+    type: TIMESTAMP
+    groupby: true
+    filterable: true
+  - column_name: tubes_produced
+    verbose_name: Tubes Produced
+    is_dttm: false
+    is_active: true
+    type: BIGINT
+    groupby: false
+    filterable: true
+  - column_name: cases_produced
+    verbose_name: Cases Produced
+    is_dttm: false
+    is_active: true
+    type: BIGINT
+    groupby: false
+    filterable: true
+  - column_name: pallets_produced
+    verbose_name: Pallets Produced
+    is_dttm: false
+    is_active: true
+    type: BIGINT
+    groupby: false
+    filterable: true
+  - column_name: good_pallets
+    verbose_name: Good Pallets
+    is_dttm: false
+    is_active: true
+    type: BIGINT
+    groupby: false
+    filterable: true
+  - column_name: defective_pallets
+    verbose_name: Defective Pallets
+    is_dttm: false
+    is_active: true
+    type: BIGINT
+    groupby: false
+    filterable: true
+  - column_name: defects_created
+    verbose_name: Defects Created
+    is_dttm: false
+    is_active: true
+    type: BIGINT
+    groupby: false
+    filterable: true
+  - column_name: defects_detected
+    verbose_name: Defects Detected
+    is_dttm: false
+    is_active: true
+    type: BIGINT
+    groupby: false
+    filterable: true
+  - column_name: material_cost
+    verbose_name: Material Cost
+    is_dttm: false
+    is_active: true
+    type: DOUBLE
+    groupby: false
+    filterable: true
+  - column_name: conversion_cost
+    verbose_name: Conversion Cost
+    is_dttm: false
+    is_active: true
+    type: DOUBLE
+    groupby: false
+    filterable: true
+  - column_name: revenue
+    verbose_name: Revenue
+    is_dttm: false
+    is_active: true
+    type: DOUBLE
+    groupby: false
+    filterable: true
+  - column_name: gross_margin
+    verbose_name: Gross Margin
+    is_dttm: false
+    is_active: true
+    type: DOUBLE
+    groupby: false
+    filterable: true
+metrics:
+  - metric_name: count
+    verbose_name: Count
+    metric_type: count
+    expression: COUNT(*)
+  - metric_name: sum_pallets
+    verbose_name: Total Pallets
+    metric_type: sum
+    expression: SUM(pallets_produced)
+  - metric_name: sum_good_pallets
+    verbose_name: Total Good Pallets
+    metric_type: sum
+    expression: SUM(good_pallets)
+  - metric_name: sum_revenue
+    verbose_name: Total Revenue
+    metric_type: sum
+    expression: SUM(revenue)
+  - metric_name: sum_margin
+    verbose_name: Total Margin
+    metric_type: sum
+    expression: SUM(gross_margin)
+  - metric_name: sum_defects
+    verbose_name: Total Defects
+    metric_type: sum
+    expression: SUM(defects_created)

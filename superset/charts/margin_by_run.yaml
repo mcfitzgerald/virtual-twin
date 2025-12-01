@@ -1,0 +1,25 @@
+slice_name: Gross Margin by Run
+description: Gross margin comparison across runs
+viz_type: echarts_bar
+params:
+  datasource: 10000000-0000-0000-0000-000000000001__table
+  viz_type: echarts_bar
+  x_axis: run_name
+  time_grain_sqla: P1D
+  metrics:
+    - total_gross_margin
+  groupby: []
+  order_desc: true
+  row_limit: 100
+  truncate_metric: true
+  show_legend: false
+  rich_tooltip: true
+  y_axis_format: '$,.0f'
+  x_axis_title: Run
+  y_axis_title: Gross Margin
+  color_scheme: supersetColors
+  extra_form_data: {}
+cache_timeout: null
+uuid: 20000000-0000-0000-0000-000000000003
+version: 1.0.0
+dataset_uuid: 10000000-0000-0000-0000-000000000001

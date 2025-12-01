@@ -1,0 +1,136 @@
+table_name: v_run_comparison
+main_dttm_col: started_at
+description: Compare simulation runs side-by-side with key metrics
+default_endpoint: null
+offset: 0
+cache_timeout: null
+schema: virtual_twin_results.main
+sql: null
+params: null
+template_params: null
+filter_select_enabled: true
+fetch_values_predicate: null
+extra: null
+normalize_columns: false
+always_filter_main_dttm: false
+uuid: 10000000-0000-0000-0000-000000000001
+version: 1.0.0
+database_uuid: 00000000-0000-0000-0000-000000000001
+columns:
+  - column_name: run_id
+    verbose_name: Run ID
+    description: Unique identifier for the simulation run
+    is_dttm: false
+    is_active: true
+    type: BIGINT
+    groupby: true
+    filterable: true
+  - column_name: run_name
+    verbose_name: Run Name
+    description: Name of the simulation run
+    is_dttm: false
+    is_active: true
+    type: VARCHAR
+    groupby: true
+    filterable: true
+  - column_name: scenario_name
+    verbose_name: Scenario
+    description: Scenario configuration name
+    is_dttm: false
+    is_active: true
+    type: VARCHAR
+    groupby: true
+    filterable: true
+  - column_name: started_at
+    verbose_name: Started At
+    description: Simulation start timestamp
+    is_dttm: true
+    is_active: true
+    type: TIMESTAMP
+    groupby: true
+    filterable: true
+  - column_name: duration_hours
+    verbose_name: Duration (hrs)
+    description: Simulation duration in hours
+    is_dttm: false
+    is_active: true
+    type: DOUBLE
+    groupby: false
+    filterable: true
+  - column_name: total_pallets
+    verbose_name: Total Pallets
+    description: Total pallets produced
+    is_dttm: false
+    is_active: true
+    type: BIGINT
+    groupby: false
+    filterable: true
+  - column_name: total_good_pallets
+    verbose_name: Good Pallets
+    description: Total good pallets (non-defective)
+    is_dttm: false
+    is_active: true
+    type: BIGINT
+    groupby: false
+    filterable: true
+  - column_name: yield_percent
+    verbose_name: Yield %
+    description: Percentage of good pallets
+    is_dttm: false
+    is_active: true
+    type: DOUBLE
+    groupby: false
+    filterable: true
+  - column_name: total_revenue
+    verbose_name: Revenue
+    description: Total revenue from good pallets
+    is_dttm: false
+    is_active: true
+    type: DOUBLE
+    groupby: false
+    filterable: true
+  - column_name: total_gross_margin
+    verbose_name: Gross Margin
+    description: Revenue minus costs
+    is_dttm: false
+    is_active: true
+    type: DOUBLE
+    groupby: false
+    filterable: true
+  - column_name: margin_percent
+    verbose_name: Margin %
+    description: Gross margin as percentage of revenue
+    is_dttm: false
+    is_active: true
+    type: DOUBLE
+    groupby: false
+    filterable: true
+  - column_name: throughput_per_hour
+    verbose_name: Throughput/hr
+    description: Pallets per hour
+    is_dttm: false
+    is_active: true
+    type: DOUBLE
+    groupby: false
+    filterable: true
+metrics:
+  - metric_name: count
+    verbose_name: Count
+    metric_type: count
+    expression: COUNT(*)
+    description: Count of rows
+  - metric_name: avg_yield
+    verbose_name: Avg Yield %
+    metric_type: avg
+    expression: AVG(yield_percent)
+    description: Average yield percentage
+  - metric_name: total_revenue
+    verbose_name: Total Revenue
+    metric_type: sum
+    expression: SUM(total_revenue)
+    description: Sum of revenue
+  - metric_name: total_margin
+    verbose_name: Total Margin
+    metric_type: sum
+    expression: SUM(total_gross_margin)
+    description: Sum of gross margin

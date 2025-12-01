@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **Apache Superset integration guide** (`docs/superset_integration.md`)
   - Comprehensive setup guide for DuckDB + Superset
+  - **Docker setup instructions** with custom Dockerfile extending Superset image
   - Connection configuration with read-only mode for concurrent queries
   - 6 proposed dashboards: Executive Summary, OEE Deep Dive, Production Analysis, What-If Scenarios, Time Series Explorer, Event Analysis
   - Time series dataset documentation for `telemetry`, `machine_telemetry`, `state_summary`, `events_detail`
@@ -17,9 +18,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Jinja templating examples for dynamic filtering
   - Performance and caching best practices
 
+- **Pre-built Superset dashboards** (`superset/`)
+  - Ready-to-import ZIP bundle: `superset/virtual_twin_dashboards.zip`
+  - 3 dashboards: Executive Summary, OEE Deep Dive, Production Analysis
+  - 15 charts covering production, OEE, economics, and time-series analysis
+  - 5 dataset definitions with metrics and column metadata
+  - Database connection configuration for DuckDB
+
 ### Technical Notes
 - Superset requires `duckdb` and `duckdb-engine` packages
+- **Docker users**: Superset uses `uv` and a venv at `/app/.venv` - must activate venv when installing packages
 - Connection URI: `duckdb:////absolute/path/to/virtual_twin_results.duckdb`
+- **Important**: Use "Connect this database with a SQLAlchemy URI string instead" link to bypass Superset's form path manipulation
 - **Critical**: Use `read_only: true` in engine parameters for concurrent dashboard queries
 
 ## [0.16.0] - 2025-11-30

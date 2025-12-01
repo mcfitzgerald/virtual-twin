@@ -37,22 +37,72 @@ pip install duckdb duckdb-engine
 - `duckdb-engine >= 0.13.0`
 
 ### 3. Docker Users
-If running Superset via Docker, extend the official image:
+If running Superset via Docker, extend the official image. **Important:** Superset uses `uv` and a virtual environment, so you must install packages into `/app/.venv`:
 
+**Step 1:** Create `Dockerfile.duckdb`:
 ```dockerfile
-FROM apache/superset:4.1.1
+ARG TAG=latest-dev
+FROM apachesuperset.docker.scarf.sh/apache/superset:${TAG}
 USER root
-RUN pip install duckdb==1.1.3 duckdb-engine==0.15.0
+RUN . /app/.venv/bin/activate && uv pip install duckdb==1.1.3 duckdb-engine==0.15.0
 USER superset
+```
+
+**Step 2:** Update your `docker-compose.yml` to build from the custom Dockerfile:
+```yaml
+x-superset-image: &superset-image superset-duckdb:local
+x-superset-build: &superset-build
+  context: .
+  dockerfile: Dockerfile.duckdb
+  args:
+    TAG: ${TAG:-latest-dev}
+```
+
+**Step 3:** Mount your Virtual Twin data directory:
+```yaml
+x-superset-volumes:
+  &superset-volumes
+  - ./docker:/app/docker
+  - superset_home:/app/superset_home
+  - /path/to/virtual-twin:/data/virtual-twin  # Add this line
+```
+
+**Step 4:** Add `build: *superset-build` to each Superset service (`superset`, `superset-init`, `superset-worker`, `superset-worker-beat`).
+
+**Step 5:** Rebuild and start:
+```bash
+docker compose -f docker-compose.yml down
+docker compose -f docker-compose.yml build --no-cache
+docker compose -f docker-compose.yml up -d
+```
+
+**Step 6:** Verify DuckDB is installed:
+```bash
+docker exec -i superset_app python -c "import duckdb; print(f'DuckDB {duckdb.__version__}')"
 ```
 
 ---
 
 ## Connection Configuration
 
+### Adding the Database Connection
+
+1. Go to **Settings** → **Database Connections** → **+ Database**
+2. Select **DuckDB** from the dropdown
+3. **Important:** Click **"Connect this database with a SQLAlchemy URI string instead"** at the bottom of the form
+   - This bypasses Superset's form which incorrectly prepends `/app/duckdb:` to your path
+4. Enter the SQLAlchemy URI (see below)
+5. Set Display Name to "Virtual Twin" or similar
+6. Click **Connect**
+
 ### SQLAlchemy URI
 
-For a local DuckDB file:
+For Docker (with mounted volume at `/data/virtual-twin`):
+```
+duckdb:////data/virtual-twin/virtual_twin_results.duckdb
+```
+
+For native Python installation:
 ```
 duckdb:////Users/michael/Documents/Github/virtual-twin/virtual_twin_results.duckdb
 ```
@@ -603,12 +653,38 @@ ORDER BY 1;
 
 ---
 
+## Pre-built Dashboards
+
+Ready-to-import dashboard bundle available in `superset/` directory:
+
+```bash
+superset/
+├── virtual_twin_dashboards.zip  # Import this file
+├── databases/DuckDB.yaml
+├── datasets/virtual_twin_results/*.yaml
+├── charts/*.yaml (15 charts)
+└── dashboards/*.yaml (3 dashboards)
+```
+
+**Quick Import:**
+1. Go to **Settings** → **Import Dashboard**
+2. Upload `superset/virtual_twin_dashboards.zip`
+3. Click **Import**
+
+**Included Dashboards:**
+- **Executive Summary**: Run comparison table, yield/margin/throughput charts
+- **OEE Deep Dive**: OEE by machine, availability, state breakdown, loss pareto
+- **Production Analysis**: Time-series production, economics, buffer levels, defects
+
+---
+
 ## Next Steps
 
 After following this plan:
-1. [ ] Install duckdb-engine in Superset
-2. [ ] Configure DuckDB connection with read-only mode
-3. [ ] Create datasets from views
-4. [ ] Build Executive Summary dashboard
-5. [ ] Build OEE Deep Dive dashboard
-6. [ ] Document and share with team
+1. [x] Install duckdb-engine in Superset
+2. [x] Configure DuckDB connection with read-only mode
+3. [x] Create datasets from views
+4. [x] Build Executive Summary dashboard
+5. [x] Build OEE Deep Dive dashboard
+6. [ ] Import pre-built dashboards from `superset/virtual_twin_dashboards.zip`
+7. [ ] Customize and share with team

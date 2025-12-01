@@ -240,10 +240,46 @@ python -m virtual_twin --run baseline_8hr --debug-events
 
 Native DuckDB support for deep-dive analytics. See [Superset Integration Guide](docs/superset_integration.md).
 
-**Quick Setup:**
+**Quick Setup (Native Python):**
 1. Install drivers: `pip install duckdb duckdb-engine`
 2. Add database connection: `duckdb:////path/to/virtual_twin_results.duckdb`
 3. Configure read-only mode in Engine Parameters for concurrent queries
+
+**Docker Setup:**
+
+1. Create `Dockerfile.duckdb` extending the Superset image:
+```dockerfile
+ARG TAG=latest-dev
+FROM apachesuperset.docker.scarf.sh/apache/superset:${TAG}
+USER root
+RUN . /app/.venv/bin/activate && uv pip install duckdb==1.1.3 duckdb-engine==0.15.0
+USER superset
+```
+
+2. Update `docker-compose.yml` to build from the custom Dockerfile and mount your data:
+```yaml
+x-superset-volumes:
+  &superset-volumes
+  - ./docker:/app/docker
+  - superset_home:/app/superset_home
+  - /path/to/virtual-twin:/data/virtual-twin  # Mount simulation data
+```
+
+3. Rebuild and start: `docker compose build --no-cache && docker compose up -d`
+
+4. In Superset UI, click **"Connect this database with a SQLAlchemy URI string instead"** and enter:
+```
+duckdb:////data/virtual-twin/virtual_twin_results.duckdb
+```
+
+> **Note:** Use the SQLAlchemy URI link to bypass Superset's form path manipulation.
+
+**Pre-built Dashboards:**
+
+Import ready-to-use dashboards from `superset/virtual_twin_dashboards.zip`:
+- Executive Summary (run comparison, yield, margin, throughput)
+- OEE Deep Dive (OEE by machine, state breakdown, loss pareto)
+- Production Analysis (time-series production, economics, buffers)
 
 #### Other Options
 
