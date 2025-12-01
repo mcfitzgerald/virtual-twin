@@ -241,7 +241,7 @@ python -m virtual_twin --run baseline_8hr --debug-events
 A pre-built dashboard is available at `grafana/dashboards/virtual_twin.json`.
 
 **Setup:**
-1. Install the DuckDB plugin: `grafana-cli plugins install frser-duckdb-datasource`
+1. Install the DuckDB plugin: `grafana-cli plugins install motherduck-duckdb-datasource`
 2. Configure data source: Settings → Data Sources → Add → DuckDB
    - Path: `/path/to/virtual_twin_results.duckdb`
 3. Import dashboard: Dashboards → Import → Upload JSON file

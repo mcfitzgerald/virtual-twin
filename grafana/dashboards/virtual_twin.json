@@ -5,7 +5,7 @@
       "label": "DuckDB",
       "description": "DuckDB data source for virtual twin simulation results",
       "type": "datasource",
-      "pluginId": "frser-duckdb-datasource",
+      "pluginId": "motherduck-duckdb-datasource",
       "pluginName": "DuckDB"
     }
   ],
@@ -18,7 +18,7 @@
     },
     {
       "type": "datasource",
-      "id": "frser-duckdb-datasource",
+      "id": "motherduck-duckdb-datasource",
       "name": "DuckDB",
       "version": "1.0.0"
     }
@@ -42,7 +42,7 @@
       "type": "row"
     },
     {
-      "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+      "datasource": { "type": "motherduck-duckdb-datasource", "uid": "${DS_DUCKDB}" },
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "thresholds" },
@@ -74,7 +74,7 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+          "datasource": { "type": "motherduck-duckdb-datasource", "uid": "${DS_DUCKDB}" },
           "rawSql": "SELECT SUM(total_good_pallets) as \"Good Pallets\" FROM run_summary WHERE run_id IN (${run_id:csv})",
           "refId": "A",
           "format": "table"
@@ -84,7 +84,7 @@
       "type": "stat"
     },
     {
-      "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+      "datasource": { "type": "motherduck-duckdb-datasource", "uid": "${DS_DUCKDB}" },
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "thresholds" },
@@ -118,7 +118,7 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+          "datasource": { "type": "motherduck-duckdb-datasource", "uid": "${DS_DUCKDB}" },
           "rawSql": "SELECT AVG(yield_percent) as \"Yield %\" FROM run_summary WHERE run_id IN (${run_id:csv})",
           "refId": "A",
           "format": "table"
@@ -128,7 +128,7 @@
       "type": "gauge"
     },
     {
-      "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+      "datasource": { "type": "motherduck-duckdb-datasource", "uid": "${DS_DUCKDB}" },
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "thresholds" },
@@ -160,7 +160,7 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+          "datasource": { "type": "motherduck-duckdb-datasource", "uid": "${DS_DUCKDB}" },
           "rawSql": "SELECT SUM(total_gross_margin) as \"Gross Margin\" FROM run_summary WHERE run_id IN (${run_id:csv})",
           "refId": "A",
           "format": "table"
@@ -170,7 +170,7 @@
       "type": "stat"
     },
     {
-      "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+      "datasource": { "type": "motherduck-duckdb-datasource", "uid": "${DS_DUCKDB}" },
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "thresholds" },
@@ -202,7 +202,7 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+          "datasource": { "type": "motherduck-duckdb-datasource", "uid": "${DS_DUCKDB}" },
           "rawSql": "SELECT AVG(throughput_per_hour) as \"Pallets/Hr\" FROM run_summary WHERE run_id IN (${run_id:csv})",
           "refId": "A",
           "format": "table"
@@ -220,7 +220,7 @@
       "type": "row"
     },
     {
-      "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+      "datasource": { "type": "motherduck-duckdb-datasource", "uid": "${DS_DUCKDB}" },
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "palette-classic" },
@@ -261,7 +261,7 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+          "datasource": { "type": "motherduck-duckdb-datasource", "uid": "${DS_DUCKDB}" },
           "rawSql": "SELECT run_id, run_name, scenario_name, sku_name, started_at, total_pallets, total_good_pallets, yield_percent, total_gross_margin, margin_percent, throughput_per_hour FROM v_run_comparison WHERE run_id IN (${run_id:csv}) ORDER BY started_at DESC",
           "refId": "A",
           "format": "table"
@@ -279,7 +279,7 @@
       "type": "row"
     },
     {
-      "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+      "datasource": { "type": "motherduck-duckdb-datasource", "uid": "${DS_DUCKDB}" },
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "thresholds" },
@@ -316,7 +316,7 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+          "datasource": { "type": "motherduck-duckdb-datasource", "uid": "${DS_DUCKDB}" },
           "rawSql": "SELECT r.run_name || ' - ' || m.machine_name as machine, m.oee_percent as \"OEE %\" FROM machine_oee m JOIN simulation_runs r ON m.run_id = r.run_id WHERE m.run_id IN (${run_id:csv}) ORDER BY m.machine_name",
           "refId": "A",
           "format": "table"
@@ -326,7 +326,7 @@
       "type": "bargauge"
     },
     {
-      "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+      "datasource": { "type": "motherduck-duckdb-datasource", "uid": "${DS_DUCKDB}" },
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "thresholds" },
@@ -363,7 +363,7 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+          "datasource": { "type": "motherduck-duckdb-datasource", "uid": "${DS_DUCKDB}" },
           "rawSql": "SELECT r.run_name || ' - ' || m.machine_name as machine, m.availability_percent as \"Availability %\" FROM machine_oee m JOIN simulation_runs r ON m.run_id = r.run_id WHERE m.run_id IN (${run_id:csv}) ORDER BY m.machine_name",
           "refId": "A",
           "format": "table"
@@ -381,7 +381,7 @@
       "type": "row"
     },
     {
-      "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+      "datasource": { "type": "motherduck-duckdb-datasource", "uid": "${DS_DUCKDB}" },
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "palette-classic" },
@@ -424,7 +424,7 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+          "datasource": { "type": "motherduck-duckdb-datasource", "uid": "${DS_DUCKDB}" },
           "rawSql": "SELECT v.ts as time, r.run_name || ' - Pallets' as metric, v.cumulative_pallets as value FROM v_cumulative_production v JOIN simulation_runs r ON v.run_id = r.run_id WHERE v.run_id IN (${run_id:csv}) ORDER BY v.ts",
           "refId": "A",
           "format": "time_series"
@@ -434,7 +434,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+      "datasource": { "type": "motherduck-duckdb-datasource", "uid": "${DS_DUCKDB}" },
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "palette-classic" },
@@ -477,7 +477,7 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+          "datasource": { "type": "motherduck-duckdb-datasource", "uid": "${DS_DUCKDB}" },
           "rawSql": "SELECT v.hour_bucket as time, r.run_name as metric, v.pallets as value FROM v_hourly_production v JOIN simulation_runs r ON v.run_id = r.run_id WHERE v.run_id IN (${run_id:csv}) ORDER BY v.hour_bucket",
           "refId": "A",
           "format": "time_series"
@@ -495,7 +495,7 @@
       "type": "row"
     },
     {
-      "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+      "datasource": { "type": "motherduck-duckdb-datasource", "uid": "${DS_DUCKDB}" },
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "palette-classic" },
@@ -544,7 +544,7 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+          "datasource": { "type": "motherduck-duckdb-datasource", "uid": "${DS_DUCKDB}" },
           "rawSql": "SELECT r.run_name || ' - ' || m.machine_name as machine, m.execute_time_sec as \"Execute\", m.starved_time_sec as \"Starved\", m.blocked_time_sec as \"Blocked\", m.down_time_sec as \"Down\", m.jammed_time_sec as \"Jammed\" FROM machine_oee m JOIN simulation_runs r ON m.run_id = r.run_id WHERE m.run_id IN (${run_id:csv}) ORDER BY m.machine_name",
           "refId": "A",
           "format": "table"
@@ -554,7 +554,7 @@
       "type": "barchart"
     },
     {
-      "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+      "datasource": { "type": "motherduck-duckdb-datasource", "uid": "${DS_DUCKDB}" },
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "palette-classic" },
@@ -597,7 +597,7 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+          "datasource": { "type": "motherduck-duckdb-datasource", "uid": "${DS_DUCKDB}" },
           "rawSql": "SELECT mt.ts as time, r.run_name || ' - ' || mt.machine_name as metric, mt.buffer_level as value FROM machine_telemetry mt JOIN simulation_runs r ON mt.run_id = r.run_id WHERE mt.run_id IN (${run_id:csv}) ORDER BY mt.ts",
           "refId": "A",
           "format": "time_series"
@@ -615,7 +615,7 @@
       "type": "row"
     },
     {
-      "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+      "datasource": { "type": "motherduck-duckdb-datasource", "uid": "${DS_DUCKDB}" },
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "palette-classic" },
@@ -658,7 +658,7 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+          "datasource": { "type": "motherduck-duckdb-datasource", "uid": "${DS_DUCKDB}" },
           "rawSql": "SELECT v.ts as time, r.run_name || ' - Margin' as metric, v.cumulative_margin as value FROM v_cumulative_production v JOIN simulation_runs r ON v.run_id = r.run_id WHERE v.run_id IN (${run_id:csv}) ORDER BY v.ts",
           "refId": "A",
           "format": "time_series"
@@ -668,7 +668,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+      "datasource": { "type": "motherduck-duckdb-datasource", "uid": "${DS_DUCKDB}" },
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "palette-classic" },
@@ -714,13 +714,13 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+          "datasource": { "type": "motherduck-duckdb-datasource", "uid": "${DS_DUCKDB}" },
           "rawSql": "SELECT t.ts as time, r.run_name || ' - Revenue' as metric, SUM(t.revenue) OVER (PARTITION BY t.run_id ORDER BY t.ts) as value FROM telemetry t JOIN simulation_runs r ON t.run_id = r.run_id WHERE t.run_id IN (${run_id:csv}) ORDER BY t.ts",
           "refId": "A",
           "format": "time_series"
         },
         {
-          "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+          "datasource": { "type": "motherduck-duckdb-datasource", "uid": "${DS_DUCKDB}" },
           "rawSql": "SELECT t.ts as time, r.run_name || ' - Cost' as metric, SUM(t.material_cost + t.conversion_cost) OVER (PARTITION BY t.run_id ORDER BY t.ts) as value FROM telemetry t JOIN simulation_runs r ON t.run_id = r.run_id WHERE t.run_id IN (${run_id:csv}) ORDER BY t.ts",
           "refId": "B",
           "format": "time_series"
@@ -738,7 +738,7 @@
     "list": [
       {
         "current": {},
-        "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+        "datasource": { "type": "motherduck-duckdb-datasource", "uid": "${DS_DUCKDB}" },
         "definition": "SELECT run_id as __value, run_name || ' (' || strftime(started_at, '%Y-%m-%d %H:%M') || ')' as __text FROM simulation_runs ORDER BY started_at DESC",
         "hide": 0,
         "includeAll": true,

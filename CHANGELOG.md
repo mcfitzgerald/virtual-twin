@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - **Production Time Series**: Cumulative production (line chart), Hourly production (bar chart)
     - **Machine State Breakdown**: Stacked bar chart (Execute/Starved/Blocked/Down/Jammed), Buffer levels over time
     - **Economics**: Cumulative gross margin, Revenue vs Cost comparison
-  - Uses DuckDB plugin (`frser-duckdb-datasource`) to query `virtual_twin_results.duckdb` directly
+  - Uses MotherDuck DuckDB plugin (`motherduck-duckdb-datasource`) to query `virtual_twin_results.duckdb` directly
   - Dashboard tags: `virtual-twin`, `simulation`, `oee`, `manufacturing`
 
 ### Technical Notes
