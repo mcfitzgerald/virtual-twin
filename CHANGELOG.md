@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.17.0] - 2025-11-30
+
+### Added
+- **Grafana dashboard** (`grafana/dashboards/virtual_twin.json`)
+  - Production dashboard for visualizing simulation results
+  - Multi-run comparison support via `$run_id` variable (multi-select)
+  - Panels organized in 5 rows:
+    - **KPI Summary**: Good Pallets (stat), Yield % (gauge), Gross Margin (stat), Throughput (stat)
+    - **Run Comparison**: Table view of all selected runs with key metrics
+    - **OEE by Machine**: Bar gauges for OEE % and Availability %
+    - **Production Time Series**: Cumulative production (line chart), Hourly production (bar chart)
+    - **Machine State Breakdown**: Stacked bar chart (Execute/Starved/Blocked/Down/Jammed), Buffer levels over time
+    - **Economics**: Cumulative gross margin, Revenue vs Cost comparison
+  - Uses DuckDB plugin (`frser-duckdb-datasource`) to query `virtual_twin_results.duckdb` directly
+  - Dashboard tags: `virtual-twin`, `simulation`, `oee`, `manufacturing`
+
+### Technical Notes
+- Import dashboard via Grafana UI: Dashboards → Import → Upload JSON
+- Configure DuckDB data source to point to `virtual_twin_results.duckdb`
+- Dashboard variable `$run_id` auto-populates from `simulation_runs` table
+- All queries support multi-run comparison via `WHERE run_id IN (${run_id:csv})`
+
 ## [0.16.0] - 2025-11-30
 
 ### Changed

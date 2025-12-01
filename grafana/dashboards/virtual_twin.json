@@ -1,0 +1,765 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_DUCKDB",
+      "label": "DuckDB",
+      "description": "DuckDB data source for virtual twin simulation results",
+      "type": "datasource",
+      "pluginId": "frser-duckdb-datasource",
+      "pluginName": "DuckDB"
+    }
+  ],
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "10.0.0"
+    },
+    {
+      "type": "datasource",
+      "id": "frser-duckdb-datasource",
+      "name": "DuckDB",
+      "version": "1.0.0"
+    }
+  ],
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 100,
+      "panels": [],
+      "title": "KPI Summary",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 1 },
+      "id": 1,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+          "rawSql": "SELECT SUM(total_good_pallets) as \"Good Pallets\" FROM run_summary WHERE run_id IN (${run_id:csv})",
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "title": "Good Pallets",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 80 },
+              { "color": "green", "value": 95 }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 1 },
+      "id": 2,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+          "rawSql": "SELECT AVG(yield_percent) as \"Yield %\" FROM run_summary WHERE run_id IN (${run_id:csv})",
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "title": "Yield %",
+      "type": "gauge"
+    },
+    {
+      "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null }
+            ]
+          },
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 1 },
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+          "rawSql": "SELECT SUM(total_gross_margin) as \"Gross Margin\" FROM run_summary WHERE run_id IN (${run_id:csv})",
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "title": "Gross Margin",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 1 },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+          "rawSql": "SELECT AVG(throughput_per_hour) as \"Pallets/Hr\" FROM run_summary WHERE run_id IN (${run_id:csv})",
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "title": "Throughput (Pallets/Hr)",
+      "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 },
+      "id": 101,
+      "panels": [],
+      "title": "Run Comparison",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "align": "auto",
+            "cellOptions": { "type": "auto" },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "green", "value": null }]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "total_gross_margin" },
+            "properties": [{ "id": "unit", "value": "currencyUSD" }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "yield_percent" },
+            "properties": [{ "id": "unit", "value": "percent" }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "margin_percent" },
+            "properties": [{ "id": "unit", "value": "percent" }]
+          }
+        ]
+      },
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 6 },
+      "id": 5,
+      "options": {
+        "cellHeight": "sm",
+        "footer": { "countRows": false, "fields": "", "reducer": ["sum"], "show": false },
+        "showHeader": true,
+        "sortBy": [{ "desc": true, "displayName": "started_at" }]
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+          "rawSql": "SELECT run_id, run_name, scenario_name, sku_name, started_at, total_pallets, total_good_pallets, yield_percent, total_gross_margin, margin_percent, throughput_per_hour FROM v_run_comparison WHERE run_id IN (${run_id:csv}) ORDER BY started_at DESC",
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "title": "Run Comparison",
+      "type": "table"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 12 },
+      "id": 102,
+      "panels": [],
+      "title": "OEE by Machine",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 65 },
+              { "color": "green", "value": 85 }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 13 },
+      "id": 6,
+      "options": {
+        "displayMode": "gradient",
+        "minVizHeight": 10,
+        "minVizWidth": 0,
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": true
+        },
+        "showUnfilled": true,
+        "valueMode": "color"
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+          "rawSql": "SELECT r.run_name || ' - ' || m.machine_name as machine, m.oee_percent as \"OEE %\" FROM machine_oee m JOIN simulation_runs r ON m.run_id = r.run_id WHERE m.run_id IN (${run_id:csv}) ORDER BY m.machine_name",
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "title": "OEE by Machine",
+      "type": "bargauge"
+    },
+    {
+      "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 80 },
+              { "color": "green", "value": 95 }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 13 },
+      "id": 7,
+      "options": {
+        "displayMode": "gradient",
+        "minVizHeight": 10,
+        "minVizWidth": 0,
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": true
+        },
+        "showUnfilled": true,
+        "valueMode": "color"
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+          "rawSql": "SELECT r.run_name || ' - ' || m.machine_name as machine, m.availability_percent as \"Availability %\" FROM machine_oee m JOIN simulation_runs r ON m.run_id = r.run_id WHERE m.run_id IN (${run_id:csv}) ORDER BY m.machine_name",
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "title": "Availability by Machine",
+      "type": "bargauge"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 19 },
+      "id": 103,
+      "panels": [],
+      "title": "Production Time Series",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": { "type": "linear" },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "group": "A", "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "green", "value": null }]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 20 },
+      "id": 8,
+      "options": {
+        "legend": { "calcs": ["max"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+          "rawSql": "SELECT v.ts as time, r.run_name || ' - Pallets' as metric, v.cumulative_pallets as value FROM v_cumulative_production v JOIN simulation_runs r ON v.run_id = r.run_id WHERE v.run_id IN (${run_id:csv}) ORDER BY v.ts",
+          "refId": "A",
+          "format": "time_series"
+        }
+      ],
+      "title": "Cumulative Production",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "lineWidth": 1,
+            "scaleDistribution": { "type": "linear" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "green", "value": null }]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 20 },
+      "id": 9,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 0.8,
+        "groupWidth": 0.7,
+        "legend": { "calcs": ["sum"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "orientation": "auto",
+        "showValue": "auto",
+        "stacking": "none",
+        "tooltip": { "mode": "multi", "sort": "desc" },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+          "rawSql": "SELECT v.hour_bucket as time, r.run_name as metric, v.pallets as value FROM v_hourly_production v JOIN simulation_runs r ON v.run_id = r.run_id WHERE v.run_id IN (${run_id:csv}) ORDER BY v.hour_bucket",
+          "refId": "A",
+          "format": "time_series"
+        }
+      ],
+      "title": "Hourly Production",
+      "type": "barchart"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 28 },
+      "id": 104,
+      "panels": [],
+      "title": "Machine State Breakdown",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "Seconds",
+            "axisPlacement": "auto",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "lineWidth": 1,
+            "scaleDistribution": { "type": "linear" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "green", "value": null }]
+          },
+          "unit": "s"
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Execute" }, "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "Starved" }, "properties": [{ "id": "color", "value": { "fixedColor": "yellow", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "Blocked" }, "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "Down" }, "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "Jammed" }, "properties": [{ "id": "color", "value": { "fixedColor": "purple", "mode": "fixed" } }] }
+        ]
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 29 },
+      "id": 10,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 0.8,
+        "groupWidth": 0.7,
+        "legend": { "calcs": [], "displayMode": "list", "placement": "right", "showLegend": true },
+        "orientation": "horizontal",
+        "showValue": "auto",
+        "stacking": "normal",
+        "tooltip": { "mode": "multi", "sort": "desc" },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+          "rawSql": "SELECT r.run_name || ' - ' || m.machine_name as machine, m.execute_time_sec as \"Execute\", m.starved_time_sec as \"Starved\", m.blocked_time_sec as \"Blocked\", m.down_time_sec as \"Down\", m.jammed_time_sec as \"Jammed\" FROM machine_oee m JOIN simulation_runs r ON m.run_id = r.run_id WHERE m.run_id IN (${run_id:csv}) ORDER BY m.machine_name",
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "title": "State Time by Machine",
+      "type": "barchart"
+    },
+    {
+      "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "none",
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "insertNulls": false,
+            "lineInterpolation": "stepAfter",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": { "type": "linear" },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "group": "A", "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "green", "value": null }]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 29 },
+      "id": 11,
+      "options": {
+        "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+          "rawSql": "SELECT mt.ts as time, r.run_name || ' - ' || mt.machine_name as metric, mt.buffer_level as value FROM machine_telemetry mt JOIN simulation_runs r ON mt.run_id = r.run_id WHERE mt.run_id IN (${run_id:csv}) ORDER BY mt.ts",
+          "refId": "A",
+          "format": "time_series"
+        }
+      ],
+      "title": "Buffer Levels Over Time",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 37 },
+      "id": 105,
+      "panels": [],
+      "title": "Economics",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": { "type": "linear" },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "group": "A", "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "green", "value": null }]
+          },
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 38 },
+      "id": 12,
+      "options": {
+        "legend": { "calcs": ["max"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+          "rawSql": "SELECT v.ts as time, r.run_name || ' - Margin' as metric, v.cumulative_margin as value FROM v_cumulative_production v JOIN simulation_runs r ON v.run_id = r.run_id WHERE v.run_id IN (${run_id:csv}) ORDER BY v.ts",
+          "refId": "A",
+          "format": "time_series"
+        }
+      ],
+      "title": "Cumulative Gross Margin",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": { "type": "linear" },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "group": "A", "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "green", "value": null }]
+          },
+          "unit": "currencyUSD"
+        },
+        "overrides": [
+          { "matcher": { "id": "byRegexp", "options": ".*Revenue.*" }, "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }] },
+          { "matcher": { "id": "byRegexp", "options": ".*Cost.*" }, "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }] }
+        ]
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 38 },
+      "id": 13,
+      "options": {
+        "legend": { "calcs": ["max"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+          "rawSql": "SELECT t.ts as time, r.run_name || ' - Revenue' as metric, SUM(t.revenue) OVER (PARTITION BY t.run_id ORDER BY t.ts) as value FROM telemetry t JOIN simulation_runs r ON t.run_id = r.run_id WHERE t.run_id IN (${run_id:csv}) ORDER BY t.ts",
+          "refId": "A",
+          "format": "time_series"
+        },
+        {
+          "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+          "rawSql": "SELECT t.ts as time, r.run_name || ' - Cost' as metric, SUM(t.material_cost + t.conversion_cost) OVER (PARTITION BY t.run_id ORDER BY t.ts) as value FROM telemetry t JOIN simulation_runs r ON t.run_id = r.run_id WHERE t.run_id IN (${run_id:csv}) ORDER BY t.ts",
+          "refId": "B",
+          "format": "time_series"
+        }
+      ],
+      "title": "Revenue vs Cost",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["virtual-twin", "simulation", "oee", "manufacturing"],
+  "templating": {
+    "list": [
+      {
+        "current": {},
+        "datasource": { "type": "frser-duckdb-datasource", "uid": "${DS_DUCKDB}" },
+        "definition": "SELECT run_id as __value, run_name || ' (' || strftime(started_at, '%Y-%m-%d %H:%M') || ')' as __text FROM simulation_runs ORDER BY started_at DESC",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Run",
+        "multi": true,
+        "name": "run_id",
+        "options": [],
+        "query": "SELECT run_id as __value, run_name || ' (' || strftime(started_at, '%Y-%m-%d %H:%M') || ')' as __text FROM simulation_runs ORDER BY started_at DESC",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      }
+    ]
+  },
+  "time": { "from": "now-24h", "to": "now" },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Virtual Twin - Production Dashboard",
+  "uid": "virtual-twin-production",
+  "version": 1,
+  "weekStart": ""
+}

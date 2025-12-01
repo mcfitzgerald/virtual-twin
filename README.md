@@ -1,6 +1,6 @@
 # Virtual Twin
 
-**Version:** 0.16.0
+**Version:** 0.17.0
 **Frameworks:** SimPy, Pydantic, Pandas, DuckDB
 **Scope:** Discrete Event Simulation (DES), Synthetic Data Generation & Analytics
 
@@ -236,9 +236,30 @@ python -m virtual_twin --run baseline_8hr --debug-events
 
 ### Visualization
 
+#### Grafana (Recommended)
+
+A pre-built dashboard is available at `grafana/dashboards/virtual_twin.json`.
+
+**Setup:**
+1. Install the DuckDB plugin: `grafana-cli plugins install frser-duckdb-datasource`
+2. Configure data source: Settings → Data Sources → Add → DuckDB
+   - Path: `/path/to/virtual_twin_results.duckdb`
+3. Import dashboard: Dashboards → Import → Upload JSON file
+   - Select `grafana/dashboards/virtual_twin.json`
+4. Select your data source when prompted
+
+**Dashboard Features:**
+- **Multi-run comparison**: Select multiple runs from dropdown to compare side-by-side
+- **KPI Summary**: Good pallets, yield %, gross margin, throughput
+- **OEE Analysis**: Per-machine OEE and availability bar gauges
+- **Production Charts**: Cumulative and hourly production time series
+- **State Breakdown**: Stacked bar chart of machine states (Execute/Starved/Blocked/Down/Jammed)
+- **Economics**: Revenue vs cost trends, cumulative margin
+
+#### Other Options
+
 - **Apache Superset**: Native DuckDB support - connect with `duckdb:////path/to/virtual_twin_results.duckdb`
-- **Grafana**: Export to SQLite with `ATTACH 'export.db' AS sqlite (TYPE SQLITE)`
-- **Parquet**: Export with `COPY table TO 'file.parquet' (FORMAT PARQUET)`
+- **Parquet Export**: `COPY table TO 'file.parquet' (FORMAT PARQUET)`
 
 ## Testing
 
