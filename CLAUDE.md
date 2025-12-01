@@ -34,10 +34,20 @@ poetry run python -m virtual_twin --run baseline_8hr --export
 poetry run python -m virtual_twin configure --run baseline_8hr
 poetry run python -m virtual_twin simulate --scenario ./scenarios/baseline_8hr_*
 
+# Database options
+poetry run python -m virtual_twin --run baseline_8hr --no-db          # Skip DB save
+poetry run python -m virtual_twin --run baseline_8hr --debug-events   # Full event logging
+
+# Testing
+poetry run pytest                                    # Run all tests
+poetry run pytest tests/test_reality_checks.py      # Run specific test file
+poetry run pytest -k "test_oee"                     # Run tests matching pattern
+
 # Linting and type checking
 poetry run ruff check src/
 poetry run ruff format src/
 poetry run mypy src/
+semgrep --config .semgrep/rules/ src/               # Find hardcoded values
 
 # Documentation (local dev server)
 poetry run mkdocs serve
@@ -218,15 +228,33 @@ poetry run python -m virtual_twin --run high_buffer_8hr
 ```python
 from virtual_twin import SimulationEngine, ConfigLoader
 
-# Using YAML configs
+# Using YAML configs - returns 4-tuple
 engine = SimulationEngine("config")
-df_ts, df_ev = engine.run("baseline_8hr")
+df_ts, df_ev, df_summary, df_detail = engine.run("baseline_8hr")
+
+# df_ts: Telemetry time-series (5-min intervals)
+# df_ev: Event log (empty unless debug_events=True)
+# df_summary: Bucketed state summary for OEE
+# df_detail: Filtered events (DOWN/JAMMED) with context
+
+# Enable full event logging for debugging
+df_ts, df_ev, df_summary, df_detail = engine.run("baseline_8hr", debug_events=True)
 
 # Or load and modify configs programmatically
 loader = ConfigLoader("config")
 resolved = loader.resolve_run("baseline_8hr")
 # Modify resolved.equipment["Filler"].buffer_capacity = 500
 machine_configs = loader.build_machine_configs(resolved)
+```
+
+### Database Queries
+
+```python
+from virtual_twin import db_connect
+
+conn = db_connect()
+df = conn.execute("SELECT * FROM v_run_comparison").df()      # Compare runs
+oee = conn.execute("SELECT * FROM v_machine_oee WHERE run_id = 1").df()
 ```
 
 ### What-If Experiments
